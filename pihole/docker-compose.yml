@@ -11,9 +11,13 @@ services:
       - "67:67/udp"
       - "80:80/tcp"
     environment:
+      PIHOLE_DNS_1: 8.8.8.8
+      PIHOLE_DNS_2: 8.8.4.4
       TZ: 'America/Denver'
       # WEBPASSWORD: 'set a secure password here or it will be random'
     # Volumes store your data between container upgrades
+    dns:
+      - 127.0.0.1
     volumes:
       - './etc-pihole:/etc/pihole'
       - './etc-dnsmasq.d:/etc/dnsmasq.d'
