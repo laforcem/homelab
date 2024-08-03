@@ -2,32 +2,34 @@ services:
   traefik:
     image: traefik:v3.1
     container_name: "traefik"
-
     command:
-      #- "--log.level=DEBUG"
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entryPoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=${EMAIL}"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      #- --log.level=DEBUG
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entryPoints.websecure.address=:443
+      - --certificatesresolvers.myresolver.acme.tlschallenge=true
+      - --certificatesresolvers.myresolver.acme.email=${EMAIL}
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+    labels:
+      # - "traefik.http.routers..middlewares=api-auth"
+      - traefik.http.middlewares.traefik.basicauth.users=${HTTP_BASIC_USER}:${HTTP_BASIC_PWD}
     ports:
       # HTTPS port
       - "443:443"
       # The Web UI (enabled by --api.insecure=true)
       - 8080:8080
     volumes:
-      - "./letsencrypt:/letsencrypt"
+      - ./letsencrypt:/letsencrypt
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
 
   whoami:
     # A container that exposes an API to show its IP address
     image: traefik/whoami
-    container_name: "whoami"
+    container_name: whoami
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)"
-      - "traefik.http.routers.whoami.entrypoints=websecure"
-      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+      - traefik.enable=true
+      - traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)
+      - traefik.http.routers.whoami.entrypoints=websecure
+      - traefik.http.routers.whoami.tls.certresolver=myresolver
