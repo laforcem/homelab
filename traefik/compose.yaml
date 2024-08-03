@@ -5,19 +5,17 @@ services:
     # Enables the web UI and tells Traefik to listen to docker
     command:
       # Traefik will listen on port 8080 by default for API request.
-      - "--api.insecure=true"
+      - --api.insecure=true
       # Explicitly tell Traefik to expose this container 
-      - "--providers.docker=true"
+      - --providers.docker=true
       # Do not expose containers unless explicitly told so
-      - "--providers.docker.exposedbydefault=false"
-      - "--entryPoints.web.address=:80"
-
-      # - "--log.level=DEBUG"
+      - --providers.docker.exposedbydefault=false
+      - --entryPoints.web.address=:80
     ports:
       # The HTTP port
-      - "80:80"
+      - 80:80
       # The Web UI (enabled by --api.insecure=true)
-      - "8080:8080"
+      - 8080:8080
     volumes:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
@@ -28,8 +26,8 @@ services:
     container_name: "whoami"
     labels:
       # Explicitly tell Traefik to expose this container
-      - "traefik.enable=true"
+      - traefik.enable=true
       # The domain the service will respond to
-      - "traefik.http.routers.whoami.rule=Host(`whoami.laforce.dev`)"
+      - traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)
       # Allow request only from the predefined entry point named "web"
-      - "traefik.http.routers.whoami.entrypoints=web"
+      - traefik.http.routers.whoami.entrypoints=web
