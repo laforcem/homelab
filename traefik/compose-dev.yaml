@@ -1,7 +1,7 @@
 services:
   traefik:
     image: traefik:v3.1
-    container_name: "traefik"
+    container_name: "traefik-dev"
     # Enables the web UI and tells Traefik to listen to docker
     command:
       # Traefik will listen on port 8080 by default for API request.
@@ -25,11 +25,11 @@ services:
   whoami:
     # A container that exposes an API to show its IP address
     image: traefik/whoami
-    container_name: "whoami"
+    container_name: "whoami-dev"
     labels:
       # Explicitly tell Traefik to expose this container
       - "traefik.enable=true"
       # The domain the service will respond to
-      - "traefik.http.routers.whoami.rule=Host(`whoami.laforce.dev`)"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
       # Allow request only from the predefined entry point named "web"
       - "traefik.http.routers.whoami.entrypoints=web"
