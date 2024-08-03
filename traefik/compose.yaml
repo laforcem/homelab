@@ -2,21 +2,23 @@ services:
   traefik:
     image: traefik:v3.1
     container_name: "traefik"
-    # Enables the web UI and tells Traefik to listen to docker
+
     command:
-      # Traefik will listen on port 8080 by default for API request.
-      - --api.insecure=true
-      # Explicitly tell Traefik to expose this container 
-      - --providers.docker=true
-      # Do not expose containers unless explicitly told so
-      - --providers.docker.exposedbydefault=false
-      - --entryPoints.web.address=:80
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=${EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
-      # The HTTP port
-      - 80:80
+      # HTTPS port
+      - "443:443"
       # The Web UI (enabled by --api.insecure=true)
       - 8080:8080
     volumes:
+      - "./letsencrypt:/letsencrypt"
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -25,9 +27,7 @@ services:
     image: traefik/whoami
     container_name: "whoami"
     labels:
-      # Explicitly tell Traefik to expose this container
-      - traefik.enable=true
-      # The domain the service will respond to
-      - traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)
-      # Allow request only from the predefined entry point named "web"
-      - traefik.http.routers.whoami.entrypoints=web
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
