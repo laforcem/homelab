@@ -1,19 +1,30 @@
+# Adapted from https://github.com/bluepuma77/traefik-best-practice/blob/main/docker-traefik-dashboard-letsencrypt/docker-compose.yml
 services:
   traefik:
     image: traefik:v3.1
     container_name: "traefik"
     command:
-      #- --log.level=DEBUG
-      - --api.insecure=true
+      - --log.level=INFO
+      - --accesslog=true
+      - --api.dashboard=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
       - --entryPoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entryPoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.asDefault=true
+      - --entrypoints.websecure.http.tls.certresolver=myresolver
       - --certificatesresolvers.myresolver.acme.tlschallenge=true
       - --certificatesresolvers.myresolver.acme.email=${EMAIL}
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
     labels:
-      # - "traefik.http.routers..middlewares=api-auth"
-      - traefik.http.middlewares.traefik.basicauth.users=${HTTP_BASIC_USER}:${HTTP_BASIC_PWD}
+      - traefik.enable=true
+      - traefik.http.routers.mydashboard.entrypoints=websecure
+      - traefik.http.routers.mydashboard.rule=Host(`proxy.${DOMAIN}`)
+      - traefik.http.routers.mydashboard.middlewares=myauth
+      - traefik.http.middlewares.myauth.basicauth.users=${HTTP_BASIC_USER}:${HTTP_BASIC_PWD}
+      - traefik.http.routers.mydashboard.service=api@internal
     ports:
       # HTTPS port
       - "443:443"
