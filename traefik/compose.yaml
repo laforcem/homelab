@@ -10,9 +10,9 @@ services:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
-      - --entryPoints.websecure.address=:443
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entryPoints.web.http.redirections.entrypoint.scheme=https
+      - --entryPoints.websecure.address=:443
       - --entrypoints.websecure.asDefault=true
       - --entrypoints.websecure.http.tls.certresolver=myresolver
       - --certificatesresolvers.myresolver.acme.tlschallenge=true
@@ -22,15 +22,14 @@ services:
       - traefik.enable=true
       - traefik.http.routers.mydashboard.entrypoints=websecure
       - traefik.http.routers.mydashboard.rule=Host(`proxy.${DOMAIN}`)
+      - traefik.http.routers.mydashboard.service=api@internal
       - traefik.http.routers.mydashboard.middlewares=myauth
       - traefik.http.middlewares.myauth.basicauth.users=${HTTP_BASIC_USER}:${HTTP_BASIC_PWD}
-      - traefik.http.routers.mydashboard.service=api@internal
     ports:
       # HTTPS port
       - "443:443"
-      # The Web UI (enabled by --api.insecure=true)
-      - 8080:8080
     volumes:
+      # Retain certs through container destruction
       - ./letsencrypt:/letsencrypt
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
