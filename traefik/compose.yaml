@@ -1,4 +1,3 @@
-# Adapted from https://github.com/bluepuma77/traefik-best-practice/blob/main/docker-traefik-dashboard-letsencrypt/docker-compose.yml
 services:
   traefik:
     image: traefik:v3.1
