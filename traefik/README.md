@@ -9,13 +9,14 @@ Setup is largely pulled from [bluepuma77/traefik-best-practice](https://github.c
 1) First, set up a username/password pair with `htpasswd` that will be used to log into the Traefik dashboard via basic auth:
 
     ```bash
-    htpasswd -nb username password
+    read -s password
+    htpasswd -nb username $password
     ```
 
     *Note: If desired, more powerful encryption with `bcrypt` can be used for the password by using the following flags instead:*
 
     ```bash
-    htpasswd -nBC 10 username password
+    htpasswd -nBC 10 username $password
     ```
 
 2) Create a `.env` file in this directory with the following values set:

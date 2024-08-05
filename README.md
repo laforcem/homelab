@@ -16,7 +16,7 @@ Private services will not include Traefik-related labels in their Compose files.
 
 ### Public services
 
-Other services are intended to be publicly-available and hosted on a generally available server. All these services are oriented around [Traefik](/traefik/), which functions as a reverse proxy that routes HTTP requests to their corresponding service.
+Other services are intended to be public and hosted on a generally available server. All these services are oriented around [Traefik](/traefik/), which functions as a reverse proxy that routes HTTP requests to their corresponding service.
 
 - [Traefik](/traefik/) (includes test app `whoami`)
 
