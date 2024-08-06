@@ -57,3 +57,7 @@ Naturally, ensure that you have a corresponding exact-match or wildcard DNS entr
 - *I'm getting a 404 trying to access either Traefik or `whoami`, what's wrong?*
 
     If your containers are healthy, check both your ingress rules and firewall rules for your OS, especially if you're using Oracle Cloud Infrastructure. Ports 80 and 443 must be accessible.
+
+- *I'm getting a 504 gateway timeout error on apps deployed via different Compose files than Traefik's.*
+
+    Apps need to be on the same Docker network as Traefik in order to be served. Make sure your container is on the network `traefiknet`. This config should already be specified in most Compose files in this repo. 
