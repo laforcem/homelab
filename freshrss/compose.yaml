@@ -2,12 +2,18 @@ volumes:
   data:
   extensions:
 
+networks:
+  traefiknet:
+    name: traefiknet
+
 services:
   freshrss:
     image: freshrss/freshrss:1.24.1
     container_name: freshrss
     hostname: freshrss
     restart: unless-stopped
+    networks:
+      - traefiknet
     logging:
       options:
         max-size: 10m
