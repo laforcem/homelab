@@ -1,0 +1,25 @@
+networks:
+  traefiknet:
+    name: traefiknet
+    external: true
+
+services:
+  couchdb:
+    image: couchdb:3
+    container_name: obsidian-livesync
+    environment:
+      - COUCHDB_USER=${USERNAME}
+      - COUCHDB_PASSWORD=${PASSWORD}
+      - TZ=America/Denver
+    # volumes:
+      # - ./data:/opt/couchdb/data
+      # - ./local.ini:/opt/couchdb/etc/local.ini
+    restart: unless-stopped
+    networks:
+      - traefiknet
+    labels:
+      - "traefik.enable=false"
+      - "traefik.http.routers.obsidian-livesync.rule=Host(`obsidian-livesync.${DOMAIN}`)"
+      - "traefik.http.routers.obsidian-livesync.entrypoints=websecure"
+      - "traefik.http.routers.obsidian-livesync.tls.certresolver=myresolver"
+      - "traefik.http.routers.obsidian-livesync.middlewares=obsidiancors"
