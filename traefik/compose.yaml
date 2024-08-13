@@ -1,7 +1,13 @@
+networks:
+  traefiknet:
+    name: traefiknet
+
 services:
   traefik:
     image: traefik:v3.1
     container_name: "traefik"
+    networks:
+      - traefiknet
     command:
       - --log.level=INFO
       - --accesslog=true
@@ -37,6 +43,8 @@ services:
     # A container that exposes an API to show its IP address
     image: traefik/whoami
     container_name: whoami
+    networks:
+      - traefiknet
     labels:
       - traefik.enable=true
       - traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)
