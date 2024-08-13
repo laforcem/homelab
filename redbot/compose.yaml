@@ -1,4 +1,3 @@
-version: "3.2"
 services:
   redbot:
     container_name: redbot
@@ -11,3 +10,4 @@ services:
       - PREFIX=.
       - TZ=America/Denver
       - PUID=1000
+      - EXTRA_ARGS=--debug
