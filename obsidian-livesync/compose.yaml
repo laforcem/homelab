@@ -5,21 +5,27 @@ networks:
 
 services:
   couchdb:
-    image: couchdb:3
+    image: couchdb:3 
     container_name: obsidian-livesync
     environment:
-      - COUCHDB_USER=${USERNAME}
-      - COUCHDB_PASSWORD=${PASSWORD}
+      - PUID=99
+      - PGID=100
+      - UMASK=0022
       - TZ=America/Denver
-    # volumes:
-      # - ./data:/opt/couchdb/data
-      # - ./local.ini:/opt/couchdb/etc/local.ini
+      - COUCHDB_USER=${COUCHDB_USERNAME}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
+    volumes:
+      - ./couchdb/data:/opt/couchdb/data
+      - ./couchdb/local.d:/opt/couchdb/etc/local.d
+      # - ./
+    # ports:
+    #   - "5984:5984"
     restart: unless-stopped
     networks:
       - traefiknet
     labels:
-      - "traefik.enable=false"
-      - "traefik.http.routers.obsidian-livesync.rule=Host(`obsidian-livesync.${DOMAIN}`)"
-      - "traefik.http.routers.obsidian-livesync.entrypoints=websecure"
-      - "traefik.http.routers.obsidian-livesync.tls.certresolver=myresolver"
-      - "traefik.http.routers.obsidian-livesync.middlewares=obsidiancors"
+      - traefik.enable=true
+      - traefik.http.routers.obsidian-livesync.rule=Host(`obsidian-livesync.${DOMAIN}`)
+      - traefik.http.routers.obsidian-livesync.entrypoints=websecure
+      - traefik.http.routers.obsidian-livesync.tls.certresolver=myresolver
+      - traefik.http.services.obsidian-livesync.loadbalancer.server.port=5984
