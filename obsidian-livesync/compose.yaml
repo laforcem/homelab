@@ -17,9 +17,6 @@ services:
     volumes:
       - ./couchdb/data:/opt/couchdb/data
       - ./couchdb/local.d:/opt/couchdb/etc/local.d
-      # - ./
-    # ports:
-    #   - "5984:5984"
     restart: unless-stopped
     networks:
       - traefiknet
