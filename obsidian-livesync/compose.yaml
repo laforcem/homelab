@@ -5,6 +5,8 @@ networks:
 
 services:
   couchdb:
+    # build:
+    #   context: .
     image: couchdb:3 
     container_name: obsidian-livesync
     environment:
@@ -16,10 +18,18 @@ services:
       - COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
     volumes:
       - ./couchdb/data:/opt/couchdb/data
-      - ./couchdb/local.d:/opt/couchdb/etc/local.d
+      - ./couchdb:/opt/couchdb/etc/local.d
     restart: unless-stopped
     networks:
       - traefiknet
+    # Copy, move, and rename docker.ini.template for initial container creation
+    entrypoint: >
+      sh -c "
+      if [ ! -f /opt/couchdb/etc/local.d/docker.ini ];
+        then cp /opt/couchdb/etc/local.d/docker.ini.template /opt/couchdb/etc/local.d/docker.ini;
+      fi
+      && docker-entrypoint.sh couchdb
+      "
     labels:
       - traefik.enable=true
       - traefik.http.routers.obsidian-livesync.rule=Host(`obsidian-livesync.${DOMAIN}`)
