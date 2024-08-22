@@ -20,6 +20,7 @@ Other services are intended to be public and hosted on a generally available ser
 
 - [Traefik](/traefik/) (includes test app `whoami`)
 - [FreshRSS](/freshrss/)
+- [`Obsidian Livesync`](/obsidian-livesync/)
 
 Before running any public applications, set up Traefik first.
 
