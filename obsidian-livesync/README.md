@@ -28,7 +28,7 @@ This guide assumes that you have an existing Obsidian vault on one or more devic
 
 **Initial config**
 
-1) Navigate to the CouchDB admin page on whatever domain you have it hosted on (`obsidian-livesync.example.com`) and login with the credentials you specified in `.env`.
+1) Navigate to the CouchDB admin page `obsidian-livesync.example.com/_utils` on whatever domain you have it hosted on and login with the credentials you specified in `.env`.
 
 2) Expand the menu `<->` and click `Setup`. Select `Configure as Single Node`, enter the same admin credentials, and leave the rest as-is. Finish with `Configure Node`.
 
@@ -43,30 +43,6 @@ This guide assumes that you have an existing Obsidian vault on one or more devic
 3) Ensure that the database is set to `Non-partitioned`, then finish creation.
 
 Repeat this section for as many Obsidian vaults as you'd like to sync.
-
-**Run config script**
-
-The included [`config.sh`](./config.sh) will make calls to CouchDB's exposed REST API endpoints to make config changes.
-
-1) Ensure that the script can be run on your machine:
-
-    ```bash
-    chmod +x config.sh
-    ```
-
-2) Set your system environment variables with `.env`:
-
-    ```bash
-    source .env
-    ```
-
-3) Invoke the script.
-
-    ```bash
-    ./config.sh
-    ```
-
-You can check the presence of the new config items in the `Configuration` section of the left menu.
 
 ### Obsidian (client-side) setup
 
@@ -90,7 +66,7 @@ You can check the presence of the new config items in the `Configuration` sectio
 
 5) Select `Test` to ensure the connection works. If it does, a popup will confirm that the plugin "Connected to obsidiandb successfully".
 
-6) Also click `Check` to make sure the database is configured correctly. Purple checkmarks will appear next to each item that is ready; otherwise, there will be a `Fix` button to help you resolve the issue. Finish with the `Apply` button.
+6) Also click `Check` to make sure the database is configured correctly. Checkmarks will appear next to each item that is ready; otherwise, there will be a `Fix` button to help you resolve the issue. Finish with the `Apply` button.
 
 7) Towards the bottom, also turn on `End-to-End Encryption` for database security. Create and save the passphrase securely; you will need it for any subsequent device that connects to the DB. Finish with `Just apply`.
 
