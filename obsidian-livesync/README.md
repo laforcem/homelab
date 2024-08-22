@@ -79,4 +79,3 @@ Repeat this section for as many Obsidian vaults as you'd like to sync.
 ## TODO
 
 - Automate `obsidiandb` database creation
-- Automate script running after container is spun up
