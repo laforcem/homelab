@@ -10,7 +10,7 @@ Some services are not public-facing and can be run on any sort of private networ
 
 - [pihole](/pihole/): For use on a home network to block ads and does not need port forwarding.
 
-- [redbot](/redbot/): Uses a Discord bot token, so does not need port forwarding.
+- [Muse](/muse/): Uses a Discord bot token, so does not need port forwarding.
 
 Private services will not include Traefik-related labels in their Compose files.
 
