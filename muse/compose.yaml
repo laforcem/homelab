@@ -1,0 +1,29 @@
+services:
+  muse:
+    image: ghcr.io/museofficial/muse:latest
+    restart: always
+    volumes:
+      - ./muse:/data
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
+    network_mode: "service:warp"
+    depends_on:
+      - warp
+  warp:
+    image: caomingjun/warp
+    restart: unless-stopped
+    ports:
+      - '1080:1080'
+    environment:
+      - WARP_SLEEP=2
+      # - WARP_LICENSE_KEY= # optional
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - ./data:/var/lib/cloudflare-warp
