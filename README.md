@@ -26,5 +26,15 @@ Before running any public applications, set up Traefik first.
 
 ## TODO
 
+### Additions
+
+- Prometheus
+- Grafana
+- HTTP server (for syncing various config files)
+- Honeypot
+- Default landing page for wildcard DNS
+
+### Modifications
+
 - Refactor Traefik's Compose file to use config files instead
 - Find a better way to develop locally without maintaining two Compose files (Compose profiles?)
