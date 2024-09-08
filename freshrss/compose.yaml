@@ -26,6 +26,6 @@ services:
       TRUSTED_PROXY: 172.16.0.1/12 192.168.0.1/16
     labels:
       - traefik.enable=true
-      - traefik.http.routers.freshrss.rule=Host(`rss.${DOMAIN}`)
+      - traefik.http.routers.freshrss.rule=Host(`freshrss.${DOMAIN}`)
       - traefik.http.routers.freshrss.entrypoints=websecure
       - traefik.http.routers.freshrss.tls.certresolver=myresolver
