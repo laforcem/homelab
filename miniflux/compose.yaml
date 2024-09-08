@@ -1,7 +1,19 @@
+volumes:
+  miniflux-db:
+
+networks:
+  traefiknet:
+    name: traefiknet
+    external: true
+
 services:
   miniflux:
     image: miniflux/miniflux:2.2.0
     container_name: miniflux
+    restart:
+      unless-stopped
+    networks:
+      - traefiknet
     depends_on:
       db:
         condition: service_healthy
@@ -20,6 +32,8 @@ services:
   db:
     image: postgres:15
     container_name: miniflux-pg
+    networks:
+      - traefiknet
     environment:
       - POSTGRES_USER=${PG_USERNAME}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
@@ -30,5 +44,3 @@ services:
       test: ["CMD", "pg_isready", "-U", "miniflux"]
       interval: 10s
       start_period: 30s
-volumes:
-  miniflux-db:
