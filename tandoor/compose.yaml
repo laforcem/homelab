@@ -37,17 +37,20 @@ services:
     labels: # traefik example labels
       - traefik.enable=true
       - traefik.http.routers.recipes.rule=Host(`recipes.${DOMAIN}`)
-      - traefik.http.routers.recipes.entrypoints=web_secure # your https endpoint
+      - traefik.http.routers.recipes.entrypoints=websecure # your https endpoint
       - traefik.http.routers.recipes.tls.certresolver=myresolver # your cert resolver
+      - traefik.docker.network=traefiknet
     depends_on:
       - web_recipes
     networks:
       - default
-      - traefik
+      - traefiknet
 
 networks:
   default:
-  traefik: # This is your external traefik network
+  traefiknet: # This is your external traefik network
+    name: traefiknet
+    external: true
 
 volumes:
   nginx_config:
