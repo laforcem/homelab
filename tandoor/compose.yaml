@@ -1,0 +1,57 @@
+services:
+  db_recipes:
+    restart: always
+    image: postgres:16-alpine
+    volumes:
+      - ./postgresql:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    networks:
+      - default
+
+  web_recipes:
+    restart: always
+    image: vabene1111/recipes
+    env_file:
+      - ./.env
+    volumes:
+      - staticfiles:/opt/recipes/staticfiles
+      # Do not make this a bind mount, see https://docs.tandoor.dev/install/docker/#volumes-vs-bind-mounts
+      - nginx_config:/opt/recipes/nginx/conf.d
+      - ./mediafiles:/opt/recipes/mediafiles
+    depends_on:
+      - db_recipes
+    networks:
+      - default
+
+  nginx_recipes:
+    image: nginx:mainline-alpine
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      # Do not make this a bind mount, see https://docs.tandoor.dev/install/docker/#volumes-vs-bind-mounts
+      - nginx_config:/etc/nginx/conf.d:ro
+      - staticfiles:/static:ro
+      - ./mediafiles:/media:ro
+    labels: # traefik example labels
+      - traefik.enable=true
+      - traefik.http.routers.recipes.rule=Host(`recipes.${DOMAIN}`)
+      - traefik.http.routers.recipes.entrypoints=websecure # your https endpoint
+      - traefik.http.routers.recipes.tls.certresolver=myresolver # your cert resolver
+      - traefik.docker.network=traefiknet
+    depends_on:
+      - web_recipes
+    networks:
+      - default
+      - traefiknet
+
+networks:
+  default:
+  traefiknet: # This is your external traefik network
+    name: traefiknet
+    external: true
+
+volumes:
+  nginx_config:
+  staticfiles:
