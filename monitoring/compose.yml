@@ -5,11 +5,11 @@ volumes:
     grafana_data: {}
 
 networks:
-  front-tier:
-  back-tier:
+  traefiknet:
+    name: traefiknet
+    external: true
 
 services:
-
   prometheus:
     image: prom/prometheus:v2.36.2
     volumes:
@@ -30,8 +30,13 @@ services:
       - cadvisor
 #      - pushgateway
     networks:
-      - back-tier
+      - traefiknet
     restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.prom.rule=Host(`prom.${DOMAIN}`)
+      - traefik.http.routers.prom.entrypoints=websecure
+      - traefik.http.routers.prom.tls.certresolver=myresolver
 #    deploy:
 #      placement:
 #        constraints:
@@ -53,7 +58,7 @@ services:
     ports:
       - 9100:9100
     networks:
-      - back-tier
+      - traefiknet
     restart: always
     deploy:
       mode: global
@@ -65,7 +70,7 @@ services:
     volumes:
       - ./alertmanager/:/etc/alertmanager/
     networks:
-      - back-tier
+      - traefiknet
     restart: always
     command:
       - '--config.file=/etc/alertmanager/config.yml'
@@ -84,7 +89,7 @@ services:
     ports:
       - 8080:8080
     networks:
-      - back-tier
+      - traefiknet
     restart: always
     deploy:
       mode: global
@@ -102,9 +107,13 @@ services:
     env_file:
       - ./grafana/config.monitoring
     networks:
-      - back-tier
-      - front-tier
+      - traefiknet
     restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)
+      - traefik.http.routers.grafana.entrypoints=websecure
+      - traefik.http.routers.grafana.tls.certresolver=myresolver
 
 #  pushgateway:
 #    image: prom/pushgateway
@@ -114,4 +123,4 @@ services:
 #    ports:
 #      - "9091:9091"
 #    networks:
-#      - back-tier
+#      - traefiknet
