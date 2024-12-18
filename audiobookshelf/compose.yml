@@ -10,3 +10,6 @@ services:
       - ./metadata:/metadata
     environment:
       - TZ=America/Denver
+    sysctls:
+      # Fix DNS problems/container Internet access
+      net.ipv6.conf.all.disable_ipv6: 1
