@@ -4,8 +4,8 @@ services:
     ports:
       - 13378:80
     volumes:
-      - ./audiobooks:/audiobooks
-      - ./podcasts:/podcasts
+      - /mnt/audiobooks:/audiobooks
+      - /mnt/podcasts:/podcasts
       - ./config:/config
       - ./metadata:/metadata
     environment:
