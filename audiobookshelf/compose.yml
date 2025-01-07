@@ -1,11 +1,11 @@
 services:
   audiobookshelf:
-    image: ghcr.io/advplyr/audiobookshelf:2.17.5
+    image: ghcr.io/advplyr/audiobookshelf:2.17.7
+    container_name: audiobookshelf
     ports:
       - 13378:80
     volumes:
-      - /mnt/audiobooks:/audiobooks
-      - /mnt/podcasts:/podcasts
+      - /mnt/smb/audiobooks:/audiobooks
       - ./config:/config
       - ./metadata:/metadata
     environment:
