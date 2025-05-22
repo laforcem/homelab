@@ -1,0 +1,17 @@
+# networks:
+#   traefiknet:
+#     name: traefiknet
+#     external: true
+
+services:
+  traefik:
+    image: traefik:v3.1
+    container_name: "traefik"
+    # networks:
+    #   - traefiknet
+    ports:
+      - "80:80"  # Only HTTP port
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker provider
+      - ./traefik.yaml:/etc/traefik/traefik.yml
+      - ./dynamic.yaml:/etc/traefik/dynamic.yml

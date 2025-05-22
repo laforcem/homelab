@@ -1,0 +1,15 @@
+entryPoints:
+  web:
+    address: ":80"  # HTTP entry point
+
+log:
+  level: "DEBUG"
+
+accesslog: true
+
+api:
+  dashboard: true
+
+providers:
+  docker:
+    exposedByDefault: false
