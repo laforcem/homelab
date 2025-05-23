@@ -22,6 +22,7 @@ services:
     volumes:
       - ./letsencrypt:/letsencrypt # Retain certs through container destruction
       - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
+      # Config files
       - ./traefik.yaml:/etc/traefik/traefik.yaml
       - ./dynamic.yaml:/etc/traefik/dynamic.yaml
 
