@@ -1,14 +1,14 @@
-# networks:
-#   traefiknet:
-#     name: traefiknet
-#     external: true
+networks:
+  traefiknet:
+    name: traefiknet
+    external: true
 
 services:
   traefik:
     image: traefik:v3.1
     container_name: "traefik"
-    # networks:
-    #   - traefiknet
+    networks:
+      - traefiknet
     ports:
       - "80:80"  # Only HTTP port
     volumes:
