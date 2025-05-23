@@ -1,15 +1,7 @@
 http:
   routers:
     mydashboard:
-      entrypoints:
-        - "web"
-      rule: PathPrefix(`/dashboard`)
-      service: api@internal
-      middlewares:
-        - myauth
-
-  middlewares:
-    myauth:
-      basicAuth:
-        users:
-          - "${HTTP_BASIC_USER}:${HTTP_BASIC_PWD}"
+      entryPoints:
+        - web
+      rule: Host(`proxy.lan`)
+      service: api@internal 

@@ -13,5 +13,6 @@ services:
       - "80:80"  # Only HTTP port
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # For Docker provider
-      - ./traefik.yaml:/etc/traefik/traefik.yml
-      - ./dynamic.yaml:/etc/traefik/dynamic.yml
+      # Config files
+      - ./traefik.yaml:/etc/traefik/traefik.yaml
+      - ./dynamic.yaml:/etc/traefik/dynamic.yaml
