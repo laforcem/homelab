@@ -1,0 +1,7 @@
+http:
+  routers:
+    mydashboard:
+      entryPoints:
+        - web
+      rule: Host(`proxy.lan`)
+      service: api@internal 
