@@ -7,8 +7,6 @@ services:
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:2.20.0
     container_name: audiobookshelf
-    ports:
-      - 13378:80
     volumes:
       - /mnt/smb/audiobooks:/audiobooks
       - ./config:/config
