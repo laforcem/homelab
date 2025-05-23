@@ -1,0 +1,16 @@
+http:
+  routers:
+    mydashboard:
+      entryPoints:
+        - websecure
+      rule: Host(`proxy.{{ env "DOMAIN"}}`)
+      service: api@internal
+      tls:
+        certResolver: myresolver
+      middlewares:
+        - myauth
+  middlewares:
+    myauth:
+      basicauth:
+        users:
+          - '{{ env "HTTP_BASIC_USER" }}:{{ env "HTTP_BASIC_PWD" }}'
