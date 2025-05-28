@@ -11,7 +11,6 @@ All applications are proxied by Traefik, either my [LAN instance](/traefik/lan/)
 Some services are used on my LAN at home:
 
 - [Airconnect](/airconnect/)
-- [Audiobookshelf](/audiobookshelf/)
 - [Pi-Hole](/pihole/)
 - [Plex](/plex/)
 
@@ -19,6 +18,7 @@ Some services are used on my LAN at home:
 
 Other services are intended to be public and hosted on a generally available server.
 
+- [Audiobookshelf](/audiobookshelf/)
 - [Miniflux](/miniflux/)
 - [Obsidian Livesync](/obsidian-livesync/)
 - [Tandoor](/tandoor/)
