@@ -10,12 +10,12 @@ services:
     networks:
       - traefiknet
     environment:
-      # traefik.yaml
-      - EMAIL
       # dynamic.yaml
       - DOMAIN
       - HTTP_BASIC_USER
       - HTTP_BASIC_PWD
+    command:
+      - --certificatesresolvers.myresolver.acme.email=${EMAIL}
     ports:
       # HTTPS port
       - "443:443"
