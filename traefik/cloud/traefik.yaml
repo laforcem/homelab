@@ -31,6 +31,6 @@ entryPoints:
 certificatesResolvers:
   myresolver:
     acme:
-      email: '{{ env "EMAIL" }}'
+      # email: '{{ env "EMAIL" }}'
       tlsChallenge: true
       storage: /letsencrypt/acme.json
