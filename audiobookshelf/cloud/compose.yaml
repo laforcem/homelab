@@ -10,7 +10,7 @@ volumes:
       remote: 'dropbox:Audiobooks'
       allow_other: 'true'
       vfs_cache_mode: full
-      poll_interval: 0
+      poll_interval: 60
 
 services:
   audiobookshelf:
