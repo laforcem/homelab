@@ -2,3 +2,4 @@ audiobooks/
 podcasts/
 metadata/
 config/
+.env

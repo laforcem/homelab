@@ -1,0 +1,36 @@
+networks:
+  traefiknet:
+    name: traefiknet
+    external: true
+
+volumes:
+  dropbox:
+    driver: rclone
+    driver_opts:
+      remote: 'dropbox:Audiobooks'
+      allow_other: 'true'
+      vfs_cache_mode: full
+      poll_interval: 60
+
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:2.24.0
+    container_name: audiobookshelf
+    restart:
+      unless-stopped
+    networks:
+      - traefiknet
+    volumes:
+      - dropbox:/audiobooks
+      - ./config:/config
+      - ./metadata:/metadata
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.audiobookshelf.rule=Host(`audiobooks.${DOMAIN}`)
+      - traefik.http.routers.audiobookshelf.entrypoints=websecure
+      - traefik.http.routers.audiobookshelf.tls.certresolver=myresolver
+    environment:
+      - TZ=America/Denver
+    sysctls:
+      # Fix DNS problems/container Internet access
+      net.ipv6.conf.all.disable_ipv6: 1
