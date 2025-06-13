@@ -1,0 +1,19 @@
+services:
+  adguard:
+    container_name: adguard-home
+    image: adguard/adguardhome:v0.107.62
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      - "80:80/tcp"
+      - "3000:3000/tcp"
+    volumes:
+      - config:/opt/adguardhome/conf # app configuration
+      - work:/opt/adguardhome/work # app working directory
+
+volumes:
+  config:
+    driver: local
+  work:
+    driver: local
