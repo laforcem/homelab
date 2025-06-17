@@ -1,0 +1,39 @@
+networks:
+  traefiknet:
+    name: traefiknet
+    external: true
+
+services:
+  traefik:
+    image: traefik:v3.1
+    container_name: "traefik"
+    networks:
+      - traefiknet
+    environment:
+      # dynamic.yaml
+      - DOMAIN
+      - HTTP_BASIC_USER
+      - HTTP_BASIC_PWD
+    command:
+      - --certificatesresolvers.myresolver.acme.email=${EMAIL}
+    ports:
+      # HTTPS port
+      - "443:443"
+    volumes:
+      - ./letsencrypt:/letsencrypt # Retain certs through container destruction
+      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
+      # Config files
+      - ./traefik.yaml:/etc/traefik/traefik.yaml
+      - ./dynamic.yaml:/etc/traefik/dynamic.yaml
+
+  # whoami:
+  #   # A container that exposes an API to show its IP address
+  #   image: traefik/whoami
+  #   container_name: whoami
+  #   networks:
+  #     - traefiknet
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)
+  #     - traefik.http.routers.whoami.entrypoints=websecure
+  #     - traefik.http.routers.whoami.tls.certresolver=myresolver
