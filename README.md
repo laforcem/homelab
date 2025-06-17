@@ -4,37 +4,21 @@ Welcome to the repo for my homelab. The purpose of this repository is to keep th
 
 ## Projects
 
+All applications are proxied by Traefik, either my [LAN instance](/traefik/lan/) or my [public instance](/traefik/cloud/).
+
 ### Private services
 
-Some services are not public-facing and can be run on any sort of private network that you please:
+Some services are used on my LAN at home:
 
-- [pihole](/pihole/): For use on a home network to block ads and does not need port forwarding.
-- [Muse](/muse/): Uses a Discord bot token, so does not need port forwarding.
-
-Private services will not include Traefik-related labels in their Compose files.
+- [Airconnect](/airconnect/)
+- [Pi-Hole](/pihole/)
+- [Plex](/plex/)
 
 ### Public services
 
-Other services are intended to be public and hosted on a generally available server. All these services are oriented around [Traefik](/traefik/), which functions as a reverse proxy that routes HTTP requests to their corresponding service.
+Other services are intended to be public and hosted on a generally available server.
 
-- [Traefik](/traefik/) (includes test app `whoami`)
+- [Audiobookshelf](/audiobookshelf/)
 - [Miniflux](/miniflux/)
-- [FreshRSS](/freshrss/)
 - [Obsidian Livesync](/obsidian-livesync/)
-
-Before running any public applications, set up Traefik first.
-
-## TODO
-
-### Additions
-
-- Prometheus
-- Grafana
-- HTTP server (for syncing various config files)
-- Honeypot
-- Default landing page for wildcard DNS
-
-### Modifications
-
-- Refactor Traefik's Compose file to use config files instead
-- Find a better way to develop locally without maintaining two Compose files (Compose profiles?)
+- [Tandoor](/tandoor/)

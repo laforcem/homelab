@@ -1,0 +1,18 @@
+log:
+  level: ERROR
+
+accesslog: true
+
+api:
+  dashboard: true
+
+providers:
+  docker:
+    exposedByDefault: false
+  file:
+    directory: /etc/traefik
+    watch: true
+
+entryPoints:
+  web:
+    address: ":80"  # HTTP entry point
