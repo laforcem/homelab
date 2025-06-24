@@ -1,19 +1,32 @@
+networks:
+  traefiknet:
+    name: traefiknet
+    external: true
+
 services:
   adguard:
     container_name: adguard-home
     image: adguard/adguardhome:v0.107.62
+    restart: always
     ports:
+      - "8080:80/tcp"
       - "53:53/tcp"
       - "53:53/udp"
       - "67:67/udp"
-      - "80:80/tcp"
-      - "3000:3000/tcp"
+      # - "3000:3000/tcp" # used for first-time setup only
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.adguard.rule=Host(`adguard.lan`)
+      - traefik.http.routers.adguard.entrypoints=web
+      - traefik.http.services.adguard.loadbalancer.server.port=80
+    networks:
+      - traefiknet
     volumes:
-      - config:/opt/adguardhome/conf # app configuration
-      - work:/opt/adguardhome/work # app working directory
+      - ./config:/opt/adguardhome/conf # config
+      - ../../homelab-data/adguard/work:/opt/adguardhome/work # working directory
 
-volumes:
-  config:
-    driver: local
-  work:
-    driver: local
+# volumes:
+#   config:
+#     driver: local
+#   work:
+#     driver: local
