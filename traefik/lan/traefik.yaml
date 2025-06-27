@@ -9,6 +9,7 @@ api:
 providers:
   docker:
     exposedByDefault: false
+    network: traefiknet
   file:
     directory: /etc/traefik
     watch: true
