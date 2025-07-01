@@ -5,19 +5,13 @@ networks:
 
 services:
   plex:
-    image: plexinc/pms-docker:1.41.7.9799-5bce000f7
+    image: plexinc/pms-docker:1.41.8.9834-071366d65
     container_name: plex
-    networks:
-      - traefiknet
+    network_mode: host # https://archive.is/EWGoj
     restart: unless-stopped
     environment:
       - TZ=America/Denver
       - PLEX_CLAIM=${CLAIM_TOKEN}
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.plex.rule=Host(`plex.lan`)
-      - traefik.http.routers.plex.entrypoints=web
-      - traefik.http.services.plex.loadbalancer.server.port=32400 # Traefik needs port specified for Plex
     volumes:
       - ./config:/config
       - ./transcode:/transcode
