@@ -6,7 +6,7 @@ networks:
 services:
   adguard:
     container_name: adguard-home
-    image: adguard/adguardhome:v0.107.62
+    image: adguard/adguardhome:v0.107.64
     restart: always
     ports:
       - "8080:80/tcp"
@@ -22,11 +22,11 @@ services:
     networks:
       - traefiknet
     volumes:
-      - ./config:/opt/adguardhome/conf # config
-      - ../../homelab-data/adguard/work:/opt/adguardhome/work # working directory
+      - config:/opt/adguardhome/conf # config
+      - work:/opt/adguardhome/work # working directory
 
-# volumes:
-#   config:
-#     driver: local
-#   work:
-#     driver: local
+volumes:
+  config:
+    driver: local
+  work:
+    driver: local
