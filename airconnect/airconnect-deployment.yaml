@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.36.0 (HEAD)
+  labels:
+    io.kompose.service: airconnect
+  name: airconnect
+  namespace: airconnect
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: airconnect
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.36.0 (HEAD)
+      labels:
+        io.kompose.service: airconnect
+    spec:
+      hostNetwork: true
+      containers:
+        - env:
+            - name: AIRCAST_VAR
+              value: -x /config/config.xml
+            - name: AIRUPNP_VAR
+              value: kill
+          image: 1activegeek/airconnect:1.8.3
+          name: airconnect
+          volumeMounts:
+            - mountPath: /config
+              name: airconnect-claim0
+      restartPolicy: Always
+      volumes:
+        - name: airconnect-claim0
+          persistentVolumeClaim:
+            claimName: airconnect-claim0
