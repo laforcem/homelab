@@ -1,3 +1,5 @@
+# This Compose definition is no longer used.
+# It was functional as of 2025-08-22.
 services:
   airconnect:
     image: 1activegeek/airconnect:1.8.3
