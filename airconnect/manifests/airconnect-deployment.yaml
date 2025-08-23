@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airconnect
+  namespace: airconnect
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: airconnect
+  template:
+    metadata:
+      labels:
+        app: airconnect
+    spec:
+      hostNetwork: true # Needed for multicast
+      containers:
+        - env:
+            - name: AIRCAST_VAR
+              value: -x /config/config.xml
+            - name: AIRUPNP_VAR
+              value: kill
+          name: airconnect
+          image: 1activegeek/airconnect:1.8.3
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /config
+              name: airconnect-config
+          resources:
+            limits:
+              cpu: 50m
+              memory: 40Mi
+            requests:
+              cpu: 25m
+              memory: 20Mi
+      restartPolicy: Always
+      volumes:
+        - name: airconnect-config
+          persistentVolumeClaim:
+            claimName: airconnect-config
