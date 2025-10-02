@@ -5,7 +5,7 @@ networks:
 
 services:
   actual_server:
-    image: docker.io/actualbudget/actual-server:latest
+    image: docker.io/actualbudget/actual-server:25.10.0
     networks:
       - traefiknet
     # environment:
