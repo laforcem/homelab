@@ -61,15 +61,19 @@ ingress:
   # -- Enable and configure ingress settings for the chart under this key.
   # @default -- See [values.yaml](./values.yaml)
   main:
-    enabled: false
-    # hosts:
-    #   - host: chart-example.local
-    #     paths:
-    #       - path: /
-    # tls:
-    #   - secretName: chart-example.local
-    #     hosts:
-    #       - chart-example.local
+    enabled: true
+    # Use Traefik's ingressClass
+    ingressClassName: traefik
+    annotations:
+      kubernetes.io/ingress.class: traefik
+    # Expose AdGuard Home UI at http://adguard.lan/
+    hosts:
+      - host: adguard.lan
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    # No TLS configured for LAN access; add TLS entries here if desired.
+    tls: []
 
 persistence:
   # -- Configure config persistence settings for the chart under this key.
