@@ -29,3 +29,20 @@ services:
       volumes:
          - ./icloudpd_malc_config:/config
          - /mnt/wd-green/icloud/malc:/home/malc/iCloud/
+   icloudpd_grug:
+      hostname: icloudpd_grug
+      networks:
+         icloudpd:
+            aliases:
+               - icloudpd_grug
+      environment:
+         - TZ=America/Denver
+         - user=grug
+      image: boredazfcuk/icloudpd:1.0.1288_11-10-2025
+      healthcheck:
+         test: /usr/local/bin/healthcheck.sh
+         start_period: 30s
+      restart: always
+      volumes:
+         - ./icloudpd_grug_config:/config
+         - /mnt/wd-green/icloud/grug:/home/grug/iCloud/
