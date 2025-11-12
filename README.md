@@ -13,8 +13,11 @@ Most applications are proxied by Traefik.
 
 Some services are used on my LAN at home:
 
-- [Airconnect](/airconnect/)
 - [AdGuard Home](/adguard-home/)
+- [Airconnect](/airconnect/)
+- [Calibre](/calibre/)
+- [Discord Rich Presence for Plex](/discord-rich-presence-plex/)
+- [icloudpd](/icloudpd/)
 - [Immich](/immich/)
 - [Plex](/plex/)
 
@@ -22,6 +25,7 @@ Some services are used on my LAN at home:
 
 Other services are intended to be public and hosted on a generally available server.
 
+- [Actual Budget](/actual/)
 - [Audiobookshelf](/audiobookshelf/)
 - [Miniflux](/miniflux/)
 - [Obsidian Livesync](/obsidian-livesync/)
