@@ -1,3 +1,8 @@
+# Setup
+
+Since YAML is incapable of interpolating envionment variables, copy the below contents into `./data/config.yaml`, substituting your Plex token where needed.
+
+```yaml
 logging:
   debug: true
   writeToFile: false
@@ -22,6 +27,7 @@ display:
     fit: true
   buttons: []
 users:
-  - token: nqsjCD64yDpyPp4qG4nt
+  - token: YOUR_TOKEN_HERE
     servers:
       - name: Starcliff Lab
+```
