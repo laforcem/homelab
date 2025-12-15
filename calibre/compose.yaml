@@ -11,7 +11,7 @@ services:
       # - PASSWORD= #optional
       # - CLI_ARGS= #optional
     volumes:
-      - /mnt/wd-green/calibre:/config
+      - /mnt/lab/calibre:/config
     ports:
       - 8080:8080
       - 8181:8181
