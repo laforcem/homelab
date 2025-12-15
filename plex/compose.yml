@@ -15,4 +15,4 @@ services:
     volumes:
       - ./config:/config
       - ./transcode:/transcode
-      - /mnt/wd-green:/data
+      - /mnt/lab:/data
