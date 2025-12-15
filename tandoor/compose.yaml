@@ -11,7 +11,7 @@ services:
 
   web_recipes:
     restart: always
-    image: vabene1111/recipes:2.2.7
+    image: vabene1111/recipes:2.3.6
     env_file:
       - ./.env
     volumes:
@@ -19,21 +19,6 @@ services:
       # Do not make this a bind mount, see https://docs.tandoor.dev/install/docker/#volumes-vs-bind-mounts
       - nginx_config:/opt/recipes/nginx/conf.d
       - ./mediafiles:/opt/recipes/mediafiles
-    depends_on:
-      - db_recipes
-    networks:
-      - default
-
-  nginx_recipes:
-    image: nginx:mainline-alpine
-    restart: always
-    env_file:
-      - ./.env
-    volumes:
-      # Do not make this a bind mount, see https://docs.tandoor.dev/install/docker/#volumes-vs-bind-mounts
-      - nginx_config:/etc/nginx/conf.d:ro
-      - staticfiles:/static:ro
-      - ./mediafiles:/media:ro
     labels: # traefik example labels
       - traefik.enable=true
       - traefik.http.routers.recipes.rule=Host(`recipes.${DOMAIN}`)
@@ -41,10 +26,10 @@ services:
       - traefik.http.routers.recipes.tls.certresolver=myresolver # your cert resolver
       - traefik.docker.network=traefiknet
     depends_on:
-      - web_recipes
+      - db_recipes
     networks:
-      - default
       - traefiknet
+      - default
 
 networks:
   default:
