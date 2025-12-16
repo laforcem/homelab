@@ -21,7 +21,7 @@ services:
       environment:
          - TZ=America/Denver
          - user=malc
-      image: boredazfcuk/icloudpd:1.0.1289_18-10-2025
+      image: boredazfcuk/icloudpd:1.0.1298_06-12-2025
       healthcheck:
          test: /usr/local/bin/healthcheck.sh
          start_period: 30s
@@ -38,7 +38,7 @@ services:
       environment:
          - TZ=America/Denver
          - user=grug
-      image: boredazfcuk/icloudpd:1.0.1289_18-10-2025
+      image: boredazfcuk/icloudpd:1.0.1298_06-12-2025
       healthcheck:
          test: /usr/local/bin/healthcheck.sh
          start_period: 30s
