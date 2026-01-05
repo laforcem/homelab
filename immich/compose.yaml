@@ -21,8 +21,8 @@ services:
       - ${UPLOAD_LOCATION}:/data
       - /etc/localtime:/etc/localtime:ro
       # External libraries
-      - /mnt/wd-green/icloud/malc:/mnt/media/icloud/malc:ro
-      - /mnt/wd-green/icloud/grug:/mnt/media/icloud/grug:ro
+      - /mnt/lab/icloud/malc:/mnt/media/icloud/malc:ro
+      - /mnt/lab/icloud/grug:/mnt/media/icloud/grug:ro
     env_file:
       - .env
     ports:
