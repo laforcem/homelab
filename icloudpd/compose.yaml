@@ -10,10 +10,13 @@ networks:
 volumes:
    icloudpd_malc_config:
       name: icloudpd_malc_config
+   icloudpd_grug_config:
+      name: icloudpd_grug_config
 
 services:
    icloudpd_malc:
-      hostname: icloudpd_malc
+      container_name: icloudpd-malc
+      hostname: icloudpd-malc
       networks:
          icloudpd:
             aliases:
@@ -21,16 +24,17 @@ services:
       environment:
          - TZ=America/Denver
          - user=malc
-      image: boredazfcuk/icloudpd:1.0.1298_06-12-2025
+      image: boredazfcuk/icloudpd:1.0.1302_23-01-2026
       healthcheck:
          test: /usr/local/bin/healthcheck.sh
          start_period: 30s
       restart: always
       volumes:
-         - ./icloudpd_malc_config:/config
-         - /mnt/lab/icloud/malc:/home/malc/iCloud/
+         - icloudpd_malc_config:/config
+         - /mnt/lab/icloud/malc:/home/user/iCloud/
    icloudpd_grug:
-      hostname: icloudpd_grug
+      container_name: icloudpd-grug
+      hostname: icloudpd-grug
       networks:
          icloudpd:
             aliases:
@@ -38,11 +42,11 @@ services:
       environment:
          - TZ=America/Denver
          - user=grug
-      image: boredazfcuk/icloudpd:1.0.1298_06-12-2025
+      image: boredazfcuk/icloudpd:1.0.1302_23-01-2026
       healthcheck:
          test: /usr/local/bin/healthcheck.sh
          start_period: 30s
       restart: always
       volumes:
-         - ./icloudpd_grug_config:/config
-         - /mnt/lab/icloud/grug:/home/grug/iCloud/
+         - icloudpd_grug_config:/config
+         - /mnt/lab/icloud/grug:/home/user/iCloud/
