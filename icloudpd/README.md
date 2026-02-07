@@ -1,8 +1,3 @@
 # Configuring icloudpd
 
-Use the following config files in `icloudpd_${user}_config/`:
-
-```txt
-apple_id="me@example.com"
-auto_delete=true
-```
+Once the containers have started, you will need to exec into the container and modify the options directly in the config files.
