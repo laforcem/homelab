@@ -28,4 +28,4 @@ Other services are intended to be public and hosted on a generally available ser
 - [Actual Budget](/actual/) (October 2025)
 - [Audiobookshelf](/audiobookshelf/) (December 2024)
 - [Miniflux](/miniflux/) (September 2024)
-- [Tandoor](/tandoor/) (August 2024)
+- [Tandoor](/tandoor/) (September 2024)
