@@ -7,26 +7,25 @@ Welcome to the repo for my homelab. The purpose of this repository is to keep th
 
 ## Projects
 
-Most applications are proxied by Traefik.
+Below is the software currently in use in this repo. The date which I first deployed the software is noted below. Whatever has been around a long time has proven itself to be reliable, since items in this list are removed when retired.
+
+Most applications are proxied by [Traefik](/traefik/).
 
 ### Private services
 
 Some services are used on my LAN at home:
 
-- [AdGuard Home](/adguard-home/)
-- [Airconnect](/airconnect/)
-- [Calibre](/calibre/)
-- [Discord Rich Presence for Plex](/discord-rich-presence-plex/)
-- [icloudpd](/icloudpd/)
-- [Immich](/immich/)
-- [Plex](/plex/)
+- [AdGuard Home](/adguard-home/) (June 2025)
+- [Airconnect](/airconnect/) (May 2025)
+- [icloudpd](/icloudpd/) (October 2025)
+- [Immich](/immich/) (June 2025)
+- [Plex](/plex/) (March 2025)
 
 ### Public services
 
 Other services are intended to be public and hosted on a generally available server.
 
-- [Actual Budget](/actual/)
-- [Audiobookshelf](/audiobookshelf/)
-- [Miniflux](/miniflux/)
-- [Obsidian Livesync](/obsidian-livesync/)
-- [Tandoor](/tandoor/)
+- [Actual Budget](/actual/) (October 2025)
+- [Audiobookshelf](/audiobookshelf/) (December 2024)
+- [Miniflux](/miniflux/) (September 2024)
+- [Tandoor](/tandoor/) (August 2024)
