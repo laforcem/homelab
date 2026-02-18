@@ -9,7 +9,7 @@ Welcome to the repo for my homelab. The purpose of this repository is to keep th
 
 Below is the software currently in use in this repo. The date which I first deployed the software is noted below. Whatever has been around a long time has proven itself to be reliable, since items in this list are removed when retired.
 
-Most applications are proxied by [Traefik](/traefik/).
+Most applications are proxied by [Traefik](/traefik/), used since August 2024.
 
 ### Private services
 
