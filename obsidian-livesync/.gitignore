@@ -1,4 +1,0 @@
-couchdb/data
-couchdb/docker.ini
-.env
-local.ini
