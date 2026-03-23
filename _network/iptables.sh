@@ -1,5 +1,5 @@
 #!/bin/sh
-
+# filepath: /jffs/scripts/firewall-start
 
 DMZ_BR="br53" # VLAN 40
 IOT_BR="br52" # VLAN 20
