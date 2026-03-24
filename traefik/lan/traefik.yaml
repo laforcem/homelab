@@ -1,7 +1,10 @@
 log:
   level: ERROR
 
-accesslog: true
+accesslog:
+  fields:
+    names:
+      StartUTC: drop
 
 api:
   dashboard: true
