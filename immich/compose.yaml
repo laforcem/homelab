@@ -43,9 +43,9 @@ services:
       - traefik.enable=true
       - traefik.http.routers.immich.rule=Host(`photos.${DOMAIN}`)
       - traefik.http.routers.immich.entrypoints=websecure
-      - traefik.http.services.immich.loadbalancer.server.port=5006
-      - traefik.docker.network=immich-traefik
+      - traefik.http.routers.miniflux.tls.certresolver=letsencrypt
       - traefik.http.services.immich.loadbalancer.server.port=2283
+      - traefik.docker.network=immich-traefik
     healthcheck:
       disable: false
 
