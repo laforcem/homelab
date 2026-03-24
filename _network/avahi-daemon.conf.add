@@ -1,7 +1,0 @@
-# filepath: /jffs/configs/avahi-daemon.conf.add
-
-[server]
-allow-interfaces=br0,br52
-
-[reflector]
-enable-reflector=yes
