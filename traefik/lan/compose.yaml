@@ -23,6 +23,8 @@ services:
       - DOMAIN
       - HTTP_BASIC_USER
       - HTTP_BASIC_PWD
+      # config
+      - TZ=America/Denver
     command:
       - --certificatesresolvers.letsencrypt.acme.email=${EMAIL}
     volumes:
