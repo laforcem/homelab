@@ -1,7 +1,16 @@
 http:
   routers:
-    mydashboard:
+    vm101-dashboard:
       entryPoints:
-        - web
-      rule: Host(`proxy.lan`)
-      service: api@internal 
+        - websecure
+      rule: Host(`proxy.vm101.{{ env "DOMAIN"}}`)
+      service: api@internal
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - myauth
+  middlewares:
+    myauth:
+      basicauth:
+        users:
+          - '{{ env "HTTP_BASIC_USER" }}:{{ env "HTTP_BASIC_PWD" }}'

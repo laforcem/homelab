@@ -1,18 +1,30 @@
 networks:
-  traefiknet:
-    name: traefiknet
-    external: true
+  immich-traefik:
+    name: immich-traefik
+
+volumes:
+  letsencrypt:
+    name: letsencrypt
 
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.6.11
     container_name: "traefik"
     networks:
-      - traefiknet
+      - immich-traefik
     ports:
-      - "80:80"  # Only HTTP port
+      - "80:80"    # HTTP
+      - "443:443"  # HTTPS
+    environment:
+      # dynamic.yaml
+      - DOMAIN
+      - HTTP_BASIC_USER
+      - HTTP_BASIC_PWD
+    command:
+      - --certificatesresolvers.letsencrypt.acme.email=${EMAIL}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # For Docker provider
+      - letsencrypt:/letsencrypt # Retain certs through container destruction
       # Config files
       - ./traefik.yaml:/etc/traefik/traefik.yaml
       - ./dynamic.yaml:/etc/traefik/dynamic.yaml
