@@ -1,0 +1,18 @@
+# AdGuard Home
+# adguard.{$DOMAIN} {
+#     tls internal
+#     reverse_proxy adguard-home:80
+# }
+
+*.lan.{$DOMAIN} {
+    tls {
+        dns porkbun {
+            api_key {$API_KEY}
+            api_secret_key {$SECRET_KEY}
+        }
+    }
+    @adguard host adguard.lan.{$DOMAIN}
+    handle @adguard {
+        reverse_proxy adguard-home:80
+    }
+}

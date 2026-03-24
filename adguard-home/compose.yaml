@@ -1,32 +1,24 @@
 networks:
-  traefiknet:
-    name: traefiknet
+  caddy-internal:
+    name: caddy-internal
     external: true
+
+volumes:
+  config:
+  work:
 
 services:
   adguard:
     container_name: adguard-home
-    image: adguard/adguardhome:v0.107.64
+    image: adguard/adguardhome:v0.107.73
     restart: always
     ports:
-      - "8080:80/tcp"
       - "53:53/tcp"
       - "53:53/udp"
       - "67:67/udp"
       # - "3000:3000/tcp" # used for first-time setup only
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.adguard.rule=Host(`adguard.lan`)
-      - traefik.http.routers.adguard.entrypoints=web
-      - traefik.http.services.adguard.loadbalancer.server.port=80
     networks:
-      - traefiknet
+      - caddy-internal
     volumes:
       - config:/opt/adguardhome/conf # config
       - work:/opt/adguardhome/work # working directory
-
-volumes:
-  config:
-    driver: local
-  work:
-    driver: local
