@@ -33,12 +33,19 @@ services:
     networks:
       - default
       - immich-traefik
-    ports:
-      - '2283:2283'
+#    ports:
+#      - '2283:2283'
     depends_on:
       - redis
       - database
     restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.immich.rule=Host(`photos.${DOMAIN}`)
+      - traefik.http.routers.immich.entrypoints=websecure
+      - traefik.http.services.immich.loadbalancer.server.port=5006
+      - traefik.docker.network=immich-traefik
+      - traefik.http.services.immich.loadbalancer.server.port=2283
     healthcheck:
       disable: false
 
