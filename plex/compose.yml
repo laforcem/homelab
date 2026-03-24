@@ -1,6 +1,5 @@
 networks:
-  traefiknet:
-    name: traefiknet
+  plex-traefik:
     external: true
 
 volumes:
@@ -11,11 +10,21 @@ services:
   plex:
     image: plexinc/pms-docker:1.43.0.10492-121068a07
     container_name: plex
-    network_mode: host # https://archive.is/EWGoj
+    # network_mode: host # https://archive.is/EWGoj
     restart: unless-stopped
     environment:
       - TZ=America/Denver
       - PLEX_CLAIM=${CLAIM_TOKEN}
+      - ADVERTISEIP=https://plex.${DOMAIN}:443/
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)
+      - traefik.http.routers.plex.entrypoints=websecure
+      - traefik.http.routers.immich.tls.certresolver=letsencrypt
+      - traefik.http.services.plex.loadbalancer.server.port=32400
+      - traefik.docker.network=plex-traefik
+    networks:
+      - plex-traefik
     volumes:
       - plex-config:/config
       - /mnt/lab:/data

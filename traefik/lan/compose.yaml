@@ -1,6 +1,8 @@
 networks:
   immich-traefik:
     name: immich-traefik
+  plex-traefik:
+    name: plex-traefik
 
 volumes:
   letsencrypt:
@@ -12,6 +14,7 @@ services:
     container_name: "traefik"
     networks:
       - immich-traefik
+      - plex-traefik
     ports:
       - "80:80"    # HTTP
       - "443:443"  # HTTPS
