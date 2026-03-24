@@ -1,0 +1,26 @@
+volumes:
+  data:
+  config:
+
+networks:
+  caddy-internal:
+    name: caddy-internal
+
+services:
+  caddy:
+    build: .
+    container_name: caddy
+    environment:
+      - DOMAIN
+      - API_KEY
+      - SECRET_KEY
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - data:/data
+      - config:/config
+    networks:
+      - caddy-internal
