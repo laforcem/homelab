@@ -1,9 +1,3 @@
-# AdGuard Home
-# adguard.{$DOMAIN} {
-#     tls internal
-#     reverse_proxy adguard-home:80
-# }
-
 *.lan.{$DOMAIN} {
     tls {
         dns porkbun {
@@ -14,5 +8,14 @@
     @adguard host adguard.lan.{$DOMAIN}
     handle @adguard {
         reverse_proxy adguard-home:80
+    }
+    @portainer host portainer.lan.{$DOMAIN}
+    handle @portainer {
+        reverse_proxy portainer:9443 {
+            transport http {
+                tls
+                tls_insecure_skip_verify
+            }
+        }
     }
 }
