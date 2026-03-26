@@ -1,3 +1,5 @@
+name: portainer
+
 networks:
   default:
     name: portainer_network
@@ -17,8 +19,5 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
-    ports:
-      - 8000:8000  # Remove if you do not intend to use Edge Agents
     networks:
       - caddy-internal
-
