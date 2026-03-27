@@ -2,7 +2,9 @@ name: caddy
 
 volumes:
   data:
+    name: caddy-mrgutsy_data
   config:
+    name: caddy-mrgutsy_config
 
 networks:
   actual-caddy:
