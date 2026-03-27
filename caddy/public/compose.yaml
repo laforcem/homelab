@@ -5,8 +5,6 @@ volumes:
   config:
 
 networks:
-  caddy-internal:
-    name: caddy-internal
   actual-caddy:
     external: true
   audiobookshelf-caddy:
