@@ -28,5 +28,9 @@
     @recipes host recipes.{$DOMAIN}
     handle @recipes {
         reverse_proxy tandoor-web:80
+    }
+    
+    handle {
+        abort
     }    
 }
