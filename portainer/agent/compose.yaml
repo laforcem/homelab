@@ -1,6 +1,6 @@
 services:
   portainer_agent:
-    image: portainer/agent:2.40.0
+    image: portainer/agent:2.40.0-alpine
     container_name: portainer_agent
     restart: always
     ports:
@@ -10,7 +10,7 @@ services:
       - /var/lib/docker/volumes:/var/lib/docker/volumes
       - /:/host
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "https://localhost:9001/ping"]
+      test: ["CMD-SHELL", "timeout 10 nc -z -v 127.0.0.1 9001 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
