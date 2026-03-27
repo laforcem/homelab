@@ -16,6 +16,8 @@ services:
     container_name: portainer
     image: portainer/portainer-ce:sts
     restart: always
+    environment:
+      - TRUSTED_ORIGINS=portainer.${DOMAIN}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
