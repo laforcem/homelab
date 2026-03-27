@@ -20,8 +20,6 @@ services:
       - ./.env
     volumes:
       - staticfiles:/opt/recipes/staticfiles
-      # Do not make this a bind mount, see https://docs.tandoor.dev/install/docker/#volumes-vs-bind-mounts
-      - nginx_config:/opt/recipes/nginx/conf.d
       - mediafiles:/opt/recipes/mediafiles
     depends_on:
       - db_recipes
@@ -35,7 +33,6 @@ networks:
     name: tandoor-caddy
 
 volumes:
-  nginx_config:
   staticfiles:
   postgresql:
   mediafiles:
