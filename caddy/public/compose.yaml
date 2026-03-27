@@ -2,11 +2,7 @@ name: caddy
 
 volumes:
   data:
-    name: caddy_data
-    external: true
   config:
-    name: caddy_config
-    external: true
 
 networks:
   caddy-internal:
