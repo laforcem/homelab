@@ -1,3 +1,5 @@
+name: caddy-lan
+
 volumes:
   data:
   config:
