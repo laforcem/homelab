@@ -33,7 +33,6 @@ services:
       - data:/data
       - config:/config
     networks:
-      - caddy-internal
       - actual-caddy
       - audiobookshelf-caddy
       - miniflux-caddy
