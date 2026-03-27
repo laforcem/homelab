@@ -1,10 +1,11 @@
+name: miniflux
+
 volumes:
   miniflux-db:
 
 networks:
-  traefiknet:
-    name: traefiknet
-    external: true
+  miniflux-caddy:
+    name: miniflux-caddy
 
 services:
   miniflux:
@@ -13,7 +14,8 @@ services:
     restart:
       unless-stopped
     networks:
-      - traefiknet
+      - miniflux-caddy
+      - default
     depends_on:
       db:
         condition: service_healthy
@@ -24,16 +26,11 @@ services:
       - ADMIN_USERNAME=${MF_USERNAME}
       - ADMIN_PASSWORD=${MF_PASSWORD}
       - BASE_URL=https://miniflux.${DOMAIN}
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.miniflux.rule=Host(`miniflux.${DOMAIN}`)
-      - traefik.http.routers.miniflux.entrypoints=websecure
-      - traefik.http.routers.miniflux.tls.certresolver=myresolver
   db:
     image: postgres:15
     container_name: miniflux-pg
     networks:
-      - traefiknet
+      - default
     environment:
       - POSTGRES_USER=${PG_USERNAME}
       - POSTGRES_PASSWORD=${PG_PASSWORD}

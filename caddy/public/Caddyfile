@@ -1,0 +1,32 @@
+{
+    email {$EMAIL}
+}
+
+*.{$DOMAIN} {
+    tls {
+        dns porkbun {
+            api_key {$API_KEY}
+            api_secret_key {$SECRET_KEY}
+        }
+    }
+    
+    @budget host budget.{$DOMAIN}
+    handle @budget {
+        reverse_proxy actual:5006
+    }
+    
+    @audiobooks host audiobooks.{$DOMAIN}
+    handle @audiobooks {
+        reverse_proxy audiobookshelf:80
+    }
+    
+    @miniflux host miniflux.{$DOMAIN}
+    handle @miniflux {
+        reverse_proxy miniflux:8080
+    }
+    
+    @recipes host recipes.{$DOMAIN}
+    handle @recipes {
+        reverse_proxy tandoor-web:80
+    }    
+}

@@ -1,13 +1,18 @@
+name: actual
+
 networks:
-  traefiknet:
-    name: traefiknet
-    external: true
+  actual-caddy:
+    name: actual-caddy
+
+volumes:
+  data:
 
 services:
   actual_server:
+    container_name: actual
     image: docker.io/actualbudget/actual-server:26.3.0
     networks:
-      - traefiknet
+      - actual-caddy
     # environment:
       # Uncomment any of the lines below to set configuration options.
       # - ACTUAL_HTTPS_KEY=/data/selfhost.key
@@ -19,9 +24,8 @@ services:
       # See all options and more details at https://actualbudget.github.io/docs/Installing/Configuration
       # !! If you are not using any of these options, remove the 'environment:' tag entirely.
     volumes:
-      # Change './actual-data' below to the path to the folder you want Actual to store its data in on your server.
       # '/data' is the path Actual will look for its files in by default, so leave that as-is.
-      - ./actual-data:/data
+      - data:/data
     healthcheck:
       # Enable health check for the instance
       test: ['CMD-SHELL', 'node src/scripts/health-check.js']
@@ -30,8 +34,3 @@ services:
       retries: 3
       start_period: 20s
     restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.actual-server.rule=Host(`budget.${DOMAIN}`)
-      - traefik.http.routers.actual-server.entrypoints=websecure
-      - traefik.http.services.actual-server.loadbalancer.server.port=5006

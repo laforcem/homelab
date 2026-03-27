@@ -47,7 +47,7 @@ labels:
       - traefik.enable=true
       - traefik.http.routers.whoami.rule=Host(`subdomain.${DOMAIN}`)
       - traefik.http.routers.whoami.entrypoints=websecure
-      - traefik.http.routers.whoami.tls.certresolver=myresolver
+      - traefik.http.routers.whoami.tls.certresolver=letsencrypt
 ```
 
 Naturally, ensure that you have a corresponding exact-match or wildcard DNS entry through your domain name registrar.

@@ -1,0 +1,46 @@
+name: caddy
+
+volumes:
+  data:
+    name: caddy_data
+    external: true
+  config:
+    name: caddy_config
+    external: true
+
+networks:
+  caddy-internal:
+    name: caddy-internal
+  actual-caddy:
+    external: true
+  audiobookshelf-caddy:
+    external: true
+  miniflux-caddy:
+    external: true
+  tandoor-caddy:
+    external: true
+
+services:
+  caddy:
+    build: .
+    container_name: caddy
+    environment:
+      - DOMAIN
+      - API_KEY
+      - SECRET_KEY
+      - EMAIL
+      - TZ=America/Denver
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"  # HTTP for redirection
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - data:/data
+      - config:/config
+    networks:
+      - caddy-internal
+      - actual-caddy
+      - audiobookshelf-caddy
+      - miniflux-caddy
+      - tandoor-caddy

@@ -1,9 +1,12 @@
+name: audiobookshelf
+
 networks:
-  traefiknet:
-    name: traefiknet
-    external: true
+  audiobookshelf-caddy:
+    name: audiobookshelf-caddy
 
 volumes:
+  config:
+  metadata:
   dropbox-audiobooks:
     driver: rclone
     driver_opts:
@@ -14,21 +17,16 @@ volumes:
 
 services:
   audiobookshelf:
-    image: ghcr.io/advplyr/audiobookshelf:2.32.1
+    image: ghcr.io/advplyr/audiobookshelf:2.33.1
     container_name: audiobookshelf
     restart:
       unless-stopped
     networks:
-      - traefiknet
+      - audiobookshelf-caddy
     volumes:
       - dropbox-audiobooks:/audiobooks
-      - ./config:/config
-      - ./metadata:/metadata
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.audiobookshelf.rule=Host(`audiobooks.${DOMAIN}`)
-      - traefik.http.routers.audiobookshelf.entrypoints=websecure
-      - traefik.http.routers.audiobookshelf.tls.certresolver=myresolver
+      - config:/config
+      - metadata:/metadata
     environment:
       - TZ=America/Denver
     sysctls:

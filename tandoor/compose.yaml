@@ -1,15 +1,19 @@
+name: tandoor
+
 services:
   db_recipes:
+    container_name: tandoor-db
     restart: always
     image: postgres:16-alpine
     volumes:
-      - ./postgresql:/var/lib/postgresql/data
+      - postgresql:/var/lib/postgresql/data
     env_file:
       - ./.env
     networks:
       - default
 
   web_recipes:
+    container_name: tandoor-web
     restart: always
     image: vabene1111/recipes:2.5.3
     env_file:
@@ -18,25 +22,20 @@ services:
       - staticfiles:/opt/recipes/staticfiles
       # Do not make this a bind mount, see https://docs.tandoor.dev/install/docker/#volumes-vs-bind-mounts
       - nginx_config:/opt/recipes/nginx/conf.d
-      - ./mediafiles:/opt/recipes/mediafiles
-    labels: # traefik example labels
-      - traefik.enable=true
-      - traefik.http.routers.recipes.rule=Host(`recipes.${DOMAIN}`)
-      - traefik.http.routers.recipes.entrypoints=websecure # your https endpoint
-      - traefik.http.routers.recipes.tls.certresolver=myresolver # your cert resolver
-      - traefik.docker.network=traefiknet
+      - mediafiles:/opt/recipes/mediafiles
     depends_on:
       - db_recipes
     networks:
-      - traefiknet
+      - tandoor-caddy
       - default
 
 networks:
   default:
-  traefiknet: # This is your external traefik network
-    name: traefiknet
-    external: true
+  tandoor-caddy:
+    name: tandoor-caddy
 
 volumes:
   nginx_config:
   staticfiles:
+  postgresql:
+  mediafiles:
