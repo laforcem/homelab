@@ -11,8 +11,8 @@ name: immich
 
 networks:
   default: {}
-  immich-traefik:
-    external: true
+  immich-caddy:
+    name: immich-caddy
 
 services:
   immich-server:
@@ -32,20 +32,11 @@ services:
       - .env
     networks:
       - default
-      - immich-traefik
-#    ports:
-#      - '2283:2283'
+      - immich-caddy
     depends_on:
       - redis
       - database
     restart: always
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.immich.rule=Host(`photos.${DOMAIN}`)
-      - traefik.http.routers.immich.entrypoints=websecure
-      - traefik.http.routers.immich.tls.certresolver=letsencrypt
-      - traefik.http.services.immich.loadbalancer.server.port=2283
-      - traefik.docker.network=immich-traefik
     healthcheck:
       disable: false
 

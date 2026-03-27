@@ -1,0 +1,26 @@
+{
+    email {$EMAIL}
+}
+
+*.{$DOMAIN} {
+    tls {
+        dns porkbun {
+            api_key {$API_KEY}
+            api_secret_key {$SECRET_KEY}
+        }
+    }
+    
+    @plex host plex.{$DOMAIN}
+    handle @plex {
+        reverse_proxy plex:32400
+    }
+    
+    @immich host photos.{$DOMAIN}
+    handle @immich {
+        reverse_proxy immich_server:2283
+    }
+    
+    handle {
+        abort
+    }    
+}
