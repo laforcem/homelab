@@ -10,8 +10,8 @@ networks:
 
 services:
   caddy:
-    build: .
-    container_name: caddy
+    build: ..
+    container_name: caddy-vm100
     environment:
       - DOMAIN
       - API_KEY
