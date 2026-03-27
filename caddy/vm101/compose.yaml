@@ -1,0 +1,35 @@
+name: caddy
+
+volumes:
+  data:
+    name: caddy-vm101_data
+  config:
+    name: caddy-vm101_config
+
+networks:
+  immich-caddy:
+    external: true
+  plex-caddy:
+    external: true
+
+services:
+  caddy:
+    build: ..
+    container_name: caddy-vm101
+    environment:
+      - DOMAIN
+      - API_KEY
+      - SECRET_KEY
+      - EMAIL
+      - TZ=America/Denver
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"  # HTTP for redirection
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - data:/data
+      - config:/config
+    networks:
+      - immich-caddy
+      - plex-caddy

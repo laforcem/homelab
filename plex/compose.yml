@@ -1,6 +1,6 @@
 networks:
-  plex-traefik:
-    external: true
+  plex-caddy:
+    name: plex-caddy
 
 volumes:
   plex-config:
@@ -16,15 +16,8 @@ services:
       - TZ=America/Denver
       - PLEX_CLAIM=${CLAIM_TOKEN}
       - ADVERTISEIP=https://plex.${DOMAIN}:443/
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)
-      - traefik.http.routers.plex.entrypoints=websecure
-      - traefik.http.routers.plex.tls.certresolver=letsencrypt
-      - traefik.http.services.plex.loadbalancer.server.port=32400
-      - traefik.docker.network=plex-traefik
     networks:
-      - plex-traefik
+      - plex-caddy
     volumes:
       - plex-config:/config
       - /mnt/lab:/data
