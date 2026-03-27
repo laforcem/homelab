@@ -2,7 +2,9 @@ name: caddy-lan
 
 volumes:
   data:
+    name: caddy-vm100_data
   config:
+    name: caddy-vm100_config
 
 networks:
   caddy-internal:
