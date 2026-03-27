@@ -16,8 +16,8 @@ networks:
 
 services:
   caddy:
-    build: .
-    container_name: caddy
+    build: ..
+    container_name: caddy-mrgutsy
     environment:
       - DOMAIN
       - API_KEY
