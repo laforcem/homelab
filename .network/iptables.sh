@@ -1,5 +1,5 @@
-#!/bin/sh
 # filepath: /jffs/scripts/firewall-start
+#!/bin/sh
 
 DMZ_BR="br53" # VLAN 40
 IOT_BR="br52" # VLAN 20
@@ -8,7 +8,7 @@ GST_BR="br54" # VLAN 30
 logger -t "firewall-start" "Applying DMZ firewall rules"
 
 # ============================================
-# CLEANUP — remove custom chians from previous run
+# CLEANUP: remove custom chians from previous run
 # ============================================
 
 # Remove custom chain hooks
@@ -28,7 +28,7 @@ iptables -F IOT_FWD 2>/dev/null
 iptables -X IOT_FWD 2>/dev/null
 
 # ============================================
-# DMZ_FWD (VLAN 40 / br53) — isolation
+# DMZ_FWD (VLAN 40 / br53): isolation
 # ============================================
 
 iptables -N DMZ_FWD
@@ -45,7 +45,7 @@ iptables -A DMZ_FWD -o $GST_BR -j DROP
 iptables -A DMZ_FWD -j RETURN
 
 # ============================================
-# DMZ_INP - controls what VLAN 40 can send to the router itself
+# DMZ_INP: controls what VLAN 40 can send to the router itself
 # ============================================
 
 iptables -N DMZ_INP
@@ -59,13 +59,18 @@ iptables -I FORWARD -i br0 -o $DMZ_BR -j ACCEPT
 iptables -I INPUT -i $DMZ_BR -j DMZ_INP
 
 # ============================================
-# IoT (VLAN 20 / br52) — isolation
+# IoT (VLAN 20 / br52): isolation
 # ============================================
 
 iptables -N IOT_FWD
 
 # --- IOT_FWD: controls what VLAN 20 can forward to ---
 iptables -A IOT_FWD -o br0 -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Allow devices to reach AdGuard Home only
+iptables -A IOT_FWD -d 192.168.10.100 -p udp --dport 53 -j ACCEPT
+iptables -A IOT_FWD -d 192.168.10.100 -p tcp --dport 53 -j ACCEPT
+
 iptables -A IOT_FWD -o br0 -j DROP
 iptables -A IOT_FWD -o $DMZ_BR -j DROP
 iptables -A IOT_FWD -o $GST_BR -j DROP
