@@ -30,9 +30,12 @@
         reverse_proxy tandoor-web:80
     }
 
-    @invidious host youtube.${$DOMAIN}
+    @invidious host youtube.{$DOMAIN}
     handle @invidious {
-        reverse_proxy invidious:3000
+        reverse_proxy invidious:3000 {
+            header_up X-Forwarded-Proto https
+            header_up X-Forwarded-Host {host}
+        }
     }
     
     handle {
