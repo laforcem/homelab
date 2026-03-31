@@ -12,7 +12,10 @@
     
     @plex host plex.{$DOMAIN}
     handle @plex {
-        reverse_proxy plex:32400
+        reverse_proxy plex:32400 {
+            header_up X-Forwarded-Proto https
+            header_up X-Forwarded-Host plex.{$DOMAIN}
+        }
     }
     
     @immich host photos.{$DOMAIN}
