@@ -10,13 +10,13 @@
         }
     }
     
-    @budget host budget.{$DOMAIN}
-    handle @budget {
+    @actual host budget.{$DOMAIN}
+    handle @actual {
         reverse_proxy actual:5006
     }
     
-    @audiobooks host audiobooks.{$DOMAIN}
-    handle @audiobooks {
+    @audiobookshelf host audiobooks.{$DOMAIN}
+    handle @audiobookshelf {
         reverse_proxy audiobookshelf:80
     }
     
@@ -28,6 +28,11 @@
     @recipes host recipes.{$DOMAIN}
     handle @recipes {
         reverse_proxy tandoor-web:80
+    }
+
+    @invidious host youtube.${$DOMAIN}
+    handle @invidious {
+        reverse_proxy invidious:3000
     }
     
     handle {
