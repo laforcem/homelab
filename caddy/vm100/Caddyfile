@@ -18,7 +18,15 @@
             }
         }
     }
-    
+    @grafana host grafana.lan.{$DOMAIN}
+    handle @grafana {
+        reverse_proxy speedtest-grafana:3000
+    }
+    @speedtest host speedtest.lan.{$DOMAIN}
+    handle @speedtest {
+        reverse_proxy speedtest-tracker:80
+    }
+
     handle {
         abort
     }
