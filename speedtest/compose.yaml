@@ -1,0 +1,76 @@
+name: speedtest
+
+volumes:
+  speedtest-influxdb:
+  speedtest-tracker:
+  speedtest-grafana:
+
+networks:
+  speedtest-internal:
+  caddy-internal:
+    name: caddy-internal
+    external: true
+
+services:
+  speedtest-tracker:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    container_name: speedtest-tracker
+    restart: unless-stopped
+    networks:
+      - speedtest-internal
+      - caddy-internal
+    environment:
+      - APP_KEY=${APP_KEY}
+      - DB_CONNECTION=sqlite
+      - INFLUXDB_URL=http://speedtest-influxdb:8086
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_BUCKET=speedtest
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - SPEEDTEST_SCHEDULE=*/15 * * * *
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    volumes:
+      - speedtest-tracker:/config
+
+  influxdb:
+    image: influxdb:2
+    container_name: speedtest-influxdb
+    restart: unless-stopped
+    networks:
+      - speedtest-internal
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=speedtest
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
+      - DOCKER_INFLUXDB_INIT_RETENTION=${INFLUXDB_RETENTION}
+    volumes:
+      - speedtest-influxdb:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      start_period: 30s
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: speedtest-grafana
+    restart: unless-stopped
+    networks:
+      - speedtest-internal
+      - caddy-internal
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+    volumes:
+      - speedtest-grafana:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      influxdb:
+        condition: service_healthy
