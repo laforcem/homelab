@@ -13,7 +13,7 @@ services:
       VITE_DEFAULT_INVIDIOUS_INSTANCE: "https://invidious.${DOMAIN}"
 
       # URL to your proxied Companion instance
-      VITE_DEFAULT_COMPANION_INSTANCE: "https://companion.${DOMAIN}"
+      VITE_DEFAULT_COMPANION_INSTANCE: "https://invidious-companion.${DOMAIN}"
 
       # URL TO RYD (Return YouTube Dislike / https://github.com/Anarios/return-youtube-dislike)
       # Leave blank to disable completely.
