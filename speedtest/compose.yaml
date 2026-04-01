@@ -32,6 +32,7 @@ services:
         condition: service_healthy
     volumes:
       - speedtest-tracker:/config
+      - ./custom-cont-init.d:/custom-cont-init.d:ro
 
   influxdb:
     image: influxdb:2
