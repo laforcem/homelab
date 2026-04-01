@@ -3,7 +3,7 @@ groups:
   - orgId: 1
     name: Speedtest
     folder: Speedtest
-    interval: 10m
+    interval: 5m
     rules:
       - uid: speedtest-no-data
         title: No speedtest data received
@@ -17,7 +17,7 @@ groups:
             model:
               query: |
                 from(bucket: "speedtest")
-                  |> range(start: -30m)
+                  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
                   |> filter(fn: (r) => r._measurement == "speedtest" and r._field == "download")
                   |> count()
               refId: A
@@ -31,7 +31,7 @@ groups:
             model:
               type: reduce
               expression: A
-              reducer: last
+              reducer: sum
               settings:
                 mode: replaceWithValue
                 replaceWithValue: 0
