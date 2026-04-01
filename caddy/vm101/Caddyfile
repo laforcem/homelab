@@ -45,8 +45,14 @@
         reverse_proxy materialious:80
     }
 
-    @companion host companion.{$DOMAIN}
-    handle @companion {
+    @invidious-companion host invidious-companion.{$DOMAIN}
+    handle @invidious-companion {
+        # Only allow access from VLAN 10
+        @not_vlan10 not remote_ip 192.168.10.0/24
+        handle @not_vlan10 {
+            abort
+        }
+
         @cors_preflight {
             method OPTIONS
         }
