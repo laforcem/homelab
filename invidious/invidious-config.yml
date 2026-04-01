@@ -1,0 +1,10 @@
+db:
+  dbname: invidious
+  user: kemal
+  password: kemal
+  host: invidious-db
+  port: 5432
+check_tables: true
+external_port: 443
+https_only: true
+use_innertube_for_captions: true
