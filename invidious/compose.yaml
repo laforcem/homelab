@@ -28,14 +28,15 @@ services:
           port: 5432
         check_tables: true
         invidious_companion:
-        # URL used for the internal communication between invidious and invidious companion
-        # There is no need to change that except if Invidious companion does not run on the same docker compose file.
-        - private_url: "http://companion:8282/companion"
+          # URL used for the internal communication between invidious and invidious companion
+          # There is no need to change that except if Invidious companion does not run on the same docker compose file.
+          - private_url: "http://companion:8282/companion"
+            public_url: "https://companion.${DOMAIN}/companion"
         # IT is NOT recommended to use the same key as HMAC KEY. Generate a new key!
         # Use the key generated in the 2nd step
         invidious_companion_key: ${INVIDIOUS_COMPANION_KEY}
         external_port: 443
-        domain: youtube.${DOMAIN}
+        domain: invidious.${DOMAIN}
         https_only: true
         # statistics_enabled: false
         # Use the key generated in the 2nd step
@@ -63,6 +64,7 @@ services:
        - SERVER_SECRET_KEY=${INVIDIOUS_COMPANION_KEY}
     networks:
       - default
+      - invidious-caddy
     restart: unless-stopped
     # Uncomment only if you have configured "public_url" for Invidious companion
     # Or if you want to use Invidious companion as an API in your program.

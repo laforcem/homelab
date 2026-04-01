@@ -23,9 +23,43 @@
         reverse_proxy immich_server:2283
     }
 
-    @invidious host youtube.{$DOMAIN}
+    @invidious host invidious.{$DOMAIN}
     handle @invidious {
+        @cors_preflight {
+            method OPTIONS
+        }
+        respond @cors_preflight 204
+
+        header Access-Control-Allow-Credentials true
+        header Access-Control-Allow-Origin "https://youtube.{$DOMAIN}" {
+            defer
+        }
+        header Access-Control-Allow-Methods "GET,POST,OPTIONS,HEAD,PATCH,PUT,DELETE"
+        header Access-Control-Allow-Headers "User-Agent,Authorization,Content-Type"
+
         reverse_proxy invidious:3000
+    }
+
+    @materialious host youtube.{$DOMAIN}
+    handle @materialious {
+        reverse_proxy materialious:80
+    }
+
+    @companion host companion.{$DOMAIN}
+    handle @companion {
+        @cors_preflight {
+            method OPTIONS
+        }
+        respond @cors_preflight 204
+
+        header Access-Control-Allow-Credentials true
+        header Access-Control-Allow-Origin "https://youtube.{$DOMAIN}" {
+            defer
+        }
+        header Access-Control-Allow-Methods "GET, POST, OPTIONS, HEAD, PATCH, PUT, DELETE"
+        header Access-Control-Allow-Headers "User-Agent, Authorization, Content-Type"
+
+        reverse_proxy invidious-companion:8282
     }
     
     handle {
