@@ -71,7 +71,7 @@
         respond @cors_preflight 204
 
         header Access-Control-Allow-Credentials true
-        header Access-Control-Allow-Origin "https://youtube.{$DOMAIN}" {
+        header Access-Control-Allow-Origin "https://invidious.{$DOMAIN}" {
             defer
         }
         header Access-Control-Allow-Methods "GET, POST, OPTIONS, HEAD, PATCH, PUT, DELETE"
