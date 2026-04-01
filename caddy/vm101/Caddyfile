@@ -22,6 +22,11 @@
     handle @immich {
         reverse_proxy immich_server:2283
     }
+
+    @invidious host youtube.{$DOMAIN}
+    handle @invidious {
+        reverse_proxy invidious:3000
+    }
     
     handle {
         abort

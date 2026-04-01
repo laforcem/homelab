@@ -11,6 +11,8 @@ networks:
     external: true
   plex-caddy:
     external: true
+  invidious-caddy:
+    external: true
 
 services:
   caddy:
@@ -33,3 +35,4 @@ services:
     networks:
       - immich-caddy
       - plex-caddy
+      - invidious-caddy

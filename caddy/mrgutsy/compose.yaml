@@ -15,8 +15,6 @@ networks:
     external: true
   tandoor-caddy:
     external: true
-  invidious-caddy:
-    external: true
 
 services:
   caddy:
@@ -41,4 +39,3 @@ services:
       - audiobookshelf-caddy
       - miniflux-caddy
       - tandoor-caddy
-      - invidious-caddy
