@@ -59,6 +59,10 @@
         header Access-Control-Allow-Methods "GET, POST, OPTIONS, HEAD, PATCH, PUT, DELETE"
         header Access-Control-Allow-Headers "User-Agent, Authorization, Content-Type"
 
+        # Rewrite /api/* requests to /companion/api/*
+        @api_requests path /api/*
+        rewrite @api_requests /companion{uri}
+
         reverse_proxy invidious-companion:8282
     }
     
