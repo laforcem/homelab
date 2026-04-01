@@ -1,0 +1,61 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: Speedtest
+    folder: Speedtest
+    interval: 10m
+    rules:
+      - uid: speedtest-no-data
+        title: No speedtest data received
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            datasourceUid: speedtest-influxdb
+            model:
+              query: |
+                from(bucket: "speedtest")
+                  |> range(start: -30m)
+                  |> filter(fn: (r) => r._measurement == "speedtest" and r._field == "download")
+                  |> count()
+              refId: A
+              queryType: ''
+              hide: false
+          - refId: B
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              settings:
+                mode: replaceWithValue
+                replaceWithValue: 0
+              refId: B
+              hide: false
+          - refId: C
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    params:
+                      - 1
+                    type: lt
+              refId: C
+              hide: false
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: No speedtest data received in the last 30 minutes
+          description: speedtest-tracker may have stopped or tests are consistently failing
+        isPaused: false
