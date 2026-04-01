@@ -52,6 +52,8 @@ services:
     healthcheck:
       test: ["CMD", "influx", "ping"]
       interval: 10s
+      timeout: 5s
+      retries: 3
       start_period: 30s
 
   grafana:
