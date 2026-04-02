@@ -99,7 +99,7 @@ fetch_router_data() {
 # ── AGH API ───────────────────────────────────────────────────────────────────
 
 # get_agh_synced_clients
-#   Fetches all AGH persistent clients tagged router_sync.
+#   Fetches all AGH persistent clients tagged user_regular.
 #   Outputs a JSON array (may be empty: []).
 get_agh_synced_clients() {
     curl -sf \
