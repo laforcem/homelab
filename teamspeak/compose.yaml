@@ -4,11 +4,20 @@ volumes:
   data:
 
 services:
+  binfmt:
+    image: tonistiigi/binfmt:latest
+    platform: linux/arm64
+    privileged: true
+    command: --install amd64
+
   teamspeak:
     image: teamspeak:3.13.7
     platform: linux/amd64
     container_name: teamspeak
     restart: unless-stopped
+    depends_on:
+      binfmt:
+        condition: service_completed_successfully
     ports:
       - "9987:9987/udp"
     environment:
