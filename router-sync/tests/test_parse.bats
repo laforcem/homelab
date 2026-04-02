@@ -53,6 +53,45 @@ setup() {
     [ "${#mac_to_ip[@]}" -eq 0 ]
 }
 
+# ── parse_arp ─────────────────────────────────────────────────────────────────
+
+@test "parse_arp: extracts IP and normalises MAC to lowercase for complete entries" {
+    declare -gA mac_to_ip=()
+    parse_arp "192.168.10.100   0x1         0x2         aa:aa:aa:aa:aa:64     *        br0"
+    [ "${mac_to_ip[aa:aa:aa:aa:aa:64]}" = "192.168.10.100" ]
+}
+
+@test "parse_arp: skips incomplete entries (flags != 0x2)" {
+    declare -gA mac_to_ip=()
+    parse_arp "192.168.10.14    0x1         0x0         00:00:00:00:00:00     *        br0"
+    [ "${#mac_to_ip[@]}" -eq 0 ]
+}
+
+@test "parse_arp: skips zero MAC addresses" {
+    declare -gA mac_to_ip=()
+    parse_arp "192.168.10.14    0x1         0x2         00:00:00:00:00:00     *        br0"
+    [ "${#mac_to_ip[@]}" -eq 0 ]
+}
+
+@test "parse_arp: does not overwrite entries already set by parse_staticlist" {
+    declare -gA mac_to_ip=([aa:aa:aa:aa:aa:64]="192.168.10.100")
+    parse_arp "192.168.10.99    0x1         0x2         aa:aa:aa:aa:aa:64     *        br0"
+    [ "${mac_to_ip[aa:aa:aa:aa:aa:64]}" = "192.168.10.100" ]
+}
+
+@test "parse_arp: handles multiple entries across different VLANs" {
+    declare -gA mac_to_ip=()
+    parse_arp "$(printf '192.168.20.163   0x1         0x2         bb:bb:bb:bb:bb:01     *        br52\n192.168.40.101   0x1         0x2         aa:aa:aa:aa:aa:65     *        br53')"
+    [ "${mac_to_ip[bb:bb:bb:bb:bb:01]}" = "192.168.20.163" ]
+    [ "${mac_to_ip[aa:aa:aa:aa:aa:65]}" = "192.168.40.101" ]
+}
+
+@test "parse_arp: empty input produces empty map" {
+    declare -gA mac_to_ip=()
+    parse_arp ""
+    [ "${#mac_to_ip[@]}" -eq 0 ]
+}
+
 # ── parse_leases ──────────────────────────────────────────────────────────────
 
 @test "parse_leases: extracts MAC and IP from lease line" {
