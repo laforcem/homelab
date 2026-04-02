@@ -105,7 +105,7 @@ get_agh_synced_clients() {
     curl -sf \
         -u "${AGH_USER}:${AGH_PASSWORD}" \
         "${AGH_URL}/control/clients" \
-    | jq '[.clients[] | select(.tags != null and (.tags | contains(["router_sync"])))]'
+    | jq '[(.clients // [])[] | select(.tags != null and (.tags | contains(["user_regular"])))]'
 }
 
 # _agh_client_body NAME IP
@@ -114,7 +114,7 @@ _agh_client_body() {
     jq -n \
         --arg name "$1" \
         --arg ip   "$2" \
-        '{"name":$name,"ids":[$ip],"tags":["router_sync"],
+        '{"name":$name,"ids":[$ip],"tags":["user_regular"],
           "use_global_settings":true,"filtering_enabled":false,
           "parental_enabled":false,"safebrowsing_enabled":false,
           "upstreams":[]}'
@@ -224,7 +224,7 @@ main() {
     for ip in "${!ip_to_name[@]}"; do
         name="${ip_to_name[$ip]}"
         existing_name=$(jq -r --arg ip "$ip" \
-            '.[] | select(.ids | contains([$ip])) | .name' \
+            '.[] | select(.ids | any(. == $ip)) | .name' \
             <<< "$synced_clients")
 
         if [[ -z "$existing_name" ]]; then
