@@ -89,13 +89,13 @@ Because `custom_clientlist` stores MACs in uppercase and the other sources store
 5. Merge the two MAC→IP maps, with static entries taking precedence.
 6. Join the merged MAC→IP map against the MAC→Name map to produce an IP→Name map.
 7. Fetch the current AGH persistent client list (`GET /control/clients`).
-8. Identify router-synced clients by the presence of the `router_sync` tag.
+8. Identify router-synced clients by the presence of the `user_regular` tag. (AGH v0.107.73 enforces a predefined tag allowlist; `router_sync` is not a valid tag. `user_regular` serves as the ownership marker — avoid applying it to manually-created clients.)
 9. For each joined entry:
    - If no AGH client exists for that IP, create one (`POST /control/clients/add`).
    - If a router-synced AGH client exists for that IP with a different name, update it (`POST /control/clients/update`).
    - If a router-synced AGH client exists with the same name, skip it.
 10. Remove any router-synced AGH client whose IP no longer appears in the joined result (device left the network or lost its custom name).
-11. Leave all AGH clients that lack the `router_sync` tag untouched.
+11. Leave all AGH clients that lack the `user_regular` tag untouched.
 
 ## Container
 
