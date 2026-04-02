@@ -57,6 +57,21 @@ parse_leases() {
     done <<< "$raw"
 }
 
+# ── Join ──────────────────────────────────────────────────────────────────────
+
+# build_ip_name_map
+#   Reads global mac_to_name and mac_to_ip; populates global ip_to_name[IP]=Name.
+#   Skips any MAC in mac_to_name that has no entry in mac_to_ip.
+build_ip_name_map() {
+    local mac name ip
+    for mac in "${!mac_to_name[@]}"; do
+        name="${mac_to_name[$mac]}"
+        ip="${mac_to_ip[$mac]+${mac_to_ip[$mac]}}"
+        [[ -z "$ip" ]] && continue
+        ip_to_name["$ip"]="$name"
+    done
+}
+
 # ── Main (skipped in test mode) ───────────────────────────────────────────────
 
 [[ "${TEST_MODE:-0}" == "1" ]] && return 0
