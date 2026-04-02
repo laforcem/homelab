@@ -192,7 +192,74 @@ main() {
     SSH_KEY="${SSH_KEY:-/root/.ssh/id_ed25519}"
     KNOWN_HOSTS="${KNOWN_HOSTS:-/root/.ssh/known_hosts}"
 
-    log "router-sync starting"
+    declare -gA mac_to_name=()
+    declare -gA mac_to_ip=()
+    declare -gA ip_to_name=()
+
+    # ── Fetch ────────────────────────────────────────────────────────────────
+    log "Fetching router data..."
+    local router_data
+    router_data=$(fetch_router_data)
+
+    local clientlist staticlist leases
+    clientlist=$(awk -F'\t' '$1=="CLIENTLIST"{print $2}' <<< "$router_data")
+    staticlist=$(awk -F'\t' '$1=="STATICLIST"{print $2}' <<< "$router_data")
+    leases=$(awk -F'\t' '$1=="LEASE"{print $2}' <<< "$router_data")
+
+    # ── Parse + join ─────────────────────────────────────────────────────────
+    parse_clientlist "$clientlist"
+    parse_staticlist "$staticlist"
+    parse_leases     "$leases"
+    build_ip_name_map
+
+    local client_count="${#ip_to_name[@]}"
+    log "Router clients resolved: $client_count"
+
+    # ── Reconcile ────────────────────────────────────────────────────────────
+    local synced_clients added=0 updated=0 removed=0 errors=0
+    synced_clients=$(get_agh_synced_clients)
+
+    # Add or update
+    local ip name existing_name
+    for ip in "${!ip_to_name[@]}"; do
+        name="${ip_to_name[$ip]}"
+        existing_name=$(jq -r --arg ip "$ip" \
+            '.[] | select(.ids | contains([$ip])) | .name' \
+            <<< "$synced_clients")
+
+        if [[ -z "$existing_name" ]]; then
+            if add_agh_client "$name" "$ip"; then
+                added=$(( added + 1 ))
+            else
+                errors=$(( errors + 1 ))
+            fi
+        elif [[ "$existing_name" != "$name" ]]; then
+            if update_agh_client "$existing_name" "$name" "$ip"; then
+                updated=$(( updated + 1 ))
+            else
+                errors=$(( errors + 1 ))
+            fi
+        fi
+    done
+
+    # Remove stale router-synced clients
+    local client_json client_name client_ip still_present
+    while IFS= read -r client_json; do
+        client_name=$(jq -r '.name' <<< "$client_json")
+        client_ip=$(jq -r '.ids[0]' <<< "$client_json")
+        still_present=false
+        [[ -n "${ip_to_name[$client_ip]+set}" ]] && still_present=true
+        if [[ "$still_present" == false ]]; then
+            if delete_agh_client "$client_name"; then
+                removed=$(( removed + 1 ))
+            else
+                errors=$(( errors + 1 ))
+            fi
+        fi
+    done < <(jq -c '.[]' <<< "$synced_clients")
+
+    log "sync complete: $client_count clients resolved, $added added, $updated updated, $removed removed, $errors errors"
+    [[ "$errors" -eq 0 ]]
 }
 
 main "$@"
