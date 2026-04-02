@@ -1,0 +1,28 @@
+name: teamspeak
+
+volumes:
+  data:
+
+services:
+  teamspeak:
+    image: teamspeak:3.13.7
+    container_name: teamspeak
+    restart: unless-stopped
+    ports:
+      - "9987:9987/udp"
+    environment:
+      - TS3SERVER_LICENSE=accept
+      - TS3SERVER_DB_PLUGIN=ts3db_sqlite3
+      - TS3SERVER_DB_SQLCREATEPATH=create_sqlite
+      - TS3SERVER_SERVER_NAME=${TS3_SERVER_NAME}
+      - TS3SERVER_SERVER_PASSWORD=${TS3_SERVER_PASSWORD}
+      - TS3SERVER_MAXCLIENTS=${TS3_SLOTS}
+      - TS3SERVER_WELCOME_MESSAGE=${TS3_WELCOME_MESSAGE}
+    volumes:
+      - data:/var/ts3server
+    healthcheck:
+      test: ["CMD-SHELL", "nc -zu localhost 9987 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
