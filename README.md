@@ -15,6 +15,7 @@ Some services are used on my LAN at home:
 - [Airconnect](/airconnect/) (May 2025)
 - [AdGuard Home](/adguard-home/) (June 2025)
 - [icloudpd](/icloudpd/) (October 2025)
+- [router-sync](/router-sync/) (April 2026)
 
 ### Hosted services
 
