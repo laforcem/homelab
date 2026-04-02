@@ -1,0 +1,16 @@
+networks:
+  caddy-internal:
+    name: caddy-internal
+    external: true
+
+services:
+  router-sync:
+    container_name: router-sync
+    build: .
+    restart: always
+    networks:
+      - caddy-internal
+    env_file: .env
+    volumes:
+      - ~/.ssh/router_sync_id:/root/.ssh/id_ed25519:ro
+      - ./known_hosts:/root/.ssh/known_hosts:ro
