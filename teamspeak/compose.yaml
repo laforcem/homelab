@@ -1,0 +1,39 @@
+name: teamspeak
+
+volumes:
+  data:
+
+services:
+  binfmt:
+    image: tonistiigi/binfmt:latest
+    platform: linux/arm64
+    privileged: true
+    command: --install amd64
+
+  teamspeak:
+    image: teamspeak:3.13.7
+    platform: linux/amd64
+    container_name: teamspeak
+    restart: unless-stopped
+    depends_on:
+      binfmt:
+        condition: service_completed_successfully
+    ports:
+      - "9987:9987/udp"
+    environment:
+      - TS3SERVER_LICENSE=accept
+      - TS3SERVER_DB_PLUGIN=ts3db_sqlite3
+      - TS3SERVER_DB_SQLCREATEPATH=create_sqlite
+      - TS3SERVER_SERVER_NAME=${TS3_SERVER_NAME}
+      - TS3SERVER_SERVER_PASSWORD=${TS3_SERVER_PASSWORD}
+      - TS3SERVER_MAXCLIENTS=${TS3_SLOTS}
+      - TS3SERVER_WELCOME_MESSAGE=${TS3_WELCOME_MESSAGE}
+      - TS3SERVER_SERVERADMIN_PASSWORD=${TS3_SERVERADMIN_PASSWORD}
+    volumes:
+      - data:/var/ts3server
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep ts3server || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
