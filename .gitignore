@@ -1,2 +1,5 @@
 .vscode
 .env
+
+router-sync/.env
+router-sync/id_ed25519
