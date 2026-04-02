@@ -40,10 +40,33 @@ parse_staticlist() {
     done
 }
 
-# parse_leases RAW
-#   Populates global mac_to_ip[MAC]=IP from dnsmasq.leases content.
-#   Format per line: TIMESTAMP MAC IP HOSTNAME CLIENT_ID
+# parse_arp RAW
+#   Populates global mac_to_ip[MAC]=IP from /proc/net/arp content.
+#   Skips incomplete entries (flags != 0x2) and zero MACs.
 #   Does NOT overwrite entries already set by parse_staticlist.
+#   Called before parse_leases so that the real-time ARP state takes
+#   precedence over potentially stale lease entries.
+parse_arp() {
+    local raw="$1"
+    [[ -z "$raw" ]] && return
+    local line ip flags mac
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        ip=$(awk '{print $1}' <<< "$line")
+        flags=$(awk '{print $3}' <<< "$line")
+        mac=$(awk '{print $4}' <<< "$line" | tr '[:upper:]' '[:lower:]')
+        [[ "$flags" != "0x2" ]] && continue
+        [[ "$mac" == "00:00:00:00:00:00" ]] && continue
+        if [[ -n "$mac" && -n "$ip" && -z "${mac_to_ip[$mac]+set}" ]]; then
+            mac_to_ip["$mac"]="$ip"
+        fi
+    done <<< "$raw"
+}
+
+# parse_leases RAW
+#   Populates global mac_to_ip[MAC]=IP from dnsmasq leases content.
+#   Format per line: TIMESTAMP MAC IP HOSTNAME CLIENT_ID
+#   Does NOT overwrite entries already set by parse_staticlist or parse_arp.
 parse_leases() {
     local raw="$1"
     local line mac ip
@@ -92,8 +115,10 @@ fetch_router_data() {
         "${ROUTER_USER}@${ROUTER_HOST}" \
         'printf "CLIENTLIST\t%s\n" "$(nvram get custom_clientlist)";
          printf "STATICLIST\t%s\n" "$(nvram get dhcp_staticlist)";
-         while IFS= read -r line; do printf "LEASE\t%s\n" "$line"; done \
-             < /var/lib/misc/dnsmasq.leases'
+         awk "NR>1{printf \"ARP\t%s\n\",\$0}" /proc/net/arp;
+         for f in /var/lib/misc/dnsmasq*.leases; do
+             while IFS= read -r line; do printf "LEASE\t%s\n" "$line"; done < "$f";
+         done'
 }
 
 # ── AGH API ───────────────────────────────────────────────────────────────────
@@ -201,14 +226,16 @@ main() {
     local router_data
     router_data=$(fetch_router_data)
 
-    local clientlist staticlist leases
+    local clientlist staticlist arp_data leases
     clientlist=$(awk -F'\t' '$1=="CLIENTLIST"{print $2}' <<< "$router_data")
     staticlist=$(awk -F'\t' '$1=="STATICLIST"{print $2}' <<< "$router_data")
+    arp_data=$(awk -F'\t' '$1=="ARP"{print $2}' <<< "$router_data")
     leases=$(awk -F'\t' '$1=="LEASE"{print $2}' <<< "$router_data")
 
     # ── Parse + join ─────────────────────────────────────────────────────────
     parse_clientlist "$clientlist"
     parse_staticlist "$staticlist"
+    parse_arp        "$arp_data"
     parse_leases     "$leases"
     build_ip_name_map
 
