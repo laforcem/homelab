@@ -33,11 +33,13 @@ Before starting, SSH to the router and run:
 nvram get dhcp_staticlist
 ```
 
-The spec assumes the format is `MAC>IP<MAC>IP<...` (same `<`/`>` conventions as `custom_clientlist`). Confirm the output matches this. If the format differs, update the `parse_staticlist` function in Task 3 accordingly. A typical result looks like:
+The actual format (confirmed from the router) is:
 
 ```
-aa:aa:aa:aa:aa:64>192.168.10.100<aa:aa:aa:aa:aa:65>192.168.10.101
+<MAC>IP>>hostname<MAC>IP>>hostname
 ```
+
+Entries are separated by `<` with a leading `<` before the first entry. Each entry has four `>`-delimited fields: MAC, IP, empty, hostname. Only MAC (field 1) and IP (field 2) are used. The `parse_staticlist` function in Task 3 handles this correctly — no adjustment needed.
 
 ---
 
@@ -171,13 +173,13 @@ setup() {
 
 @test "parse_staticlist: extracts MAC and IP, normalises MAC to lowercase" {
     declare -gA mac_to_ip=()
-    parse_staticlist "aa:aa:aa:aa:aa:64>192.168.10.100"
+    parse_staticlist "<aa:aa:aa:aa:aa:64>192.168.10.100>>vm100"
     [ "${mac_to_ip[aa:aa:aa:aa:aa:64]}" = "192.168.10.100" ]
 }
 
-@test "parse_staticlist: handles multiple entries" {
+@test "parse_staticlist: handles multiple entries with leading <" {
     declare -gA mac_to_ip=()
-    parse_staticlist "aa:aa:aa:aa:aa:64>192.168.10.100<aa:aa:aa:aa:aa:65>192.168.10.101"
+    parse_staticlist "<aa:aa:aa:aa:aa:64>192.168.10.100>>vm100<aa:aa:aa:aa:aa:65>192.168.10.101>>vm101"
     [ "${mac_to_ip[aa:aa:aa:aa:aa:64]}" = "192.168.10.100" ]
     [ "${mac_to_ip[aa:aa:aa:aa:aa:65]}" = "192.168.10.101" ]
 }
