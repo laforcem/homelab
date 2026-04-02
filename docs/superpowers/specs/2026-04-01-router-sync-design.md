@@ -52,13 +52,13 @@ Fields beyond MAC are ignored. Produces a MAC→Name map.
 nvram get dhcp_staticlist
 ```
 
-Format: entries separated by `<`, each entry delimited by `>`:
+Format: entries separated by `<` (including a leading `<`), each entry delimited by `>`:
 
 ```
-MAC>IP>...
+<MAC>IP>>hostname<MAC>IP>>hostname
 ```
 
-Produces a MAC→IP map for statically assigned devices. These entries are permanent — they populate the map regardless of whether the device is currently online.
+Only fields 1 (MAC) and 2 (IP) are used; the trailing `>>hostname` fields are ignored. Produces a MAC→IP map for statically assigned devices. These entries are permanent — they populate the map regardless of whether the device is currently online.
 
 **`dnsmasq.leases` (file) — dynamic MAC + IP**
 
