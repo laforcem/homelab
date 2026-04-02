@@ -86,6 +86,7 @@ fetch_router_data() {
     ssh \
         -i "${SSH_KEY}" \
         -o "UserKnownHostsFile=${KNOWN_HOSTS}" \
+        -o "StrictHostKeyChecking=yes" \
         -o "ConnectTimeout=10" \
         -o "BatchMode=yes" \
         "${ROUTER_USER}@${ROUTER_HOST}" \
