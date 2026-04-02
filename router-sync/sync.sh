@@ -96,6 +96,88 @@ fetch_router_data() {
              < /var/lib/misc/dnsmasq.leases'
 }
 
+# ── AGH API ───────────────────────────────────────────────────────────────────
+
+# get_agh_synced_clients
+#   Fetches all AGH persistent clients tagged router_sync.
+#   Outputs a JSON array (may be empty: []).
+get_agh_synced_clients() {
+    curl -sf \
+        -u "${AGH_USER}:${AGH_PASSWORD}" \
+        "${AGH_URL}/control/clients" \
+    | jq '[.clients[] | select(.tags != null and (.tags | contains(["router_sync"])))]'
+}
+
+# _agh_client_body NAME IP
+#   Emits the JSON object used for add and update payloads.
+_agh_client_body() {
+    jq -n \
+        --arg name "$1" \
+        --arg ip   "$2" \
+        '{"name":$name,"ids":[$ip],"tags":["router_sync"],
+          "use_global_settings":true,"filtering_enabled":false,
+          "parental_enabled":false,"safebrowsing_enabled":false,
+          "upstreams":[]}'
+}
+
+# add_agh_client NAME IP
+add_agh_client() {
+    local name="$1" ip="$2"
+    local http_code
+    http_code=$(curl -sf -o /dev/null -w "%{http_code}" \
+        -X POST \
+        -u "${AGH_USER}:${AGH_PASSWORD}" \
+        -H "Content-Type: application/json" \
+        -d "$(_agh_client_body "$name" "$ip")" \
+        "${AGH_URL}/control/clients/add") || http_code="000"
+    if [[ "$http_code" == "200" ]]; then
+        log "  + added: $name ($ip)"
+    else
+        log "  ERROR: failed to add $name ($ip) — HTTP $http_code"
+        return 1
+    fi
+}
+
+# update_agh_client OLD_NAME NEW_NAME IP
+update_agh_client() {
+    local old_name="$1" new_name="$2" ip="$3"
+    local body http_code
+    body=$(jq -n \
+        --arg old_name "$old_name" \
+        --argjson data "$(_agh_client_body "$new_name" "$ip")" \
+        '{"name":$old_name,"data":$data}')
+    http_code=$(curl -sf -o /dev/null -w "%{http_code}" \
+        -X POST \
+        -u "${AGH_USER}:${AGH_PASSWORD}" \
+        -H "Content-Type: application/json" \
+        -d "$body" \
+        "${AGH_URL}/control/clients/update") || http_code="000"
+    if [[ "$http_code" == "200" ]]; then
+        log "  ~ updated: $old_name → $new_name ($ip)"
+    else
+        log "  ERROR: failed to update $old_name → $new_name ($ip) — HTTP $http_code"
+        return 1
+    fi
+}
+
+# delete_agh_client NAME
+delete_agh_client() {
+    local name="$1"
+    local http_code
+    http_code=$(curl -sf -o /dev/null -w "%{http_code}" \
+        -X POST \
+        -u "${AGH_USER}:${AGH_PASSWORD}" \
+        -H "Content-Type: application/json" \
+        -d "$(jq -n --arg name "$name" '{"name":$name}')" \
+        "${AGH_URL}/control/clients/delete") || http_code="000"
+    if [[ "$http_code" == "200" ]]; then
+        log "  - removed: $name"
+    else
+        log "  ERROR: failed to remove $name — HTTP $http_code"
+        return 1
+    fi
+}
+
 # ── Main (skipped in test mode) ───────────────────────────────────────────────
 
 [[ "${TEST_MODE:-0}" == "1" ]] && return 0
