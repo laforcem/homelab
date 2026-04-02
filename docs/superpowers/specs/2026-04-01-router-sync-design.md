@@ -30,7 +30,9 @@ The `.env` file and SSH private key are gitignored and live on the host only.
 
 ## Data sources
 
-**Router nvram — custom client names**
+All three sources are fetched in a single SSH session.
+
+**`custom_clientlist` (nvram) — Name + MAC**
 
 ```
 nvram get custom_clientlist
@@ -42,9 +44,23 @@ Format: entries separated by `<`, each entry delimited by `>`:
 NAME>MAC>...
 ```
 
-Fields beyond MAC are ignored. Both `NAME` and `MAC` are extracted.
+Fields beyond MAC are ignored. Produces a MAC→Name map.
 
-**Router dnsmasq lease table**
+**`dhcp_staticlist` (nvram) — static MAC + IP**
+
+```
+nvram get dhcp_staticlist
+```
+
+Format: entries separated by `<`, each entry delimited by `>`:
+
+```
+MAC>IP>...
+```
+
+Produces a MAC→IP map for statically assigned devices. These entries are permanent — they populate the map regardless of whether the device is currently online.
+
+**`dnsmasq.leases` (file) — dynamic MAC + IP**
 
 ```
 cat /var/lib/misc/dnsmasq.leases
@@ -56,26 +72,30 @@ Format: space-separated fields per line:
 TIMESTAMP MAC IP HOSTNAME CLIENT_ID
 ```
 
-Only `MAC` (field 2) and `IP` (field 3) are used.
+Only `MAC` (field 2) and `IP` (field 3) are used. Produces a MAC→IP map for currently active leases.
 
 **Join**
 
-MAC is the key. For each entry in `custom_clientlist`, the script looks up the MAC in the lease table to find the current IP. Entries with no matching lease (device offline or never connected) are skipped. Because `custom_clientlist` stores MACs in uppercase and `dnsmasq.leases` stores them in lowercase, both sides are normalized to lowercase before comparison.
+MAC is the key. The two MAC→IP maps are merged with static entries taking precedence over dynamic ones. Each entry in `custom_clientlist` is then looked up in the merged map. Entries with no match (device has neither a static reservation nor an active lease) are skipped.
+
+Because `custom_clientlist` stores MACs in uppercase and the other sources store them in lowercase, all MACs are normalized to lowercase before any comparison.
 
 ## Sync logic
 
-1. SSH to the router and fetch both data sources in a single session.
+1. SSH to the router and fetch all three data sources in a single session.
 2. Parse `custom_clientlist` into a MAC→Name map.
-3. Parse `dnsmasq.leases` into a MAC→IP map.
-4. Join on MAC to produce an IP→Name map.
-5. Fetch the current AGH persistent client list (`GET /control/clients`).
-6. Identify router-synced clients by the presence of the `router_sync` tag.
-7. For each joined entry:
+3. Parse `dhcp_staticlist` into a MAC→IP map (static).
+4. Parse `dnsmasq.leases` into a MAC→IP map (dynamic).
+5. Merge the two MAC→IP maps, with static entries taking precedence.
+6. Join the merged MAC→IP map against the MAC→Name map to produce an IP→Name map.
+7. Fetch the current AGH persistent client list (`GET /control/clients`).
+8. Identify router-synced clients by the presence of the `router_sync` tag.
+9. For each joined entry:
    - If no AGH client exists for that IP, create one (`POST /control/clients/add`).
    - If a router-synced AGH client exists for that IP with a different name, update it (`POST /control/clients/update`).
    - If a router-synced AGH client exists with the same name, skip it.
-8. Remove any router-synced AGH client whose IP no longer appears in the joined result (device left the network or lost its custom name).
-9. Leave all AGH clients that lack the `router_sync` tag untouched.
+10. Remove any router-synced AGH client whose IP no longer appears in the joined result (device left the network or lost its custom name).
+11. Leave all AGH clients that lack the `router_sync` tag untouched.
 
 ## Container
 
