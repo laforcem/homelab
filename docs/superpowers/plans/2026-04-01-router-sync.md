@@ -836,19 +836,19 @@ This task is performed once on the homelab host, not inside the container.
 ssh-keygen -t ed25519 -f ~/.ssh/router_sync_id -C "router-sync" -N ""
 ```
 
-- [ ] **Step 2: Add the public key to the router**
+- [ ] **Step 2: Add the public key to the router via the UI**
 
-```bash
-ssh admin@192.168.10.1 "cat >> /jffs/.ssh/authorized_keys" < ~/.ssh/router_sync_id.pub
-```
+In the Asuswrt-Merlin web UI, go to **Administration → System → Authorized Keys** and paste the contents of `~/.ssh/router_sync_id.pub`. Save and apply.
 
 Verify:
 
 ```bash
-ssh -i ~/.ssh/router_sync_id admin@192.168.10.1 "echo ok"
+ssh -i ~/.ssh/router_sync_id malc@192.168.10.1 "echo ok"
 ```
 
 Expected output: `ok`
+
+Note: the SSH user on this router is `malc`, not `admin`. Set `ROUTER_USER=malc` in the `.env` file.
 
 - [ ] **Step 3: Capture the router's host key**
 
