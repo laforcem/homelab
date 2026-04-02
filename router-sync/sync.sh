@@ -12,7 +12,7 @@ log() { printf '[%s] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"; }
 #   Format: NAME>MAC>...<NAME>MAC>...
 parse_clientlist() {
     local raw="$1"
-    local entry name mac
+    local entry name mac entries
     IFS='<' read -ra entries <<< "$raw"
     for entry in "${entries[@]}"; do
         [[ -z "$entry" ]] && continue
@@ -30,7 +30,7 @@ parse_clientlist() {
 parse_staticlist() {
     local raw="$1"
     [[ -z "$raw" ]] && return
-    local entry mac ip
+    local entry mac ip entries
     IFS='<' read -ra entries <<< "$raw"
     for entry in "${entries[@]}"; do
         [[ -z "$entry" ]] && continue
