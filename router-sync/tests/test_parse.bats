@@ -118,3 +118,43 @@ setup() {
     parse_leases "86274 AA:BB:CC:DD:EE:FF 192.168.10.1 host1 *"
     [ "${mac_to_ip[aa:bb:cc:dd:ee:ff]}" = "192.168.10.1" ]
 }
+
+# ── parse_lease_hostnames ─────────────────────────────────────────────────────
+
+@test "parse_lease_hostnames: adds DHCP hostname to mac_to_name for unnamed device" {
+    declare -gA mac_to_name=()
+    parse_lease_hostnames "86199 cc:cc:cc:cc:cc:07 192.168.10.7 p1g2 01:cc:cc:cc:cc:cc:07"
+    [ "${mac_to_name[cc:cc:cc:cc:cc:07]}" = "p1g2" ]
+}
+
+@test "parse_lease_hostnames: does not overwrite custom_clientlist name" {
+    declare -gA mac_to_name=([cc:cc:cc:cc:cc:07]="My PC")
+    parse_lease_hostnames "86199 cc:cc:cc:cc:cc:07 192.168.10.7 p1g2 01:cc:cc:cc:cc:cc:07"
+    [ "${mac_to_name[cc:cc:cc:cc:cc:07]}" = "My PC" ]
+}
+
+@test "parse_lease_hostnames: skips entries with asterisk hostname" {
+    declare -gA mac_to_name=()
+    parse_lease_hostnames "86199 aa:bb:cc:dd:ee:ff 192.168.10.7 * 01:aa:bb:cc:dd:ee:ff"
+    [ "${#mac_to_name[@]}" -eq 0 ]
+}
+
+@test "parse_lease_hostnames: handles multiple leases, sets all unnamed" {
+    declare -gA mac_to_name=()
+    parse_lease_hostnames "$(printf \
+        '86199 cc:cc:cc:cc:cc:07 192.168.10.7 p1g2 *\n86382 cc:cc:cc:cc:cc:32 192.168.10.32 x1y4 *')"
+    [ "${mac_to_name[cc:cc:cc:cc:cc:07]}" = "p1g2" ]
+    [ "${mac_to_name[cc:cc:cc:cc:cc:32]}" = "x1y4" ]
+}
+
+@test "parse_lease_hostnames: normalises MAC to lowercase" {
+    declare -gA mac_to_name=()
+    parse_lease_hostnames "86199 cc:cc:cc:cc:cc:07 192.168.10.7 p1g2 *"
+    [ "${mac_to_name[cc:cc:cc:cc:cc:07]}" = "p1g2" ]
+}
+
+@test "parse_lease_hostnames: empty input produces empty map" {
+    declare -gA mac_to_name=()
+    parse_lease_hostnames ""
+    [ "${#mac_to_name[@]}" -eq 0 ]
+}

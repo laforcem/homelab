@@ -63,6 +63,26 @@ parse_arp() {
     done <<< "$raw"
 }
 
+# parse_lease_hostnames RAW
+#   Populates global mac_to_name[MAC]=hostname for devices that have a DHCP
+#   hostname but are not already named in custom_clientlist.
+#   Skips entries whose hostname field is "*" (dnsmasq sentinel for no hostname).
+#   Does NOT overwrite entries already set by parse_clientlist.
+parse_lease_hostnames() {
+    local raw="$1"
+    [[ -z "$raw" ]] && return
+    local line mac hostname
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        mac=$(awk '{print $2}' <<< "$line" | tr '[:upper:]' '[:lower:]')
+        hostname=$(awk '{print $4}' <<< "$line")
+        if [[ -n "$mac" && -n "$hostname" && "$hostname" != "*" \
+              && -z "${mac_to_name[$mac]+set}" ]]; then
+            mac_to_name["$mac"]="$hostname"
+        fi
+    done <<< "$raw"
+}
+
 # parse_leases RAW
 #   Populates global mac_to_ip[MAC]=IP from dnsmasq leases content.
 #   Format per line: TIMESTAMP MAC IP HOSTNAME CLIENT_ID
@@ -233,10 +253,11 @@ main() {
     leases=$(awk -F'\t' '$1=="LEASE"{print $2}' <<< "$router_data")
 
     # ── Parse + join ─────────────────────────────────────────────────────────
-    parse_clientlist "$clientlist"
-    parse_staticlist "$staticlist"
-    parse_arp        "$arp_data"
-    parse_leases     "$leases"
+    parse_clientlist      "$clientlist"
+    parse_lease_hostnames "$leases"
+    parse_staticlist      "$staticlist"
+    parse_arp             "$arp_data"
+    parse_leases          "$leases"
     build_ip_name_map
 
     local client_count="${#ip_to_name[@]}"
