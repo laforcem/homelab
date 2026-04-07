@@ -10,7 +10,7 @@ volumes:
   dropbox-audiobooks:
     driver: rclone
     driver_opts:
-      remote: 'dropbox:Audiobooks'
+      remote: 'dropbox:Homelab/audiobookshelf/audiobooks'
       allow_other: 'true'
       vfs_cache_mode: full
       poll_interval: 60
