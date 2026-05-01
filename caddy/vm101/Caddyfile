@@ -23,6 +23,11 @@
         reverse_proxy immich_server:2283
     }
 
+    @karakeep host bookmarks.{$DOMAIN}
+    handle @karakeep {
+        reverse_proxy karakeep:3000
+    }
+
     @invidious host invidious.{$DOMAIN}
     handle @invidious {
         # Only allow access from VLAN 10
