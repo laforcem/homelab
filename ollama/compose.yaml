@@ -1,0 +1,21 @@
+name: ollama
+
+networks:
+  ollama:
+    name: ollama
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    volumes:
+      - data:/root/.ollama
+    networks:
+      - ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=5m
+
+volumes:
+  data:
+    name: ollama_data
