@@ -32,6 +32,8 @@ Philosophy: lists are coarse and durable. Tags do the fine-grained work. Collect
 
 These seed the vocabulary. Ollama will extend it automatically as new bookmarks are saved. New tags should be lowercase; avoid near-duplicates (e.g. `linux` and `linux-tools` coexisting).
 
+Each bookmark should receive **2–5 tags**. Fewer than 2 is too narrow for useful search; more than 5 dilutes the vocabulary into noise. This range is encoded in the Ollama custom prompt.
+
 Date-based tags (`8/23/2025`, `9/25/2025`) from Raindrop are retired. Those research sessions are retagged semantically:
 - `8/23/2025` batch (DMCA/copyright law) → `copyright` + `legal`
 - `9/25/2025` batch (Bible rebinding services) → `bookbinding`
