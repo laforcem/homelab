@@ -1,7 +1,7 @@
 # Karakeep Migration Design
 
 **Date:** 2026-05-01
-**Status:** Approved
+**Status:** Approved — Raindrop cleanup complete (2026-05-01)
 
 ## Overview
 
