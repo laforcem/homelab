@@ -1,5 +1,6 @@
 .worktrees/
-.vscode
+.vscode/*
+!.vscode/settings.json
 .env
 
 router-sync/.env

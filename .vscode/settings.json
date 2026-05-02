@@ -1,0 +1,9 @@
+{
+    "yaml.schemas": {
+        "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": "file:///home/malc/homelab/immich/compose-remote-ml.yaml"
+    },
+    "chat.disableAIFeatures": true,
+    "workbench.editorAssociations": {
+        "**/docs/superpowers/**/*.md": "vscode.markdown.preview.editor"
+    }
+}
