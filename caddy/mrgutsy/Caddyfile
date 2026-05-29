@@ -25,6 +25,11 @@
         reverse_proxy miniflux:8080
     }
     
+    @navidrome host music.{$DOMAIN}
+    handle @navidrome {
+        reverse_proxy navidrome:4533
+    }
+
     @recipes host recipes.{$DOMAIN}
     handle @recipes {
         reverse_proxy tandoor-web:80
