@@ -1,0 +1,30 @@
+name: navidrome
+
+networks:
+  navidrome-caddy:
+    name: navidrome-caddy
+
+volumes:
+  data:
+    name: navidrome-data
+
+services:
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: navidrome
+    restart: unless-stopped
+    user: 1000:1000
+    networks:
+      - navidrome-caddy
+    volumes:
+      - data:/data
+      - /mnt/lab/music:/music:ro
+    environment:
+      - TZ=America/Denver
+      - ND_MUSICFOLDER=/music
+      - ND_DATAFOLDER=/data
+      - ND_SCANSCHEDULE=@every 24h
+      - ND_AGENTS=deezer,listenbrainz,lastfm
+      - ND_LASTFM_APIKEY=${LASTFM_API_KEY}
+      - ND_LASTFM_SECRET=${LASTFM_SECRET}
+      - ND_LASTFM_SCROBBLEFIRSTARTISTONLY=true
