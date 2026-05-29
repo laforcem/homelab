@@ -8,6 +8,8 @@
 
 **Tech Stack:** Karakeep (`ghcr.io/karakeep-app/karakeep:release`), Ollama (`ollama/ollama`), Meilisearch (`getmeili/meilisearch:v1.41.0`), Alpine Chrome (`gcr.io/zenika-hub/alpine-chrome:124`), Caddy, Docker Compose
 
+> **Note:** qwen3:4b was originally planned but takes 6+ minutes per inference on CPU-only hardware (even with AVX2) due to chain-of-thought reasoning. Use `qwen2.5:3b` instead — ~7s per request (2s model load + 1.3s eval), clean JSON output, much better tag quality than llama3.2:1b.
+
 ---
 
 ## Executor notes
@@ -262,7 +264,7 @@ NEXTAUTH_URL=https://bookmarks.yourdomain.com
 
 # Ollama — container name resolves via shared 'ollama' Docker network
 OLLAMA_BASE_URL=http://ollama:11434
-INFERENCE_TEXT_MODEL=qwen3:4b
+INFERENCE_TEXT_MODEL=qwen2.5:3b
 INFERENCE_FETCH_TIMEOUT_SEC=120
 
 # Archiving disabled until 6TB RAID is operational
