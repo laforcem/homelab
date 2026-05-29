@@ -23,6 +23,11 @@
         reverse_proxy immich_server:2283
     }
 
+    @navidrome host music.{$DOMAIN}
+    handle @navidrome {
+        reverse_proxy navidrome:4533
+    }
+
     @invidious host invidious.{$DOMAIN}
     handle @invidious {
         # Only allow access from VLAN 10
