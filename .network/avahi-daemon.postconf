@@ -1,0 +1,11 @@
+#!/bin/sh
+CONFIG=$1
+source /usr/sbin/helper.sh
+
+# Add allow-interfaces under [Server]
+pc_insert "deny-interfaces" "allow-interfaces=br0,br52" $CONFIG
+
+# Append reflector config
+pc_append "[reflector]" $CONFIG
+pc_append "enable-reflector=yes" $CONFIG
+
