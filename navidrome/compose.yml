@@ -27,3 +27,17 @@ services:
       - ND_LASTFM_APIKEY=${LASTFM_API_KEY}
       - ND_LASTFM_SECRET=${LASTFM_SECRET}
       - ND_LASTFM_SCROBBLEFIRSTARTISTONLY=true
+  feishin:
+    container_name: feishin
+    image: 'ghcr.io/jeffvli/feishin:1.13'
+    restart: unless-stopped
+    networks:
+      - navidrome-caddy
+    environment:
+        - SERVER_NAME=navidrome 
+        - SERVER_TYPE=navidrome
+        - SERVER_LOCK=true
+        - SERVER_URL=https://nd.${DOMAIN}
+        - REMOTE_URL=https://music.${DOMAIN}
+        - LEGACY_AUTHENTICATION=false
+        - ANALYTICS_DISABLED=true
