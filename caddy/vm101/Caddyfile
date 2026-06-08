@@ -23,11 +23,16 @@
         reverse_proxy immich_server:2283
     }
 
-    @navidrome host music.{$DOMAIN}
+    @feishin host music.{$DOMAIN}
+    handle @feishin {
+        reverse_proxy feishin:9180
+    }
+
+    @navidrome host nd.{$DOMAIN}
     handle @navidrome {
         reverse_proxy navidrome:4533
     }
-    
+
     handle {
         abort
     }    
