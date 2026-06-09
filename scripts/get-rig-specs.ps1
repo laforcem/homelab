@@ -61,7 +61,12 @@ Row "BIOS version"    $bios.SMBIOSBIOSVersion
 Row "BIOS date"       $bios.ReleaseDate
 Blank
 Row "System model"    $sys.Model
-Row "Chassis type"    (Get-CimInstance Win32_SystemEnclosure).ChassisTypes -join ', '
+$chassisMap = @{3='Desktop';4='Low Profile Desktop';6='Mini Tower';7='Tower';8='Portable';
+                9='Laptop';10='Notebook';13='All-in-One';17='Server';23='Rack Mount';
+                35='Mini PC';36='Stick PC'}
+$chassisCodes = (Get-CimInstance Win32_SystemEnclosure).ChassisTypes
+$chassisNames = $chassisCodes | ForEach-Object { if ($chassisMap[$_]) { $chassisMap[$_] } else { "code $_" } }
+Row "Chassis type"    ($chassisNames -join ', ')
 
 
 # ── CPU ───────────────────────────────────────────────────────────────────────
@@ -91,8 +96,8 @@ Blank
 foreach ($d in $dimms) {
     $gb   = [math]::Round($d.Capacity / 1GB, 0)
     $mhz  = $d.ConfiguredClockSpeed
-    $type = switch ($d.MemoryType) {
-        26 { "DDR4" } 34 { "DDR5" } 24 { "DDR3" } default { "type $($d.MemoryType)" }
+    $type = switch ($d.SMBIOSMemoryType) {
+        24 { "DDR3" } 26 { "DDR4" } 34 { "DDR5" } default { "type $($d.SMBIOSMemoryType)" }
     }
     Row "Slot $($d.DeviceLocator)" "$gb GB $type @ ${mhz} MHz | $($d.Manufacturer.Trim()) | P/N: $($d.PartNumber.Trim()) | S/N: $($d.SerialNumber.Trim())"
     Row "  Form factor"            (switch ($d.FormFactor) { 8 {'DIMM'} 12 {'SO-DIMM'} default {"code $($d.FormFactor)"} })
@@ -111,7 +116,29 @@ Section "GPU(s)"
 $gpus = Get-CimInstance Win32_VideoController
 foreach ($g in $gpus) {
     Row "Name"          $g.Name
-    Row "VRAM"          ("{0} MB" -f [math]::Round($g.AdapterRAM / 1MB))
+    # AdapterRAM is UInt32 — overflows for GPUs >4GB. Try nvidia-smi first, then WDDM registry, then WMI.
+    $vramStr = $null
+    if ($g.Name -match 'NVIDIA') {
+        $smiOut = (nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>$null | Select-Object -First 1)
+        if ($smiOut -match '^\d+$') { $vramStr = "$([math]::Round([int]$smiOut)) MB (nvidia-smi)" }
+    }
+    if (-not $vramStr) {
+        $regPath = "HKLM:\SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"
+        $vramReg = Get-ChildItem $regPath -ErrorAction SilentlyContinue |
+            Get-ItemProperty -ErrorAction SilentlyContinue |
+            Where-Object { $_.DriverDesc -and $_.DriverDesc -like "*$($g.Name.Split(' ')[0])*" } |
+            Select-Object -ExpandProperty HardwareInformation.qwMemorySize -ErrorAction SilentlyContinue
+        if ($vramReg) { $vramStr = "{0} MB (registry)" -f [math]::Round($vramReg / 1MB) }
+    }
+    if (-not $vramStr) {
+        $raw = $g.AdapterRAM
+        $vramStr = if ($raw -gt 0 -and $raw -lt 4GB) {
+            "{0} MB (WMI — may be wrong for >4GB cards)" -f [math]::Round($raw / 1MB)
+        } else {
+            "unknown — AdapterRAM=$raw overflowed UInt32; run dxdiag for accurate value"
+        }
+    }
+    Row "VRAM" $vramStr
     Row "Driver ver"    $g.DriverVersion
     Row "Driver date"   $g.DriverDate
     Row "Resolution"    "$($g.CurrentHorizontalResolution) x $($g.CurrentVerticalResolution) @ $($g.CurrentRefreshRate) Hz"
