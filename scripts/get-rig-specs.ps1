@@ -246,3 +246,17 @@ $output | Set-Content -Path $outFile -Encoding UTF8
 $output | Write-Host
 
 Write-Host "`n`nOutput saved to: $outFile" -ForegroundColor Cyan
+
+# ── Upload to gofile ──────────────────────────────────────────────────────────
+
+try {
+    Write-Host "Uploading to gofile..." -ForegroundColor Yellow
+    $server   = (Invoke-RestMethod 'https://api.gofile.io/servers').data.servers[0].name
+    $response = Invoke-RestMethod -Uri "https://$server.gofile.io/contents/uploadfile" `
+                    -Method Post `
+                    -Form @{ file = Get-Item $outFile }
+    $link = $response.data.downloadPage
+    Write-Host "Share this link: $link" -ForegroundColor Green
+} catch {
+    Write-Host "Gofile upload failed — just send the file directly: $outFile" -ForegroundColor Red
+}
