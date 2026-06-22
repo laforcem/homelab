@@ -57,6 +57,7 @@ services:
       - AUDIOMUSE_USER=${AUDIOMUSE_ADMIN_USER:-admin}
       - AUDIOMUSE_PASSWORD=${AUDIOMUSE_ADMIN_PASSWORD}
       - JWT_SECRET=${AUDIOMUSE_JWT_SECRET}
+      - API_TOKEN=${AUDIOMUSE_API_TOKEN}
       - AUTH_ENABLED=True
     volumes:
       - audiomuse-temp-audio-flask:/app/temp_audio
@@ -87,6 +88,7 @@ services:
       - AUDIOMUSE_USER=${AUDIOMUSE_ADMIN_USER:-admin}
       - AUDIOMUSE_PASSWORD=${AUDIOMUSE_ADMIN_PASSWORD}
       - JWT_SECRET=${AUDIOMUSE_JWT_SECRET}
+      - API_TOKEN=${AUDIOMUSE_API_TOKEN}
       - AUTH_ENABLED=True
     volumes:
       - audiomuse-temp-audio-worker:/app/temp_audio
