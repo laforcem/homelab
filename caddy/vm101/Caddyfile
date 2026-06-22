@@ -35,5 +35,15 @@
 
     handle {
         abort
-    }    
+    }
+}
+
+audiomuse.lan.{$DOMAIN} {
+    tls {
+        dns porkbun {
+            api_key {$API_KEY}
+            api_secret_key {$SECRET_KEY}
+        }
+    }
+    reverse_proxy audiomuse-ai-flask:8000
 }
