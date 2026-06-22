@@ -1,0 +1,24 @@
+services:
+  porkbun-ddns:
+    image: mietzen/porkbun-ddns:1.1.27
+    container_name: porkbun-ddns
+    environment:
+      DOMAIN: ${DOMAIN} # Your Porkbun domain
+      SUBDOMAINS: ${SUBDOMAIN} # Subdomains comma spreaded
+      APIKEY: ${API_KEY} # Your Porkbun API-Key
+      SECRETAPIKEY: ${SECRET_KEY} # Your Porkbun Secret-API-Key
+      # PUBLIC_IPS: "1.2.3.4,2001:043e::1" # Set if you got static IP's
+      # FRITZBOX: "192.168.178.1" # Use Fritz!BOX to obtain Public IP's
+      SLEEP: 3600 # Seconds to sleep between DynDNS runs
+      # IPV4: "TRUE" # Set IPv4 address
+      # IPV6: "TRUE" # Set IPv6 address
+      # DEBUG: "FALSE" # DEBUG LOGGING
+    restart: unless-stopped
+
+# # Uncomment below to let it detect ipv6 address:
+#     networks:
+#       - ipv6_enabled
+
+# networks:
+#   ipv6_enabled:
+#     enable_ipv6: true
