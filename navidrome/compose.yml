@@ -115,12 +115,33 @@ services:
           echo "$$AUDIOMUSEAI_PLUGIN_VERSION" > /data/plugins/audiomuseai.version
         fi
 
+  discord-rich-presence-plugin-fetch:
+    image: curlimages/curl:8.11.1
+    container_name: discord-rich-presence-plugin-fetch
+    user: root
+    environment:
+      - DISCORD_RICH_PRESENCE_PLUGIN_VERSION=${DISCORD_RICH_PRESENCE_PLUGIN_VERSION:-v2.0.0}
+    volumes:
+      - data:/data
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /data/plugins
+        installed="$$(cat /data/plugins/discord-rich-presence.version 2>/dev/null || true)"
+        if [ "$$installed" != "$$DISCORD_RICH_PRESENCE_PLUGIN_VERSION" ]; then
+          curl -fsSL -o /data/plugins/discord-rich-presence.ndp "https://github.com/navidrome/discord-rich-presence-plugin/releases/download/$$DISCORD_RICH_PRESENCE_PLUGIN_VERSION/discord-rich-presence.ndp"
+          echo "$$DISCORD_RICH_PRESENCE_PLUGIN_VERSION" > /data/plugins/discord-rich-presence.version
+        fi
+
   navidrome:
     image: deluan/navidrome:0.62.0
     container_name: navidrome
     restart: unless-stopped
     depends_on:
       audiomuseai-plugin-fetch:
+        condition: service_completed_successfully
+      discord-rich-presence-plugin-fetch:
         condition: service_completed_successfully
     networks:
       - navidrome-caddy
