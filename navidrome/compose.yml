@@ -160,6 +160,7 @@ services:
       - ND_PLUGINS_ENABLED=true
       - ND_PLUGINS_AUTORELOAD=true
       - ND_DEVARTISTINFOTIMETOLIVE=1s
+      - ND_BASEURL=https://nd.${DOMAIN}
   feishin:
     container_name: feishin
     image: 'ghcr.io/jeffvli/feishin:1.13'
