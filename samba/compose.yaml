@@ -1,0 +1,19 @@
+name: samba
+
+services:
+  samba:
+    image: ghcr.io/servercontainers/samba:latest
+    container_name: samba
+    restart: unless-stopped
+    ports:
+      - "${SAMBA_BIND_ADDRESS}:445:445"
+    volumes:
+      - /mnt/lab:/shares/lab
+    environment:
+      - TZ=America/Denver
+      - AVAHI_DISABLE=true
+      - WSDD2_DISABLE=true
+      - NETBIOS_DISABLE=true
+      - ACCOUNT_malc=${SAMBA_MALC_PASSWORD}
+      - UID_malc=1000
+      - SAMBA_VOLUME_CONFIG_lab=[homelab]; path = /shares/lab; valid users = malc; read only = no; browseable = yes; guest ok = no
