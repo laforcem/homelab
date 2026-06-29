@@ -6,6 +6,7 @@ setup() {
     MOCK_BIN="$(mktemp -d)"
     export PATH="$MOCK_BIN:$PATH"
     export BOOT_VOLUME_ID="ocid1.bootvolume.oc1.iad.testvol"
+    export COMPARTMENT_ID="ocid1.tenancy.oc1.iad.testtenancy"
     export BACKUP_NAME_PREFIX="test-backup"
     export OCI_CLI_KEY_FILE="/dev/null"
     rm -f "$BATS_TEST_TMPDIR/oci_calls.log"

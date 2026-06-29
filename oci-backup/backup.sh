@@ -3,6 +3,7 @@ set -euo pipefail
 
 BACKUP_NAME_PREFIX="${BACKUP_NAME_PREFIX:?BACKUP_NAME_PREFIX is required}"
 BOOT_VOLUME_ID="${BOOT_VOLUME_ID:?BOOT_VOLUME_ID is required}"
+COMPARTMENT_ID="${COMPARTMENT_ID:?COMPARTMENT_ID is required}"
 export OCI_CLI_KEY_FILE="${OCI_CLI_KEY_FILE:-/run/oci_key.pem}"
 
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
@@ -10,6 +11,7 @@ NEW_NAME="${BACKUP_NAME_PREFIX}-${TIMESTAMP}"
 
 echo "Checking for existing backup with prefix '${BACKUP_NAME_PREFIX}'..."
 LIST_OUTPUT=$(oci bv boot-volume-backup list \
+    --compartment-id "${COMPARTMENT_ID}" \
     --boot-volume-id "${BOOT_VOLUME_ID}" \
     --lifecycle-state AVAILABLE \
     --all \
