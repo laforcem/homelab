@@ -13,13 +13,19 @@ LIST_OUTPUT=$(oci bv boot-volume-backup list \
     --boot-volume-id "${BOOT_VOLUME_ID}" \
     --lifecycle-state AVAILABLE \
     --all \
-    --output json \
-    2>/dev/null) || LIST_OUTPUT='{"data":[]}'
+    --output json) || LIST_OUTPUT='{"data":[]}'
+
+MATCH_COUNT=$(echo "$LIST_OUTPUT" \
+    | jq --arg prefix "$BACKUP_NAME_PREFIX" \
+        '[.data[] | select(."display-name" | startswith($prefix))] | length')
+
+if [ "${MATCH_COUNT:-0}" -gt 1 ]; then
+    echo "WARNING: Found ${MATCH_COUNT} backups matching prefix '${BACKUP_NAME_PREFIX}' — using first, others may need manual cleanup" >&2
+fi
 
 EXISTING_ID=$(echo "$LIST_OUTPUT" \
     | jq -r --arg prefix "$BACKUP_NAME_PREFIX" \
-        '.data[] | select(."display-name" | startswith($prefix)) | .id' \
-    | head -1)
+        'first(.data[] | select(."display-name" | startswith($prefix)) | .id) // empty')
 
 if [ -n "$EXISTING_ID" ]; then
     echo "Found existing backup: ${EXISTING_ID}"
@@ -33,8 +39,7 @@ CREATE_OUTPUT=$(oci bv boot-volume-backup create \
     --type FULL \
     --display-name "${NEW_NAME}" \
     --wait-for-state AVAILABLE \
-    --output json \
-    2>/dev/null) || CREATE_OUTPUT='{"data":{"id":""}}'
+    --output json) || CREATE_OUTPUT='{"data":{"id":""}}'
 
 NEW_ID=$(echo "$CREATE_OUTPUT" | jq -r '.data.id // empty')
 
@@ -47,11 +52,13 @@ echo "New backup created: ${NEW_ID}"
 
 if [ -n "$EXISTING_ID" ]; then
     echo "Deleting old backup: ${EXISTING_ID}"
-    oci bv boot-volume-backup delete --force \
+    if oci bv boot-volume-backup delete --force \
         --boot-volume-backup-id "${EXISTING_ID}" \
-        --wait-for-state TERMINATED \
-        2>/dev/null
-    echo "Old backup deleted"
+        --wait-for-state TERMINATED; then
+        echo "Old backup deleted"
+    else
+        echo "WARNING: Failed to delete old backup ${EXISTING_ID} — manual cleanup may be required" >&2
+    fi
 fi
 
 echo "Backup complete"
