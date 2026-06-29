@@ -7,7 +7,7 @@ set -eu
 # Write private key to fixed path. OCI_CLI_KEY_FILE env var in the crontab
 # points here so crond-spawned processes can find it without inheriting shell env.
 install -m 600 /dev/null /run/oci_key.pem
-printf '%s' "${OCI_CLI_KEY_CONTENT}" > /run/oci_key.pem
+printf '%s\n' "${OCI_CLI_KEY_CONTENT}" > /run/oci_key.pem
 
 # Write crontab. Set OCI_CLI_KEY_FILE as a crontab variable so crond passes it
 # to each invocation of backup.sh.
