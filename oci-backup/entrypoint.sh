@@ -13,6 +13,12 @@ printf '%s\n' "${OCI_CLI_KEY_CONTENT}" > /run/oci_key.pem
 # to each invocation of backup.sh.
 cat > /etc/crontabs/root << EOF
 OCI_CLI_KEY_FILE=/run/oci_key.pem
+OCI_CLI_USER=${OCI_CLI_USER}
+OCI_CLI_FINGERPRINT=${OCI_CLI_FINGERPRINT}
+OCI_CLI_TENANCY=${OCI_CLI_TENANCY}
+OCI_CLI_REGION=${OCI_CLI_REGION}
+BOOT_VOLUME_ID=${BOOT_VOLUME_ID}
+BACKUP_NAME_PREFIX=${BACKUP_NAME_PREFIX}
 ${BACKUP_INTERVAL_CRON} /usr/local/bin/backup.sh >> /proc/1/fd/1 2>&1
 EOF
 
