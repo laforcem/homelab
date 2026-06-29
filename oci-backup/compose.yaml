@@ -1,0 +1,6 @@
+services:
+  oci-backup:
+    container_name: oci-backup
+    build: .
+    restart: always
+    env_file: .env
