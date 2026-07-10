@@ -135,7 +135,7 @@ services:
         fi
 
   navidrome:
-    image: deluan/navidrome:0.62.0
+    image: deluan/navidrome:0.63.1
     container_name: navidrome
     restart: unless-stopped
     depends_on:
