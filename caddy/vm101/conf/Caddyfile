@@ -1,0 +1,49 @@
+{
+    email {$EMAIL}
+}
+
+*.{$DOMAIN} {
+    tls {
+        dns porkbun {
+            api_key {$API_KEY}
+            api_secret_key {$SECRET_KEY}
+        }
+    }
+    
+    @plex host plex.{$DOMAIN}
+    handle @plex {
+        reverse_proxy plex:32400 {
+            header_up X-Forwarded-Proto https
+            header_up X-Forwarded-Host plex.{$DOMAIN}
+        }
+    }
+    
+    @immich host photos.{$DOMAIN}
+    handle @immich {
+        reverse_proxy immich_server:2283
+    }
+
+    @feishin host music.{$DOMAIN}
+    handle @feishin {
+        reverse_proxy feishin:9180
+    }
+
+    @navidrome host nd.{$DOMAIN}
+    handle @navidrome {
+        reverse_proxy navidrome:4533
+    }
+
+    handle {
+        abort
+    }
+}
+
+audiomuse.lan.{$DOMAIN} {
+    tls {
+        dns porkbun {
+            api_key {$API_KEY}
+            api_secret_key {$SECRET_KEY}
+        }
+    }
+    reverse_proxy audiomuse-ai-flask:8000
+}

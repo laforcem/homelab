@@ -1,7 +1,8 @@
 services:
   portainer_agent:
-    image: portainer/agent:2.40.0-alpine
+    image: portainer/agent:2.39.4-alpine
     container_name: portainer_agent
+    init: true
     restart: always
     ports:
       - "9001:9001"

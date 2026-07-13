@@ -11,8 +11,6 @@ networks:
     external: true
   plex-caddy:
     external: true
-  invidious-caddy:
-    external: true
   navidrome-caddy:
     external: true
 
@@ -31,11 +29,10 @@ services:
       - "443:443"
       - "80:80"  # HTTP for redirection
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./conf:/etc/caddy:ro
       - data:/data
       - config:/config
     networks:
       - immich-caddy
       - plex-caddy
-      - invidious-caddy
       - navidrome-caddy
