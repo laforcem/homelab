@@ -37,7 +37,7 @@ for name in icloud immich movies music; do
   # shellcheck disable=SC2086
   if rclone copy "$src" "$dest" \
       --backup-dir "$backup_dir" \
-      --transfers=4 --checkers=8 --checksum \
+      --transfers=4 --checkers=8 \
       $excludes \
       --log-file "$log_file"; then
     curl -fsS --retry 3 "https://hc-ping.com/${uuid}" > /dev/null
