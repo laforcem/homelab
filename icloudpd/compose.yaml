@@ -8,45 +8,89 @@ networks:
          com.docker.network.bridge.name: icloudpd
 
 volumes:
-   icloudpd_malc_config:
-      name: icloudpd_malc_config
-   icloudpd_grug_config:
-      name: icloudpd_grug_config
+   icloudpd_malc_session:
+      name: icloudpd_malc_session
+   icloudpd_grug_session:
+      name: icloudpd_grug_session
+   icloudpd_notifier_state:
+      name: icloudpd_notifier_state
 
 services:
    icloudpd_malc:
       container_name: icloudpd-malc
       hostname: icloudpd-malc
+      image: ghcr.io/laforcem/icloudpd:v1.0.0-rc3
       networks:
          icloudpd:
             aliases:
-               - icloudpd_malc
+               - icloudpd-malc
       environment:
          - TZ=America/Denver
-         - user=malc
-      image: boredazfcuk/icloudpd:1.0.1359_28-02-2026
-      healthcheck:
-         test: /usr/local/bin/healthcheck.sh
-         start_period: 30s
+         - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+         - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID_MALC}
+         - ICLOUDPD_ACCOUNT_NAME=malc
       restart: always
+      ports:
+         - "8081:8080"
       volumes:
-         - icloudpd_malc_config:/config
-         - /mnt/lab/icloud/malc:/home/user/iCloud/
+         - icloudpd_malc_session:/home/icloudpd/.pyicloud
+         - /mnt/lab/icloud/malc:/data
+         - ./deploy-scripts:/deploy-scripts:ro
+      command:
+         - --directory=/data
+         - --username
+         - ${APPLE_ID_MALC}
+         - --cookie-directory=/home/icloudpd/.pyicloud
+         - --xmp-sidecar
+         - --watch-with-interval=86400
+         - --password-provider=webui
+         - --mfa-provider=webui
+         - --notification-script=/deploy-scripts/notify-expiry.sh
+
    icloudpd_grug:
       container_name: icloudpd-grug
       hostname: icloudpd-grug
+      image: ghcr.io/laforcem/icloudpd:v1.0.0-rc3
       networks:
          icloudpd:
             aliases:
-               - icloudpd_grug
+               - icloudpd-grug
       environment:
          - TZ=America/Denver
-         - user=grug
-      image: boredazfcuk/icloudpd:1.0.1359_28-02-2026
-      healthcheck:
-         test: /usr/local/bin/healthcheck.sh
-         start_period: 30s
+         - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+         - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID_GRUG}
+         - ICLOUDPD_ACCOUNT_NAME=grug
+      restart: always
+      ports:
+         - "8082:8080"
+      volumes:
+         - icloudpd_grug_session:/home/icloudpd/.pyicloud
+         - /mnt/lab/icloud/grug:/data
+         - ./deploy-scripts:/deploy-scripts:ro
+      command:
+         - --directory=/data
+         - --username
+         - ${APPLE_ID_GRUG}
+         - --cookie-directory=/home/icloudpd/.pyicloud
+         - --xmp-sidecar
+         - --watch-with-interval=86400
+         - --password-provider=webui
+         - --mfa-provider=webui
+         - --log-level=info
+         - --notification-script=/deploy-scripts/notify-expiry.sh
+
+   icloudpd_notifier:
+      container_name: icloudpd-notifier
+      hostname: icloudpd-notifier
+      image: alpine:3.23
+      networks:
+         - icloudpd
+      environment:
+         - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+         - TELEGRAM_CHAT_ID_MALC=${TELEGRAM_CHAT_ID_MALC}
+         - TELEGRAM_CHAT_ID_GRUG=${TELEGRAM_CHAT_ID_GRUG}
       restart: always
       volumes:
-         - icloudpd_grug_config:/config
-         - /mnt/lab/icloud/grug:/home/user/iCloud/
+         - icloudpd_notifier_state:/state
+         - ./deploy-scripts:/deploy-scripts:ro
+      entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl >/dev/null && exec /deploy-scripts/webui-status-poller.sh"]
