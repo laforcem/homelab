@@ -16,14 +16,12 @@ secrets:
     file: ./secrets/telegram_bot_token.txt
   telegram_allowed_chat_ids:
     file: ./secrets/telegram_allowed_chat_ids.txt
-  icloudpd_webui_external_url:
-    file: ./secrets/icloudpd_webui_external_url.txt
 
 services:
   icloudpd:
     container_name: icloudpd
     hostname: icloudpd
-    image: ghcr.io/laforcem/icloudpd:v1.1.0
+    image: ghcr.io/laforcem/icloudpd:v1.1.0-rc7
     networks:
       - icloudpd
     environment:
@@ -43,16 +41,15 @@ services:
   icloudpd-telegram-bot:
     container_name: icloudpd-telegram-bot
     hostname: icloudpd-telegram-bot
-    image: ghcr.io/laforcem/icloudpd-telegram-bot:v1.1.0
+    image: ghcr.io/laforcem/icloudpd-telegram-bot:v1.1.0-rc7
     networks:
       - icloudpd
     environment:
       - TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
       - TELEGRAM_ALLOWED_CHAT_IDS_FILE=/run/secrets/telegram_allowed_chat_ids
       - ICLOUDPD_BASE_URL=http://icloudpd:2011
-      - ICLOUDPD_WEBUI_EXTERNAL_URL_FILE=/run/secrets/icloudpd_webui_external_url
+      - ICLOUDPD_WEBUI_EXTERNAL_URL=http://192.168.40.101:2011
     secrets:
       - telegram_bot_token
       - telegram_allowed_chat_ids
-      - icloudpd_webui_external_url
     restart: always
