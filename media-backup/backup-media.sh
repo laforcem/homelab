@@ -19,7 +19,7 @@ declare -A EXTRA_EXCLUDES=(
 declare -A HC_UUIDS=(
   [icloud]="36ef3811-6cf7-4b2e-835f-b8bb49f21540"
   [immich]="f6e1e429-237c-4736-a55d-fdf08c750d28"
-  [movies]="3875b203-362b-445d-bbac-8530a4843f57"
+  [movies]="e64a6457-86e2-4fcd-8991-bcb77f1df478"
   [music]="6f9bbd04-0ce0-419a-ab29-c65b814e9ed9"
 )
 
