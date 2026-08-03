@@ -14,7 +14,12 @@
     handle @actual {
         reverse_proxy actual:5006
     }
-    
+
+    @actual_mcp host mcp-budget.{$DOMAIN}
+    handle @actual_mcp {
+        reverse_proxy actual-mcp:3600
+    }
+
     @audiobookshelf host audiobooks.{$DOMAIN}
     handle @audiobookshelf {
         reverse_proxy audiobookshelf:80
