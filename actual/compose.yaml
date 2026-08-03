@@ -20,9 +20,10 @@ services:
       - ACTUAL_PASSWORD=${PASSWORD}
       - ACTUAL_BUDGET_SYNC_ID=${SYNC_ID}
       - MCP_SSE_AUTHORIZATION=${MCP_SSE_AUTHORIZATION}
-      - MCP_BRIDGE_PUBLIC_HOST=mcp-budget.${DOMAIN}
+      - MCP_BRIDGE_PUBLIC_HOST=budget.${DOMAIN}
       - MCP_BRIDGE_PUBLIC_SCHEME=https
       - MCP_BRIDGE_USE_TLS=true
+      - MCP_BRIDGE_HTTP_PATH=/mcp/http
     volumes:
       - mcp_data:/app/data
     healthcheck:
