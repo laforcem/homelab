@@ -11,7 +11,7 @@ volumes:
 services:
   actual_mcp:
     container_name: actual-mcp
-    image: ghcr.io/agigante80/actual-mcp-server:v0.9.3
+    image: ghcr.io/agigante80/actual-mcp-server:0.9.3
     networks:
       - actual-caddy
     environment:
