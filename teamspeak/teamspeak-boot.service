@@ -1,0 +1,14 @@
+[Unit]
+Description=Bring up the teamspeak compose stack (re-registers the QEMU amd64 binfmt_misc handler before starting the amd64-only teamspeak container)
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/ubuntu/homelab/teamspeak
+ExecStart=/usr/bin/docker compose up -d
+
+[Install]
+WantedBy=multi-user.target
