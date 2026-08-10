@@ -24,6 +24,7 @@ Each host's Caddy config lives under `caddy/<host>/`. Which Caddyfile a service'
 - **`docs/current-state.md`** — hand-written current inventory: what runs where, storage, network, backup. Check here first for "what does the lab look like right now" — including per-host workload lists, which are deliberately not duplicated in this file.
 - **Live systems** — anything a running system already knows (versions, capacity, health) is queried, not transcribed. Don't copy figures from `qm list`, `pvesm status`, or similar into a doc; they go stale immediately and the doc becomes actively misleading.
 - **Obsidian vault** (private, not in this repo) — roadmap, sequencing, hardware planning, and the reasoning behind them.
+- **GitHub Project board** (https://github.com/users/laforcem/projects/1) — day-to-day task/issue status. The vault roadmap sets direction and reasoning; it deliberately doesn't track task-level status itself.
 
 ## Local setup
 
