@@ -34,7 +34,6 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 
 | Service | Route |
 |---|---|
-| plex | `plex.$DOMAIN` |
 | immich_server | `photos.$DOMAIN` |
 | feishin | `music.$DOMAIN` |
 | navidrome | `nd.$DOMAIN` |
