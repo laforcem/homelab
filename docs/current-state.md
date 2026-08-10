@@ -51,7 +51,6 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | teamspeak | has its own subdomain, but not through Caddy — it's raw UDP (9987), not HTTP, so it can't be reverse-proxied; the DNS record points straight at mrgutsy |
 | herobrines-mansion, mc-sloth-kingdom (Minecraft) | not proxied, no subdomain — voice/game traffic, kept off the home network deliberately |
 
-`airconnect` is defined in the repo (`airconnect/compose.yaml`) but not running on any host — parked, not scheduled to return; see its design spec in `docs/superpowers/specs/` for why.
 
 ## Storage
 
