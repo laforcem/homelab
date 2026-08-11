@@ -67,7 +67,7 @@ The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrat
 
 ## Backup
 
-- **PBS** — whole-VM backup for vm100 and vm101's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore. A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`). Initial catch-up may take several days — Backblaze's account-level daily storage cap throttles the first bulk upload, and the job just resumes each night rather than restarting; check `proxmox-backup-manager sync-job list` / task log on `pbs` for current status rather than assuming this note reflects today's progress.
+- **PBS** — whole-VM backup for vm100 and vm101's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore. A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`).
 - **vm101 media library** (`truelab`, `/mnt/lab`) — `media-backup/` rclone-syncs it to a Dropbox remote (`dropbox:Homelab/<name>`), independent of PBS.
 - **`audiobookshelf`** mounts a Dropbox rclone remote directly (`dropbox:Homelab/audiobookshelf/audiobooks`) rather than being backed up after the fact.
 - **`oci-backup`** (on vm100) backs up OCI-hosted resources — see `oci-backup/README.md` for scope.
