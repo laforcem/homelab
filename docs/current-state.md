@@ -60,13 +60,14 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 |---|---|---|
 | `local-zfs` (`rpool`) | 238GB NVMe, ZFS | All three VMs' OS/boot disks |
 | `truelab` | ~500GB HDD, LVM-thin | vm101's media data disk only (`/mnt/lab`) |
-| `pbs-ssd` | 180GB SSD | The `pbs` VM's single datastore (`backups`) |
+| `pbs-ssd` | 180GB SSD | The `pbs` VM's local datastore (`backups`) |
+| `pbs-b2-cache` | ~500GB HDD (ex-`lab` drive) | Local cache for the `pbs` VM's B2-backed offsite datastore (`b2-offsite`) |
 
 The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrated to `local-zfs` (issue #34). Current pool usage is live state; query it (`pvesm status`, `zpool list`) rather than trusting a number written here.
 
 ## Backup
 
-- **PBS** — whole-VM backup for vm100 and vm101's OS disks (vm101's media disk exceeds the datastore and is out of scope). One datastore, no sync job configured yet — the Backblaze B2 offsite copy (roadmap, "Offsite backup destination") has not landed.
+- **PBS** — whole-VM backup for vm100 and vm101's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore. A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`). Initial catch-up may take several days — Backblaze's account-level daily storage cap throttles the first bulk upload, and the job just resumes each night rather than restarting; check `proxmox-backup-manager sync-job list` / task log on `pbs` for current status rather than assuming this note reflects today's progress.
 - **vm101 media library** (`truelab`, `/mnt/lab`) — `media-backup/` rclone-syncs it to a Dropbox remote (`dropbox:Homelab/<name>`), independent of PBS.
 - **`audiobookshelf`** mounts a Dropbox rclone remote directly (`dropbox:Homelab/audiobookshelf/audiobooks`) rather than being backed up after the fact.
 - **`oci-backup`** (on vm100) backs up OCI-hosted resources — see `oci-backup/README.md` for scope.
@@ -87,5 +88,4 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 ## Known gaps as of this writing
 
 - No Grafana/Prometheus cluster observability yet (roadmap Phase 0, not started).
-- PBS offsite copy to Backblaze B2 not configured.
 - `speedtest-tracker`, `speedtest-grafana`, and `samba` run `:latest` rather than a pinned tag — the only unpinned images in the estate.
