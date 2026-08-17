@@ -85,6 +85,10 @@ VLANs, by number and purpose (router config: `.network/iptables.sh`):
 
 The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD`, `DMZ_FWD`, etc.) rather than relying on switch-level ACLs alone.
 
+## Terraform
+
+`terraform/` provisions `pve` VMs via `bpg/proxmox`, authenticating with an API token pulled from Bitwarden Secrets Manager — no secrets committed, state is local-only. A Debian 13 cloud-init template exists (VMID 103, `debian-template`); future VM issues clone from it.
+
 ## Known gaps as of this writing
 
 - No Grafana/Prometheus cluster observability yet (roadmap Phase 0, not started).
