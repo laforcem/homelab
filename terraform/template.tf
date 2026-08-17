@@ -6,12 +6,10 @@ resource "proxmox_download_file" "debian_image" {
     file_name = "debian-13-generic-amd64.qcow2"
 }
 
-resource "proxmox_virtual_environment_vm" "vm" {
+resource "proxmox_virtual_environment_vm" "template" {
     name = "debian-template"
     node_name = "pve0"
     template = true
-    cpu { cores = 2 }
-    memory { dedicated = 2048 }
     agent { enabled = true }
     serial_device {}
     network_device { bridge = "vmbr0" }
