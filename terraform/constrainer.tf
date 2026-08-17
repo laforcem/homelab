@@ -1,6 +1,7 @@
 resource "proxmox_virtual_environment_vm" "constrainer" {
     name = "constrainer"
     node_name = "pve0"
+    scsi_hardware = "virtio-scsi-single"
     clone { vm_id = proxmox_virtual_environment_vm.template.id }
     cpu { cores = 2 }
     memory { dedicated = 2048 }
@@ -26,6 +27,9 @@ resource "proxmox_virtual_environment_vm" "constrainer" {
             username = "malc"
             keys = [trimspace(data.local_file.pubkey.content)]
         }
+    }
+    operating_system {
+        type = "l26"
     }
 }
 
