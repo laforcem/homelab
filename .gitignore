@@ -6,3 +6,9 @@ router-sync/.env
 router-sync/id_ed25519
 .claude/
 docs/superpowers/
+
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.bw-provider-state
