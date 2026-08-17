@@ -12,3 +12,4 @@ docs/superpowers/
 *.tfstate.backup
 *.tfvars
 .bw-provider-state
+*.tfstate.*.backup

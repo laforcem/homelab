@@ -12,6 +12,7 @@ This file describes what's running today, on docker-compose. It gets rewritten w
 | `vm100` | VMID 100, docker-compose | `192.168.10.100` | Debian 12 |
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `pbs` | VMID 102, Proxmox Backup Server | `192.168.10.103` | PBS 4.2.0 |
+| `constrainer` | VMID 104, vm100 successor (base OS only, no workloads yet) | `192.168.10.104` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
 `mrgutsy` deliberately holds only workloads that don't belong on the home network: bandwidth/latency-sensitive voice and game traffic, plus a handful of services repatriated ahead of the k3s migration. Everything else runs on `pve`'s VMs.
@@ -87,7 +88,7 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 
 ## Terraform
 
-`terraform/` provisions `pve` VMs via `bpg/proxmox`, authenticating with an API token pulled from Bitwarden Secrets Manager — no secrets committed, state is local-only. A Debian 13 cloud-init template exists (VMID 103, `debian-template`); future VM issues clone from it.
+`terraform/` provisions `pve` VMs via `bpg/proxmox`, authenticating with an API token pulled from Bitwarden Secrets Manager — no secrets committed, state is local-only. A Debian 13 cloud-init template exists (VMID 103, `debian-template`). `constrainer.tf` clones it into VMID 104 (`192.168.10.104`, VLAN 10) — the vm100 successor from #51. Workload migration is #53, not done yet.
 
 ## Known gaps as of this writing
 
