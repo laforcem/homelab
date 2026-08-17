@@ -134,6 +134,25 @@ services:
           echo "$$DISCORD_RICH_PRESENCE_PLUGIN_VERSION" > /data/plugins/discord-rich-presence.version
         fi
 
+  apple-music-plugin-fetch:
+    image: curlimages/curl:8.11.1
+    container_name: apple-music-plugin-fetch
+    user: root
+    environment:
+      - APPLE_MUSIC_PLUGIN_VERSION=${APPLE_MUSIC_PLUGIN_VERSION:-v0.2.0}
+    volumes:
+      - data:/data
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /data/plugins
+        installed="$$(cat /data/plugins/apple-music.version 2>/dev/null || true)"
+        if [ "$$installed" != "$$APPLE_MUSIC_PLUGIN_VERSION" ]; then
+          curl -fsSL -o /data/plugins/apple-music.ndp "https://github.com/navidrome/apple-music-plugin/releases/download/$$APPLE_MUSIC_PLUGIN_VERSION/apple-music.ndp"
+          echo "$$APPLE_MUSIC_PLUGIN_VERSION" > /data/plugins/apple-music.version
+        fi
+
   navidrome:
     image: deluan/navidrome:0.63.1
     container_name: navidrome
@@ -142,6 +161,8 @@ services:
       audiomuseai-plugin-fetch:
         condition: service_completed_successfully
       discord-rich-presence-plugin-fetch:
+        condition: service_completed_successfully
+      apple-music-plugin-fetch:
         condition: service_completed_successfully
     networks:
       - navidrome-caddy
@@ -153,7 +174,7 @@ services:
       - ND_MUSICFOLDER=/music
       - ND_DATAFOLDER=/data
       - ND_SCANSCHEDULE=@every 24h
-      - ND_AGENTS=deezer,listenbrainz,lastfm,audiomuseai
+      - ND_AGENTS=deezer,listenbrainz,lastfm,audiomuseai,apple-music
       - ND_LASTFM_APIKEY=${LASTFM_API_KEY}
       - ND_LASTFM_SECRET=${LASTFM_SECRET}
       - ND_LASTFM_SCROBBLEFIRSTARTISTONLY=true
