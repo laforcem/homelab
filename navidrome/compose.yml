@@ -214,6 +214,7 @@ services:
       - ND_PLUGINS_AUTORELOAD=true
       - ND_DEVARTISTINFOTIMETOLIVE=1s
       - ND_BASEURL=https://nd.${DOMAIN}
+      - ND_COVERARTPRIORITY=cover.webp,folder.webp,front.webp,cover.*,folder.*,front.*,embedded,external
   feishin:
     container_name: feishin
     image: 'ghcr.io/jeffvli/feishin:1.13'
