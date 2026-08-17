@@ -8,11 +8,11 @@ Config and compose files for a personal homelab, one service per directory. Larg
 
 ## Substrate
 
-Everything below runs on **docker-compose today**. The lab is migrating to k3s + Terraform + GitOps; that migration is tracked outside this repo, in a private roadmap document, and hasn't started yet. Don't assume any Kubernetes tooling exists until a workload actually shows up as manifests in this repo.
+Everything below runs on **docker-compose today**. The lab is migrating to k3s + Terraform + GitOps; that migration is tracked outside this repo, in a private roadmap document. Terraform groundwork has started (`terraform/`, `bpg/proxmox` provider, a cloud-init template on `pve`) but no real workload VMs exist yet. Don't assume any Kubernetes tooling exists until a workload actually shows up as manifests in this repo.
 
 ## Hosts
 
-- **pve** (`192.168.10.2`) — Proxmox VE, single physical host, 6c/6t. Runs three VMs: **vm100** (`192.168.10.100`), **vm101** (`192.168.40.101`), and **pbs** (`192.168.10.103`, Proxmox Backup Server).
+- **pve** (`192.168.10.2`) — Proxmox VE, single physical host, 6c/6t. Runs three VMs: **vm100** (`192.168.10.100`), **vm101** (`192.168.40.101`), and **pbs** (`192.168.10.103`, Proxmox Backup Server). `pve` is only the SSH/DNS target — its actual Proxmox cluster node name (needed for Terraform's `node_name`) is **pve0**.
 - **mrgutsy** — a separate cloud VM (OCI), not on the home network. **Its address is deliberately not committed to this repo — do not add it to any tracked file.**
 
 What runs on each host, and the routes serving it, is inventory — see "Where state lives" below rather than assuming this list is current.
