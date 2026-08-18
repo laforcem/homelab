@@ -22,6 +22,8 @@ BWS_ACCESS_TOKEN=$BW_ACCESS_TOKEN
 ```
 (Terraform's provider and Ansible's `bitwarden.secrets` collection expect differently-named env vars for the same token.)
 
+Tailscale's reusable auth key (stored in the same bws project) expires after 90 days by default — if the "Start Tailscale" task starts failing, check whether it needs rotating before assuming it's an Ansible/collection problem.
+
 ## Usage
 
 ```
