@@ -88,3 +88,31 @@
     name: malc
     groups: docker
     append: true
+
+- name: Create tempdir for doco-cd bootstrap
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: doco-cd
+  register: doco_cd_tempdir
+
+- name: Deploy doco-cd Compose file
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../doco-cd/compose.yaml"
+    dest: "{{ doco_cd_tempdir.path }}/compose.yaml"
+    mode: "0644"
+
+- name: Check if doco-cd is already running
+  community.docker.docker_container_info:
+    name: doco-cd
+  register: doco_cd_check
+
+- name: Bootstrap doco-cd (first run only)
+  community.docker.docker_compose_v2:
+    project_src: "{{ doco_cd_tempdir.path }}"
+    state: present
+  when: not doco_cd_check.exists
+
+- name: Remove doco-cd bootstrap tempdir
+  ansible.builtin.file:
+    path: "{{ doco_cd_tempdir.path }}"
+    state: absent
