@@ -1,0 +1,9 @@
+all:
+  vars:
+    ansible_user: malc
+  children:
+    utility:
+      hosts:
+        constrainer:
+          ansible_host: 192.168.10.104
+    k3s:
