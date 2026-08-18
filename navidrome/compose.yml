@@ -11,7 +11,6 @@ volumes:
   audiomuse-redis-data:
   audiomuse-temp-audio-flask:
   audiomuse-temp-audio-worker:
-  animated-artworks-cache:
 
 services:
   audiomuse-redis:
@@ -153,37 +152,6 @@ services:
           curl -fsSL -o /data/plugins/apple-music.ndp "https://github.com/navidrome/apple-music-plugin/releases/download/$$APPLE_MUSIC_PLUGIN_VERSION/apple-music.ndp"
           echo "$$APPLE_MUSIC_PLUGIN_VERSION" > /data/plugins/apple-music.version
         fi
-
-  animated-artworks:
-    image: ghcr.io/m8tec/apple-music-animated-artworks:latest
-    container_name: apple-music-animated-artworks
-    platform: linux/amd64
-    networks:
-      - navidrome-caddy
-    volumes:
-      - animated-artworks-cache:/app/data
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - CACHE_FILE_PATH=/app/data/cache_database.json
-    restart: unless-stopped
-
-  animated-artwork-downloader:
-    image: ghcr.io/m8tec/animated-artwork-downloader:latest
-    container_name: animated-artwork-downloader
-    networks:
-      - navidrome-caddy
-    depends_on:
-      - animated-artworks
-    environment:
-      - SyncConfig__LibraryPath=/music
-      - SyncConfig__ArtworkApiUrl=http://animated-artworks:8080
-      - SyncConfig__RescanIntervalMinutes=${ANIMATED_COVER_RESCAN_INTERVAL_MINUTES:-1440}
-      - SyncConfig__DelayBetweenApiRequestsMs=${ANIMATED_COVER_API_DELAY_MS:-2000}
-      - SyncConfig__MinVariantResolution=${ANIMATED_COVER_MIN_RESOLUTION:-1000}
-      - SyncConfig__WebpQuality=${ANIMATED_COVER_WEBP_QUALITY:-50}
-    volumes:
-      - /mnt/lab/music:/music
-    restart: unless-stopped
 
   navidrome:
     image: deluan/navidrome:0.63.1
