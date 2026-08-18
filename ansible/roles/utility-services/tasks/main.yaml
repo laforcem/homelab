@@ -15,3 +15,16 @@
     name: tailscale
     state: present
     update_cache: true
+
+- name: Resolve Tailscale auth key
+  ansible.builtin.set_fact:
+    tailscale_authkey_resolved: "{{ tailscale_authkey }}"
+  no_log: true
+
+- name: Start Tailscale
+  ansible.builtin.command:
+    cmd: >-
+      tailscale up
+      --authkey={{ tailscale_authkey_resolved }}
+      --advertise-routes=192.168.10.0/24,192.168.40.0/24
+      --hostname=constrainer
