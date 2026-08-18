@@ -174,13 +174,12 @@ services:
       - ND_MUSICFOLDER=/music
       - ND_DATAFOLDER=/data
       - ND_SCANSCHEDULE=@every 24h
-      - ND_AGENTS=deezer,listenbrainz,lastfm,audiomuseai,apple-music
+      - ND_AGENTS=apple-music,deezer,listenbrainz,lastfm,audiomuseai
       - ND_LASTFM_APIKEY=${LASTFM_API_KEY}
       - ND_LASTFM_SECRET=${LASTFM_SECRET}
       - ND_LASTFM_SCROBBLEFIRSTARTISTONLY=true
       - ND_PLUGINS_ENABLED=true
       - ND_PLUGINS_AUTORELOAD=true
-      - ND_DEVARTISTINFOTIMETOLIVE=1s
       - ND_BASEURL=https://nd.${DOMAIN}
       - ND_COVERARTPRIORITY=cover.webp,folder.webp,front.webp,cover.*,folder.*,front.*,embedded,external
   feishin:
