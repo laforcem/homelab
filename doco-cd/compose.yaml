@@ -8,6 +8,8 @@ services:
     environment:
       TZ: America/Denver
       DOCKER_HOST: tcp://docker-socket-proxy:2375
+      SECRET_PROVIDER: bitwarden_sm
+      SECRET_PROVIDER_ACCESS_TOKEN: ${SECRET_PROVIDER_ACCESS_TOKEN}
       POLL_CONFIG: |
         - url: https://github.com/laforcem/homelab.git
           reference: refs/heads/main
@@ -17,8 +19,29 @@ services:
               working_dir: doco-cd
               compose_files:
                 - compose.yaml
+              env_files:
+                - /secrets/doco-cd.env
+            - name: oci-backup
+              working_dir: oci-backup
+              compose_files:
+                - compose.yaml
+              external_secrets:
+                OCI_CLI_USER: "fc755bbc-3ae9-4af5-8a12-b4ab000eef25"
+                OCI_CLI_TENANCY: "4e09e83c-3749-48bf-a5e3-b4ab000f1c6d"
+                OCI_CLI_KEY_CONTENT: "8a9a02f2-1883-4a25-bc75-b4ab00101cde"
+                BOOT_VOLUME_ID: "4b5d7b03-572f-4859-b64a-b4ab00105cb1"
+            - name: porkbun-ddns
+              working_dir: porkbun-ddns
+              compose_files:
+                - compose.yaml
+              external_secrets:
+                DOMAIN: "4d3bfd3c-0a5d-496e-8eeb-b4ab00128f57"
+                SUBDOMAIN: "40832d03-e0d3-49e6-80b8-b4ab00135d22"
+                API_KEY: "05d378b9-de09-465c-80ec-b4ab001378de"
+                SECRET_KEY: "e991c510-db7b-4e76-b885-b4ab00138c89"
     volumes:
       - data:/data
+      - /opt/doco-cd-secrets:/secrets:ro
     cap_drop:
       - ALL
     depends_on:
