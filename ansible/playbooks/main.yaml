@@ -1,0 +1,11 @@
+- name: Configure all hosts
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Configure utility host(s)
+  hosts: utility
+  become: true
+  roles:
+    - utility-services
