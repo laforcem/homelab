@@ -9,6 +9,7 @@ services:
       OCI_CLI_TENANCY: ${OCI_CLI_TENANCY}
       OCI_CLI_KEY_CONTENT: ${OCI_CLI_KEY_CONTENT}
       BOOT_VOLUME_ID: ${BOOT_VOLUME_ID}
+      COMPARTMENT_ID: ${COMPARTMENT_ID}
       # Not secrets — identifiers/config, committed plain
       OCI_CLI_FINGERPRINT: "93:65:e2:47:49:93:d6:ce:91:91:20:f9:5e:88:64:40"
       OCI_CLI_REGION: us-phoenix-1
