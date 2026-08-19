@@ -29,6 +29,7 @@ services:
                 OCI_CLI_USER: "fc755bbc-3ae9-4af5-8a12-b4ab000eef25"
                 OCI_CLI_TENANCY: "4e09e83c-3749-48bf-a5e3-b4ab000f1c6d"
                 OCI_CLI_KEY_CONTENT: "8a9a02f2-1883-4a25-bc75-b4ab00101cde"
+                COMPARTMENT_ID: "6039f4df-bec5-438a-9b72-b4ab0021c7a2"
                 BOOT_VOLUME_ID: "4b5d7b03-572f-4859-b64a-b4ab00105cb1"
             - name: porkbun-ddns
               working_dir: porkbun-ddns
