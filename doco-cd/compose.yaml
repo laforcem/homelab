@@ -77,7 +77,8 @@ services:
       COMMIT: 0
       EXEC: 0
       PLUGINS: 0
-      SESSION: 0
+      SESSION: 1
+      GRPC: 1
       SWARM: 0
       SYSTEM: 0
       SERVICES: 0
