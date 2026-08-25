@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
   audiomuse-ai-flask:
-    image: ghcr.io/neptunehub/audiomuse-ai:latest
+    image: ghcr.io/neptunehub/audiomuse-ai:3.4.0
     container_name: audiomuse-ai-flask-app
     networks:
       - navidrome-caddy
@@ -67,7 +67,7 @@ services:
     restart: unless-stopped
 
   audiomuse-ai-worker:
-    image: ghcr.io/neptunehub/audiomuse-ai:latest
+    image: ghcr.io/neptunehub/audiomuse-ai:3.4.0
     networks:
       - navidrome-caddy
     environment:
