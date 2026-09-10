@@ -13,6 +13,7 @@ This file describes what's running today, on docker-compose. It gets rewritten w
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `pbs` | VMID 102, Proxmox Backup Server | `192.168.10.103` | PBS 4.2.0 |
 | `constrainer` | VMID 104, vm100 successor — Ansible-configured (#52); vm100's real workloads not yet migrated (#53) | `192.168.10.104` | Debian 13 |
+| `secretary` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.105` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
 `mrgutsy` deliberately holds only workloads that don't belong on the home network: bandwidth/latency-sensitive voice and game traffic, plus a handful of services repatriated ahead of the k3s migration. Everything else runs on `pve`'s VMs.
@@ -45,6 +46,12 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | feishin | `music.$DOMAIN` |
 | navidrome | `nd.$DOMAIN` |
 | icloudpd, icloudpd-telegram-bot, samba, audiomuse-ai (flask + worker) | not proxied |
+
+**secretary** — trusted VLAN 10, admin access via Tailscale only:
+
+| Service | Route |
+|---|---|
+| OpenClaw (personal assistant) | not proxied — Telegram long polling; config and deploy tooling live in the separate Moltron repo, not this one |
 
 **mrgutsy** — external (`$DOMAIN`):
 
