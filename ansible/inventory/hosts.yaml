@@ -6,4 +6,8 @@ all:
       hosts:
         constrainer:
           ansible_host: 192.168.10.104
+    secretary:
+      hosts:
+        secretary:
+          ansible_host: 192.168.10.105
     k3s:
