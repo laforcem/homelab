@@ -16,6 +16,8 @@ services:
     container_name: tandoor-web
     restart: always
     image: vabene1111/recipes:2.6.15
+    environment:
+      - TZ=America/Denver
     env_file:
       - ./.env
     volumes:
