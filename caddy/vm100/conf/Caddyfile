@@ -26,6 +26,15 @@
     handle @speedtest {
         reverse_proxy speedtest-tracker:80
     }
+    @openclaw host openclaw.lan.{$DOMAIN}
+    handle @openclaw {
+        reverse_proxy 192.168.10.105:18789 {
+            transport http {
+                tls
+                tls_insecure_skip_verify
+            }
+        }
+    }
 
     handle {
         abort
