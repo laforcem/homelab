@@ -9,9 +9,3 @@
   become: true
   roles:
     - utility-services
-
-- name: Configure secretary host
-  hosts: secretary
-  become: true
-  roles:
-    - secretary-network
