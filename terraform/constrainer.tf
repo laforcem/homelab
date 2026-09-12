@@ -3,7 +3,12 @@ resource "proxmox_virtual_environment_vm" "constrainer" {
     node_name = "pve0"
     scsi_hardware = "virtio-scsi-single"
     clone { vm_id = proxmox_virtual_environment_vm.template.id }
-    cpu { cores = 2 }
+    # host, not the qemu64 default — see secretary.tf; same single-node
+    # cluster, no live migration to budget for.
+    cpu {
+        cores = 2
+        type = "host"
+    }
     memory { dedicated = 2048 }
     agent { 
         enabled = true 
