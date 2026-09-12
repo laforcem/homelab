@@ -3,7 +3,13 @@ resource "proxmox_virtual_environment_vm" "secretary" {
     node_name = "pve0"
     scsi_hardware = "virtio-scsi-single"
     clone { vm_id = proxmox_virtual_environment_vm.template.id }
-    cpu { cores = 2 }
+    # host, not the qemu64 default: single-node cluster, no live migration to
+    # budget for — qemu64's baseline-SSE2 feature set made Claude Code's
+    # native binary spin in an infinite loop at startup (moltron issue #17).
+    cpu {
+        cores = 2
+        type = "host"
+    }
     memory { dedicated = 8192 }
     agent {
         enabled = true
