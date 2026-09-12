@@ -12,6 +12,10 @@ secrets:
     file: ./secrets/apple_id_malc.txt
   apple_id_grug:
     file: ./secrets/apple_id_grug.txt
+  apple_password_malc:
+    file: ./secrets/apple_password_malc.txt
+  apple_password_grug:
+    file: ./secrets/apple_password_grug.txt
   telegram_bot_token:
     file: ./secrets/telegram_bot_token.txt
   telegram_allowed_chat_ids:
@@ -39,6 +43,8 @@ services:
     secrets:
       - apple_id_malc
       - apple_id_grug
+      - apple_password_malc
+      - apple_password_grug
 
   icloudpd-telegram-bot:
     container_name: icloudpd-telegram-bot

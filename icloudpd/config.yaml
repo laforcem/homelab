@@ -1,7 +1,7 @@
 app:
   log_level: info
   mfa_provider: webui
-  password_providers: [webui]
+  password_providers: [parameter, webui]
   webui_port: 2011
   watch_with_interval: 86400
 
@@ -12,8 +12,10 @@ all_users:
 
 users:
   - username_file: /run/secrets/apple_id_malc
+    password_file: /run/secrets/apple_password_malc
     directory: /data/malc
     cookie_directory: /home/icloudpd/.pyicloud/malc
   - username_file: /run/secrets/apple_id_grug
+    password_file: /run/secrets/apple_password_grug
     directory: /data/grug
     cookie_directory: /home/icloudpd/.pyicloud/grug
