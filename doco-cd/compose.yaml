@@ -1,4 +1,6 @@
 name: doco-cd
+# Main instance: deploys everything except itself. doco-cd-updater/ is the
+# only thing that redeploys this stack — see doco-cd's Self-Updating docs.
 
 services:
   app:
