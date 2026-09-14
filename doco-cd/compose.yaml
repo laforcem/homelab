@@ -33,6 +33,13 @@ services:
                 DOMAIN: "4d3bfd3c-0a5d-496e-8eeb-b4ab00128f57"
                 API_KEY: "05d378b9-de09-465c-80ec-b4ab001378de"
                 SECRET_KEY: "e991c510-db7b-4e76-b885-b4ab00138c89"
+            - name: router-sync
+              working_dir: router-sync
+              compose_files:
+                - compose.yaml
+              external_secrets:
+                SSH_PRIVATE_KEY: "e161d8e8-4437-445e-9de7-b4c5017e30bf"
+                AGH_PASSWORD: "0d135bea-e776-4677-a546-b4c5017fd9ce"
             - name: oci-backup
               working_dir: oci-backup
               compose_files:

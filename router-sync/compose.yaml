@@ -6,11 +6,17 @@ networks:
 services:
   router-sync:
     container_name: router-sync
-    build: .
+    image: ghcr.io/laforcem/router-sync:latest
     restart: always
+    environment:
+      ROUTER_HOST: 192.168.10.1
+      ROUTER_USER: malc
+      SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
+      AGH_URL: http://adguard-home
+      AGH_USER: router-sync
+      AGH_PASSWORD: ${AGH_PASSWORD}
+      SYNC_INTERVAL_MINUTES: 10
     networks:
       - caddy-internal
-    env_file: .env
     volumes:
-      - ~/.ssh/router_sync_id:/root/.ssh/id_ed25519:ro
       - ./known_hosts:/root/.ssh/known_hosts:ro
