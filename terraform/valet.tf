@@ -25,7 +25,7 @@ resource "proxmox_virtual_environment_vm" "valet" {
         datastore_id = "local-zfs"
         ip_config {
             ipv4 {
-                address = "192.168.10.105/24"
+                address = "192.168.10.14/24"
                 gateway = "192.168.10.1"
             }
         }
