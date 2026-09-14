@@ -70,8 +70,6 @@ services:
       - GF_SERVER_ROOT_URL=https://grafana.lan.${DOMAIN}
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
       - INFLUXDB_ORG=homelab
-      - TELEGRAM_BOT_TOKEN=
-      - TELEGRAM_CHAT_ID=
     volumes:
       - speedtest-grafana:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
