@@ -1,0 +1,44 @@
+name: doco-cd-updater
+
+services:
+  app:
+    container_name: doco-cd-updater
+    image: ghcr.io/kimdre/doco-cd:0.118.0
+    restart: unless-stopped
+    environment:
+      TZ: America/Denver
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+      SCHEDULER_ENABLED: false
+      POLL_CONFIG: |
+        - url: https://github.com/laforcem/homelab.git
+          reference: refs/heads/main
+          interval: 300
+          deployments:
+            - name: doco-cd
+              working_dir: doco-cd
+              compose_files:
+                - compose.yaml
+              env_files:
+                - /secrets/doco-cd.env
+              force_recreate: true
+    volumes:
+      - data:/data
+      - /opt/doco-cd-secrets:/secrets:ro
+    cap_drop:
+      - ALL
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "/doco-cd", "healthcheck"]
+      start_period: 15s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  data:
+
+networks:
+  internal:
+    name: doco-cd_internal
+    external: true

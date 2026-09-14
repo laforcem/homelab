@@ -15,12 +15,10 @@ services:
           reference: refs/heads/main
           interval: 300
           deployments:
-            - name: doco-cd
-              working_dir: doco-cd
+            - name: doco-cd-updater
+              working_dir: doco-cd-updater
               compose_files:
                 - compose.yaml
-              env_files:
-                - /secrets/doco-cd.env
             - name: oci-backup
               working_dir: oci-backup
               compose_files:
@@ -97,3 +95,4 @@ volumes:
 
 networks:
   internal:
+    name: doco-cd_internal

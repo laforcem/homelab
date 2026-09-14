@@ -36,7 +36,7 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 
 | Service | Route |
 |---|---|
-| doco-cd (+ docker-socket-proxy) | not proxied — self-managed via git-push polling against this repo's `doco-cd/` directory, no SSH needed to redeploy |
+| doco-cd (+ docker-socket-proxy), doco-cd-updater | not proxied — main instance polls this repo and deploys everything except itself; a second, minimal `doco-cd-updater` instance (scheduler disabled) polls independently and redeploys the main instance, since a single instance can't safely redeploy itself (see [doco-cd's Self-Updating docs](https://doco.cd/latest/Advanced/Self-Updating/)) |
 
 **vm101** — external (`$DOMAIN`), VLAN 40 (DMZ):
 
@@ -110,7 +110,7 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 `ansible/` configures `constrainer` (#52) — a shared `common` role (every host, including the future k3s node) plus a `utility-services` role (constrainer-only). Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
 
 - **`common`** — `qemu-guest-agent`, unattended-upgrades, timezone/NTP, SSH hardening (no password auth, no root login), `ufw` (deny-by-default, SSH + Tailscale allowed, plus routed-traffic rules for constrainer's subnet-router role).
-- **`utility-services`** — Tailscale (reusable auth key from the same Bitwarden Secrets Manager project Terraform uses; rotates every 90 days), Docker + Compose plugin, and Doco-CD — deployed once via Ansible bootstrap, then self-managing: it polls this repo's `doco-cd/` directory and redeploys itself on a git push, no SSH needed after the initial bootstrap. Doco-CD talks to Docker through a `docker-socket-proxy` sidecar (endpoint allow-list) rather than mounting `/var/run/docker.sock` directly.
+- **`utility-services`** — Tailscale (reusable auth key from the same Bitwarden Secrets Manager project Terraform uses; rotates every 90 days), Docker + Compose plugin, and Doco-CD — deployed once via Ansible bootstrap, then self-managing: it polls this repo's `doco-cd/` and `doco-cd-updater/` directories and redeploys on a git push, no SSH needed after the initial bootstrap. A single doco-cd instance can't safely redeploy itself (stopping its own container kills the process driving its own recreation), so a second, minimal `doco-cd-updater` instance — scheduler disabled, no `external_secrets` of its own — polls independently and is the one that redeploys the main instance; the main instance deploys everything else, including `doco-cd-updater` itself. Both instances talk to Docker through the same shared `docker-socket-proxy` sidecar (endpoint allow-list) rather than mounting `/var/run/docker.sock` directly.
 
 ## Known gaps as of this writing
 
