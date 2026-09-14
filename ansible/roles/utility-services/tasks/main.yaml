@@ -45,6 +45,13 @@
       --authkey={{ tailscale_authkey_resolved }}
       --advertise-routes=192.168.10.0/24,192.168.40.0/24
       --hostname=warden
+      --accept-dns=false
+  # With the stub listener off (see above), systemd-resolved can no longer
+  # race/merge per-link resolvers — clients hit /etc/resolv.conf's flat list
+  # sequentially. Tailscale's 100.100.100.100 claims DefaultRoute alongside
+  # eth0's real resolver and is unreliable for non-tailnet lookups, so it
+  # was eating the full per-server timeout on every external DNS query
+  # (including dockerd's own registry pulls) before falling through.
 
 - name: Create /etc/apt/keyrings
   ansible.builtin.file:
