@@ -25,7 +25,7 @@ services:
       - INFLUXDB_URL=http://speedtest-influxdb:8086
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
       - INFLUXDB_BUCKET=speedtest
-      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_ORG=homelab
       - SPEEDTEST_SCHEDULE=*/15 * * * *
     depends_on:
       influxdb:
@@ -42,12 +42,12 @@ services:
       - speedtest-internal
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME}
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
       - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
-      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_ORG=homelab
       - DOCKER_INFLUXDB_INIT_BUCKET=speedtest
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
-      - DOCKER_INFLUXDB_INIT_RETENTION=${INFLUXDB_RETENTION}
+      - DOCKER_INFLUXDB_INIT_RETENTION=2160h
     volumes:
       - speedtest-influxdb:/var/lib/influxdb2
     healthcheck:
@@ -69,9 +69,9 @@ services:
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
       - GF_SERVER_ROOT_URL=https://grafana.lan.${DOMAIN}
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
-      - INFLUXDB_ORG=${INFLUXDB_ORG}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - INFLUXDB_ORG=homelab
+      - TELEGRAM_BOT_TOKEN=
+      - TELEGRAM_CHAT_ID=
     volumes:
       - speedtest-grafana:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning

@@ -33,6 +33,16 @@ services:
                 DOMAIN: "4d3bfd3c-0a5d-496e-8eeb-b4ab00128f57"
                 API_KEY: "05d378b9-de09-465c-80ec-b4ab001378de"
                 SECRET_KEY: "e991c510-db7b-4e76-b885-b4ab00138c89"
+            - name: speedtest
+              working_dir: speedtest
+              compose_files:
+                - compose.yaml
+              external_secrets:
+                APP_KEY: "aa224100-800d-4374-bbe3-b4c50183e67a"
+                INFLUXDB_TOKEN: "37686f71-b1f3-4758-a60f-b4c5018414f2"
+                INFLUXDB_PASSWORD: "cdf3b21a-1ba6-4272-97aa-b4c501844f87"
+                GRAFANA_ADMIN_PASSWORD: "174165f9-dc39-4ef1-8656-b4c50184ab41"
+                DOMAIN: "4d3bfd3c-0a5d-496e-8eeb-b4ab00128f57"
             - name: router-sync
               working_dir: router-sync
               compose_files:
