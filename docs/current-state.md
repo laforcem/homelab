@@ -45,7 +45,7 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | immich_server | `photos.$DOMAIN` |
 | feishin | `music.$DOMAIN` |
 | navidrome | `nd.$DOMAIN` |
-| icloudpd, icloudpd-telegram-bot, samba, audiomuse-ai (flask + worker) | not proxied |
+| icloudpd, icloudpd-telegram-bot, samba, audiomuse-ai (flask + worker) | not proxied — samba serves two SMB shares off `/mnt/lab`: `[homelab]` (full tree, `malc` only) and `[music]` (`/mnt/lab/music`, read/write for `malc` and `moltron`, the latter for the OpenClaw agent on the home LAN) |
 
 **secretary** — trusted VLAN 10, admin access via Tailscale only:
 
