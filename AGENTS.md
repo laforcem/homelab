@@ -34,7 +34,7 @@ Fresh clone, run once:
 git config core.filemode false
 ```
 
-The repo's only executable scripts (`media-backup/backup-media.sh`, `router-sync/entrypoint.sh`, `speedtest/custom-cont-init.d/99-configure-influxdb.sh`) report inconsistent permission bits through WSL mounts, which makes git — and any editor's git panel — flag them as modified with no actual content change. This setting is per-clone; `git clone` never carries local config, so it has to be run again after every fresh clone or worktree.
+The repo's only executable scripts (`media-backup/backup-media.sh`, `speedtest/custom-cont-init.d/99-configure-influxdb.sh`) report inconsistent permission bits through WSL mounts, which makes git — and any editor's git panel — flag them as modified with no actual content change. This setting is per-clone; `git clone` never carries local config, so it has to be run again after every fresh clone or worktree.
 
 ## Conventions
 
