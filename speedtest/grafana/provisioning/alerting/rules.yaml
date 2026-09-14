@@ -58,4 +58,4 @@ groups:
         annotations:
           summary: No speedtest data received in the last 30 minutes
           description: speedtest-tracker may have stopped or tests are consistently failing
-        isPaused: false
+        isPaused: true
