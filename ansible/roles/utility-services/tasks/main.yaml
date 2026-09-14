@@ -35,7 +35,7 @@
       tailscale up
       --authkey={{ tailscale_authkey_resolved }}
       --advertise-routes=192.168.10.0/24,192.168.40.0/24
-      --hostname=constrainer
+      --hostname=warden
 
 - name: Create /etc/apt/keyrings
   ansible.builtin.file:
