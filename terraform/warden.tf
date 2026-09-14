@@ -9,7 +9,7 @@ resource "proxmox_virtual_environment_vm" "warden" {
         cores = 2
         type = "host"
     }
-    memory { dedicated = 2048 }
+    memory { dedicated = 4096 }
     agent { 
         enabled = true 
         timeout = "10s"
