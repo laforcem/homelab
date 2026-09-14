@@ -1,17 +1,18 @@
-resource "proxmox_virtual_environment_vm" "constrainer" {
-    name = "constrainer"
+resource "proxmox_virtual_environment_vm" "valet" {
+    name = "valet"
     node_name = "pve0"
     scsi_hardware = "virtio-scsi-single"
     clone { vm_id = proxmox_virtual_environment_vm.template.id }
-    # host, not the qemu64 default — see secretary.tf; same single-node
-    # cluster, no live migration to budget for.
+    # host, not the qemu64 default: single-node cluster, no live migration to
+    # budget for — qemu64's baseline-SSE2 feature set made Claude Code's
+    # native binary spin in an infinite loop at startup (moltron issue #17).
     cpu {
         cores = 2
         type = "host"
     }
-    memory { dedicated = 2048 }
-    agent { 
-        enabled = true 
+    memory { dedicated = 8192 }
+    agent {
+        enabled = true
         timeout = "10s"
     }
     network_device { bridge = "vmbr0" }
@@ -24,7 +25,7 @@ resource "proxmox_virtual_environment_vm" "constrainer" {
         datastore_id = "local-zfs"
         ip_config {
             ipv4 {
-                address = "192.168.10.104/24"
+                address = "192.168.10.105/24"
                 gateway = "192.168.10.1"
             }
         }
@@ -36,8 +37,4 @@ resource "proxmox_virtual_environment_vm" "constrainer" {
     operating_system {
         type = "l26"
     }
-}
-
-data "local_file" "pubkey" {
-    filename = "/home/malc/.ssh/id_ed25519.pub"
 }

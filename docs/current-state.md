@@ -12,8 +12,8 @@ This file describes what's running today, on docker-compose. It gets rewritten w
 | `vm100` | VMID 100, docker-compose | `192.168.10.100` | Debian 12 |
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `pbs` | VMID 102, Proxmox Backup Server | `192.168.10.103` | PBS 4.2.0 |
-| `constrainer` | VMID 104, vm100 successor — Ansible-configured (#52); vm100's real workloads not yet migrated (#53) | `192.168.10.104` | Debian 13 |
-| `secretary` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.105` | Debian 13 |
+| `warden` | VMID 104, vm100 successor — Ansible-configured (#52); vm100's real workloads not yet migrated (#53) | `192.168.10.104` | Debian 13 |
+| `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.105` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
 `mrgutsy` deliberately holds only workloads that don't belong on the home network: bandwidth/latency-sensitive voice and game traffic, plus a handful of services repatriated ahead of the k3s migration. Everything else runs on `pve`'s VMs.
@@ -32,7 +32,7 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | speedtest-tracker | `speedtest.lan.$DOMAIN` |
 | portainer_agent, oci-backup, porkbun-ddns, router-sync, speedtest-influxdb | not proxied |
 
-**constrainer** — trusted VLAN 10, not yet proxied through Caddy:
+**warden** — trusted VLAN 10, not yet proxied through Caddy:
 
 | Service | Route |
 |---|---|
@@ -47,7 +47,7 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | navidrome | `nd.$DOMAIN` |
 | icloudpd, icloudpd-telegram-bot, samba, audiomuse-ai (flask + worker) | not proxied — samba serves two SMB shares off `/mnt/lab`: `[homelab]` (full tree, `malc` only) and `[music]` (`/mnt/lab/music`, read/write for `malc` and `moltron`, the latter for the OpenClaw agent on the home LAN) |
 
-**secretary** — trusted VLAN 10, admin access via Tailscale only:
+**valet** — trusted VLAN 10, admin access via Tailscale only:
 
 | Service | Route |
 |---|---|
@@ -99,17 +99,17 @@ VLANs, by number and purpose (router config: `.network/iptables.sh`):
 
 The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD`, `DMZ_FWD`, etc.) rather than relying on switch-level ACLs alone.
 
-`constrainer` also runs as a Tailscale subnet router, advertising both `192.168.10.0/24` and `192.168.40.0/24` (mirroring vm100's existing subnet-router config — both currently advertise the same routes, ahead of vm100's eventual decommission in #53).
+`warden` also runs as a Tailscale subnet router, advertising both `192.168.10.0/24` and `192.168.40.0/24` (mirroring vm100's existing subnet-router config — both currently advertise the same routes, ahead of vm100's eventual decommission in #53).
 
 ## Terraform
 
-`terraform/` provisions `pve` VMs via `bpg/proxmox`, authenticating with an API token pulled from Bitwarden Secrets Manager — no secrets committed, state is local-only. A Debian 13 cloud-init template exists (VMID 103, `debian-template`). `constrainer.tf` clones it into VMID 104 (`192.168.10.104`, VLAN 10) — the vm100 successor from #51. Workload migration is #53, not done yet.
+`terraform/` provisions `pve` VMs via `bpg/proxmox`, authenticating with an API token pulled from Bitwarden Secrets Manager — no secrets committed, state is local-only. A Debian 13 cloud-init template exists (VMID 103, `debian-template`). `warden.tf` clones it into VMID 104 (`192.168.10.104`, VLAN 10) — the vm100 successor from #51. Workload migration is #53, not done yet.
 
 ## Ansible
 
-`ansible/` configures `constrainer` (#52) — a shared `common` role (every host, including the future k3s node) plus a `utility-services` role (constrainer-only). Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
+`ansible/` configures `warden` (#52) — a shared `common` role (every host, including the future k3s node) plus a `utility-services` role (warden-only). Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
 
-- **`common`** — `qemu-guest-agent`, unattended-upgrades, timezone/NTP, SSH hardening (no password auth, no root login), `ufw` (deny-by-default, SSH + Tailscale allowed, plus routed-traffic rules for constrainer's subnet-router role).
+- **`common`** — `qemu-guest-agent`, unattended-upgrades, timezone/NTP, SSH hardening (no password auth, no root login), `ufw` (deny-by-default, SSH + Tailscale allowed, plus routed-traffic rules for warden's subnet-router role).
 - **`utility-services`** — Tailscale (reusable auth key from the same Bitwarden Secrets Manager project Terraform uses; rotates every 90 days), Docker + Compose plugin, and Doco-CD — deployed once via Ansible bootstrap, then self-managing: it polls this repo's `doco-cd/` and `doco-cd-updater/` directories and redeploys on a git push, no SSH needed after the initial bootstrap. A single doco-cd instance can't safely redeploy itself (stopping its own container kills the process driving its own recreation), so a second, minimal `doco-cd-updater` instance — scheduler disabled, no `external_secrets` of its own — polls independently and is the one that redeploys the main instance; the main instance deploys everything else, including `doco-cd-updater` itself. Both instances talk to Docker through the same shared `docker-socket-proxy` sidecar (endpoint allow-list) rather than mounting `/var/run/docker.sock` directly.
 
 ## Known gaps as of this writing
