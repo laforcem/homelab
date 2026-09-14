@@ -1,0 +1,29 @@
+name: caddy-lan
+
+volumes:
+  data:
+    name: caddy-warden_data
+  config:
+    name: caddy-warden_config
+
+networks:
+  caddy-internal:
+    name: caddy-internal
+
+services:
+  caddy:
+    build: ..
+    container_name: caddy-warden
+    environment:
+      - DOMAIN
+      - API_KEY
+      - SECRET_KEY
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    volumes:
+      - ./conf:/etc/caddy:ro
+      - data:/data
+      - config:/config
+    networks:
+      - caddy-internal
