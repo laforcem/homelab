@@ -27,10 +27,9 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | Service | Route |
 |---|---|
 | adguard-home | `adguard.lan.$DOMAIN` |
-| portainer | `portainer.lan.$DOMAIN` |
 | speedtest-grafana | `grafana.lan.$DOMAIN` |
 | speedtest-tracker | `speedtest.lan.$DOMAIN` |
-| portainer_agent, oci-backup, porkbun-ddns, router-sync, speedtest-influxdb | not proxied |
+| oci-backup, porkbun-ddns, router-sync, speedtest-influxdb | not proxied |
 
 **warden** — trusted VLAN 10, not yet proxied through Caddy:
 
