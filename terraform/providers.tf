@@ -5,7 +5,7 @@ provider "bitwarden-secrets" {
 }
 
 provider "proxmox" {
-    endpoint = "https://192.168.10.2:8006/api2/json"
+    endpoint = "https://192.168.10.10:8006/api2/json"
     api_token = data.bitwarden-secrets_secret.proxmox_token.value
     insecure = true
 }
