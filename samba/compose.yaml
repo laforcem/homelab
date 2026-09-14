@@ -16,4 +16,7 @@ services:
       - NETBIOS_DISABLE=true
       - ACCOUNT_malc=${SAMBA_MALC_PASSWORD}
       - UID_malc=1000
+      - ACCOUNT_moltron=${SAMBA_MOLTRON_PASSWORD}
+      - UID_moltron=1000
       - SAMBA_VOLUME_CONFIG_lab=[homelab]; path = /shares/lab; valid users = malc; read only = no; browseable = yes; guest ok = no
+      - SAMBA_VOLUME_CONFIG_music=[music]; path = /shares/lab/music; valid users = malc,moltron; read only = no; browseable = yes; guest ok = no
