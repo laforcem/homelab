@@ -3,7 +3,7 @@ name: doco-cd
 services:
   app:
     container_name: doco-cd
-    image: ghcr.io/kimdre/doco-cd:0.109.2
+    image: ghcr.io/kimdre/doco-cd:0.118.0
     restart: unless-stopped
     environment:
       TZ: America/Denver
