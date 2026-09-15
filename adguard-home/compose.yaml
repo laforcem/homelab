@@ -22,3 +22,23 @@ services:
     volumes:
       - config:/opt/adguardhome/conf # config
       - work:/opt/adguardhome/work # working directory
+
+  backup:
+    container_name: adguard-home-backup
+    image: offen/docker-volume-backup:v2.49.0
+    restart: unless-stopped
+    environment:
+      BACKUP_CRON_EXPRESSION: "15 3 * * *" # nightly, offset from PBS's 03:00 snapshot and 04:30 B2 sync
+      BACKUP_FILENAME: "adguard-home-config-%Y-%m-%dT%H-%M-%S.tar.gz"
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_PRUNING_PREFIX: "adguard-home-config-"
+      NOTIFICATION_LEVEL: "info" # ping on success too, not just failure
+      NOTIFICATION_URLS: "generic+https://hc-ping.com/e5873744-9ddb-4c66-8f3d-319c7e6fb709"
+      # From Bitwarden Secrets Manager via doco-cd's external_secrets
+      DROPBOX_APP_KEY: ${DROPBOX_APP_KEY}
+      DROPBOX_APP_SECRET: ${DROPBOX_APP_SECRET}
+      DROPBOX_REFRESH_TOKEN: ${DROPBOX_REFRESH_TOKEN}
+      # Not a secret — path, committed plain
+      DROPBOX_REMOTE_PATH: "/Homelab/adguard-home"
+    volumes:
+      - config:/backup/adguard-home-config:ro

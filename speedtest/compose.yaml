@@ -57,6 +57,26 @@ services:
       retries: 3
       start_period: 30s
 
+  speedtest-tracker-backup:
+    container_name: speedtest-tracker-backup
+    image: offen/docker-volume-backup:v2.49.0
+    restart: unless-stopped
+    environment:
+      BACKUP_CRON_EXPRESSION: "30 3 * * *" # nightly, offset from PBS's 03:00 snapshot, adguard's 03:15, and B2's 04:30 sync
+      BACKUP_FILENAME: "speedtest-tracker-config-%Y-%m-%dT%H-%M-%S.tar.gz"
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_PRUNING_PREFIX: "speedtest-tracker-config-"
+      NOTIFICATION_LEVEL: "info" # ping on success too, not just failure
+      NOTIFICATION_URLS: "generic+https://hc-ping.com/7f63c1a8-99e1-4a9a-a8b8-001783df159b"
+      # From Bitwarden Secrets Manager via doco-cd's external_secrets
+      DROPBOX_APP_KEY: ${DROPBOX_APP_KEY}
+      DROPBOX_APP_SECRET: ${DROPBOX_APP_SECRET}
+      DROPBOX_REFRESH_TOKEN: ${DROPBOX_REFRESH_TOKEN}
+      # Not a secret — path, committed plain
+      DROPBOX_REMOTE_PATH: "/Homelab/speedtest-tracker"
+    volumes:
+      - speedtest-tracker:/backup/speedtest-tracker-config:ro
+
   grafana:
     image: grafana/grafana:latest
     container_name: speedtest-grafana

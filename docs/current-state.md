@@ -87,7 +87,8 @@ The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrat
 - **vm101 media library** (`truelab`, `/mnt/lab`) — `media-backup/` rclone-syncs it to a Dropbox remote (`dropbox:Homelab/<name>`), independent of PBS.
 - **`audiobookshelf`** mounts a Dropbox rclone remote directly (`dropbox:Homelab/audiobookshelf/audiobooks`) rather than being backed up after the fact.
 - **`oci-backup`** (on warden) backs up OCI-hosted resources — see `oci-backup/README.md` for scope.
-- **AdGuard Home's config/query-log/stats** (warden, Docker named volumes `adguard-home_config`/`adguard-home_work`) has no dedicated backup beyond whatever PBS covers at the VM-disk level — not independently verified.
+- **AdGuard Home's config** (warden, `adguard-home_config` volume) — an `offen/docker-volume-backup` sidecar tars it nightly (03:15) to Dropbox (`Homelab/adguard-home`), 30-day retention, healthchecks.io-monitored.
+- **speedtest-tracker's config/DB** (warden, `speedtest-tracker` volume) — same pattern, nightly at 03:30, to `Homelab/speedtest-tracker`, 30-day retention, healthchecks.io-monitored. speedtest-influxdb and speedtest-grafana are deliberately not backed up this way — their data (speedtest history, dashboard layout) is regenerable and lower-value than config state.
 
 ## Network
 
