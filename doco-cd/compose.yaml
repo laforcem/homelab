@@ -25,6 +25,10 @@ services:
               working_dir: adguard-home
               compose_files:
                 - compose.yaml
+              external_secrets:
+                DROPBOX_APP_KEY: "491fc480-9679-4992-a726-b4c601069133"
+                DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
+                DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
             - name: caddy-lan
               working_dir: caddy/warden
               compose_files:
@@ -43,6 +47,9 @@ services:
                 INFLUXDB_PASSWORD: "cdf3b21a-1ba6-4272-97aa-b4c501844f87"
                 GRAFANA_ADMIN_PASSWORD: "174165f9-dc39-4ef1-8656-b4c50184ab41"
                 DOMAIN: "4d3bfd3c-0a5d-496e-8eeb-b4ab00128f57"
+                DROPBOX_APP_KEY: "491fc480-9679-4992-a726-b4c601069133"
+                DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
+                DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
             - name: router-sync
               working_dir: router-sync
               compose_files:
