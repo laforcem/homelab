@@ -6,6 +6,7 @@ router-sync/.env
 router-sync/id_ed25519
 .claude/
 docs/superpowers/
+docs/research/
 
 .terraform/
 *.tfstate
