@@ -1,6 +1,20 @@
+<!-- AI AGENTS: READ THIS
+When editing this file, DO:
+- Be as clear and concise as possible
+- Write as few words as are grammatically necessary to convey important information
+- Add information that is descriptive of the current state and nothing more
+- Use technical terms when they are descriptive and necessary
+- Include information about hardware, which is less mutable than software
+DO NOT:
+- Add any narratives, stories, or long tales
+- Be overly verbose
+- Use unnecessary jargon in places where plain English suffices
+- Add information that will naturally rot: volume sizes, memory usage, or anything that could otherwise be accessed by pulling live state. Software is more mutable than software.
+ -->
+
 # Current State
 
-Last verified: 2026-09-14, against live hosts (`qm list`, `docker ps`, `pvesm status`, `ansible-playbook`, `tailscale status`) — not from the compose files alone.
+Last verified: 2026-09-15, against live hosts (`qm list`, `docker ps`, `pvesm status`, `ansible-playbook`, `tailscale status`, `pvesh`, `proxmox-backup-manager`) — not from the compose files alone.
 
 This file describes what's running today, on docker-compose. It gets rewritten wholesale at the k3s migration rather than incrementally patched toward that future — see the documentation plan (private, Obsidian vault) for why. Per `AGENTS.md`'s routing rule, anything a live system can answer belongs there, not here — this file stops at facts nothing live currently reports.
 
@@ -15,7 +29,7 @@ This file describes what's running today, on docker-compose. It gets rewritten w
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
-`vm100` has been fully decommissioned — VMID 100 no longer exists on `pve0` (confirmed live, not just emptied of containers).
+`vm100` has been fully decommissioned — VMID 100 no longer exists on `pve0`.
 
 Static IP allocation on VLAN 10 (`192.168.10.0/24`): `.1-9` network equipment, `.10-19` servers/hypervisors, `.20-29` reserved for other static infra, `.100-254` DHCP pool. `warden`/`pve`/`pbs`/`valet` all sit in `.10-19`; `vm100`'s old `.100` address predated the scheme and is now retired along with the VM.
 
@@ -35,7 +49,7 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | openclaw (proxied on warden, runs on `valet`) | `openclaw.lan.$DOMAIN` |
 | caddy, doco-cd (+ docker-socket-proxy), doco-cd-updater, oci-backup, porkbun-ddns, router-sync, speedtest-influxdb | not proxied |
 
-doco-cd (main instance) polls this repo and deploys everything above except itself; a second, minimal `doco-cd-updater` instance (scheduler disabled) polls independently and redeploys the main instance, since a single instance can't safely redeploy itself (see [doco-cd's Self-Updating docs](https://doco.cd/latest/Advanced/Self-Updating/)).
+doco-cd (main instance) polls this repo and deploys everything above except itself; a second, minimal `doco-cd-updater` instance (scheduler disabled) polls independently and redeploys the main instance, since a single instance can't safely redeploy itself (see [doco-cd's Self-Updating docs](https://doco.cd/latest/Advanced/Self-Updating/)). Both instances reach Docker through a shared `docker-socket-proxy` sidecar rather than mounting `/var/run/docker.sock` directly.
 
 router-sync's image source lives in a separate repo ([`laforcem/router-sync`](https://github.com/laforcem/router-sync), public, GH Actions builds/pushes to GHCR) — this repo only holds its deployment config.
 
@@ -83,7 +97,7 @@ The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrat
 
 ## Backup
 
-- **PBS** — whole-VM backup for vm101/warden/valet's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore, via a single vzdump job (daily 03:00, `vmid: 101,104,105` — confirmed live via `pvesh get /cluster/backup` on 2026-09-15, after finding warden and valet had been missing from it since the migration). A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`).
+- **PBS** — whole-VM backup for vm101/warden/valet's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore, via a single vzdump job (daily 03:00, `vmid: 101,104,105`). A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`, bucket `starcliff-lab`). Both jobs are healthchecks.io-monitored via PVE's/PBS's native webhook+matcher notifications (success/failure ping separate check URLs). B2 bucket lifecycle must be "Keep only the last version of the file" (not the B2 default), so PBS's own prune/GC deletes actually free B2 storage.
 - **vm101 media library** (`truelab`, `/mnt/lab`) — `media-backup/` rclone-syncs it to a Dropbox remote (`dropbox:Homelab/<name>`), independent of PBS.
 - **`audiobookshelf`** mounts a Dropbox rclone remote directly (`dropbox:Homelab/audiobookshelf/audiobooks`) rather than being backed up after the fact.
 - **`oci-backup`** (on warden) backs up OCI-hosted resources — see `oci-backup/README.md` for scope.
@@ -103,7 +117,7 @@ VLANs, by number and purpose (router config: `.network/iptables.sh`):
 
 The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD`, `DMZ_FWD`, etc.) rather than relying on switch-level ACLs alone.
 
-`warden` runs as the sole Tailscale subnet router, advertising both `192.168.10.0/24` and `192.168.40.0/24` (vm100's identical advertisement was torn down along with removing Tailscale from vm100 entirely). `warden` itself does not use Tailscale for its own DNS resolution (`--accept-dns=false`) — its resolver claiming the default route conflicted with AdGuard Home needing `0.0.0.0:53`, and was unreliable for general internet lookups once systemd-resolved's stub listener was disabled for the same reason.
+`warden` runs as the sole Tailscale subnet router, advertising `192.168.10.0/24` and `192.168.40.0/24`. It does not use Tailscale for its own DNS resolution (`--accept-dns=false`) — that would conflict with AdGuard Home needing `0.0.0.0:53`.
 
 ## Terraform
 
@@ -114,7 +128,7 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 `ansible/` configures `warden` — a shared `common` role (every host, including the future k3s node) plus a `utility-services` role (warden-only). Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
 
 - **`common`** — static hostname (set to match the inventory hostname), `qemu-guest-agent`, unattended-upgrades, timezone/NTP, SSH hardening (no password auth, no root login), `ufw` (deny-by-default, SSH + Tailscale allowed, plus routed-traffic rules for warden's subnet-router role).
-- **`utility-services`** — disables systemd-resolved's stub DNS listener (AdGuard Home needs `0.0.0.0:53`), Tailscale (reusable auth key from the same Bitwarden Secrets Manager project Terraform uses; rotates every 90 days; `--accept-dns=false`, see Network above), Docker + Compose plugin, and Doco-CD — deployed once via Ansible bootstrap, then self-managing: it polls this repo's `doco-cd/` and `doco-cd-updater/` directories and redeploys on a git push, no SSH needed after the initial bootstrap. A single doco-cd instance can't safely redeploy itself (stopping its own container kills the process driving its own recreation), so a second, minimal `doco-cd-updater` instance — scheduler disabled, no `external_secrets` of its own — polls independently and is the one that redeploys the main instance; the main instance deploys everything else, including `doco-cd-updater` itself. Both instances talk to Docker through the same shared `docker-socket-proxy` sidecar (endpoint allow-list) rather than mounting `/var/run/docker.sock` directly.
+- **`utility-services`** — disables systemd-resolved's stub DNS listener (AdGuard Home needs `0.0.0.0:53`), Tailscale (reusable auth key from the same Bitwarden Secrets Manager project Terraform uses; rotates every 90 days; `--accept-dns=false`, see Network above), Docker + Compose plugin, and Doco-CD — deployed once via Ansible bootstrap, then self-managing via git push (see Workloads above for the doco-cd/doco-cd-updater split), no SSH needed after the initial bootstrap.
 
 ## Known gaps as of this writing
 
@@ -122,3 +136,4 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 - `speedtest-tracker`, `speedtest-grafana`, and `samba` run `:latest` rather than a pinned tag — the only unpinned images in the estate.
 - `speedtest-grafana`'s Telegram alerting was removed (not just disabled) after it turned out an empty bot token crash-loops Grafana's whole provisioning module rather than failing gracefully — will get rebuilt when alerting gets real attention.
 - `router-sync`'s AGH API user (`router-sync`, a dedicated AdGuard Home account, not the personal admin login) was created directly in AGH's live config — AGH has no web UI for user management, config-file only. Not reproducible from a fresh deploy without redoing this by hand.
+- speedtest-influxdb, speedtest-grafana, and doco-cd's own `/data` volume have no app-level backup yet (tracked in [#95](https://github.com/laforcem/homelab/issues/95)).
