@@ -27,7 +27,7 @@ This file describes what's running today, on docker-compose. It gets rewritten w
 | `warden` | VMID 104, vm100's successor — fully migrated (#51–#53), all workloads live here | `192.168.10.12` | Debian 13 |
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
-| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54); no k3s or workloads yet (tracked in #99) | `192.168.40.10` | Debian 13 |
+| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); no workloads migrated yet | `192.168.40.10` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
 `vm100` was fully decommissioned, freeing VMID 100 for reuse — Proxmox's next-free-VMID allocation then assigned it to the unrelated `chimaera` VM described above.
@@ -126,10 +126,11 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 
 ## Ansible
 
-`ansible/` configures `warden` — a shared `common` role (every host, including the k3s node) plus a `utility-services` role (warden-only). `chimaera` is in the inventory's `k3s` group but has no role applied yet — that's #99 (Ansible: configure chimaera), not yet started. Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
+`ansible/` configures `warden` and `chimaera` — a shared `common` role (every host) plus host-specific roles: `utility-services` (warden-only) and `k3s` (chimaera-only, #99). Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
 
 - **`common`** — static hostname (set to match the inventory hostname), `qemu-guest-agent`, unattended-upgrades, timezone/NTP, SSH hardening (no password auth, no root login), `ufw` (deny-by-default, SSH + Tailscale allowed, plus routed-traffic rules for warden's subnet-router role).
 - **`utility-services`** — disables systemd-resolved's stub DNS listener (AdGuard Home needs `0.0.0.0:53`), Tailscale (reusable auth key from the same Bitwarden Secrets Manager project Terraform uses; rotates every 90 days; `--accept-dns=false`, see Network above), Docker + Compose plugin, and Doco-CD — deployed once via Ansible bootstrap, then self-managing via git push (see Workloads above for the doco-cd/doco-cd-updater split), no SSH needed after the initial bootstrap.
+- **`k3s`** — installs k3s with defaults (Traefik ingress, ServiceLB, `local-path-provisioner`), no per-app workloads yet. `--tls-san k3s.lan.$DOMAIN` is baked in at install time so the control plane is reachable by name instead of raw IP; `k3s.lan.$DOMAIN` is a manual AdGuard Home DNS rewrite to `192.168.40.10` (not tracked as code — AdGuard's config isn't a file in this repo). `ufw` opens `6443/tcp` (kube API) from the LAN (`192.168.10.0/24`) and Tailscale's range (`100.64.0.0/10`), and `443/tcp` (ingress, HTTPS only) from the DMZ subnet. The role also fetches and rewrites a kubeconfig to the operator's `~/.kube/chimaera.yaml`. Local `kubectl`/`kubectx`/`fzf` tooling and aliases are tracked in `laforcem/dotfiles`, not here.
 
 ## Known gaps as of this writing
 

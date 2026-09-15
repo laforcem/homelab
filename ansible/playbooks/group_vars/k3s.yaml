@@ -1,0 +1,3 @@
+domain: "{{ lookup('bitwarden.secrets.lookup', '4d3bfd3c-0a5d-496e-8eeb-b4ab00128f57') }}"
+k3s_tls_san: "k3s.lan.{{ domain }}"
+k3s_cluster_name: starcliff

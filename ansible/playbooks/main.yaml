@@ -9,3 +9,9 @@
   become: true
   roles:
     - utility-services
+
+- name: Configure k3s node(s)
+  hosts: k3s
+  become: true
+  roles:
+    - k3s
