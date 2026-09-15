@@ -8,6 +8,7 @@ DO NOT:
 - Add any narratives, stories, or long tales
 - Be overly verbose
 - Use unnecessary jargon in places where plain English suffices
+- Add information that will naturally rot: disk/volume sizes, memory usage, or anything that could otherwise be accessed by pulling live state
  -->
 
 # Current State
