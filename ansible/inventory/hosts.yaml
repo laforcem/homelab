@@ -7,3 +7,6 @@ all:
         warden:
           ansible_host: 192.168.10.12
     k3s:
+      hosts:
+        chimaera:
+          ansible_host: 192.168.40.10

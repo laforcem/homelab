@@ -27,11 +27,12 @@ This file describes what's running today, on docker-compose. It gets rewritten w
 | `warden` | VMID 104, vm100's successor — fully migrated (#51–#53), all workloads live here | `192.168.10.12` | Debian 13 |
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
+| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54); no k3s or workloads yet (tracked in #99) | `192.168.40.10` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
-`vm100` has been fully decommissioned — VMID 100 no longer exists on `pve0`.
+`vm100` was fully decommissioned, freeing VMID 100 for reuse — Proxmox's next-free-VMID allocation then assigned it to the unrelated `chimaera` VM described above.
 
-Static IP allocation on VLAN 10 (`192.168.10.0/24`): `.1-9` network equipment, `.10-19` servers/hypervisors, `.20-29` reserved for other static infra, `.100-254` DHCP pool. `warden`/`pve`/`pbs`/`valet` all sit in `.10-19`; `vm100`'s old `.100` address predated the scheme and is now retired along with the VM.
+Static IP allocation on VLAN 10 (`192.168.10.0/24`): `.1-9` network equipment, `.10-19` servers/hypervisors, `.20-29` reserved for other static infra, `.100-254` DHCP pool. `warden`/`pve`/`pbs`/`valet` all sit in `.10-19`; `vm100`'s old `.100` address predated the scheme and is now retired along with the VM. VLAN 40 (`192.168.40.0/24`) has no formal ranges yet — `vm101` (`.101`) predates any scheme, `chimaera` (`.10`) follows VLAN 10's "servers start at `.10`" convention.
 
 `mrgutsy` deliberately holds only workloads that don't belong on the home network: bandwidth/latency-sensitive voice and game traffic, plus a handful of services repatriated ahead of the k3s migration. Everything else runs on `pve`'s VMs.
 
@@ -121,11 +122,11 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 
 ## Terraform
 
-`terraform/` provisions `pve` VMs via `bpg/proxmox`, authenticating with an API token pulled from Bitwarden Secrets Manager — no secrets committed, state is local-only. A Debian 13 cloud-init template exists (VMID 103, `debian-template`). `warden.tf` and `valet.tf` provision VMID 104/105 respectively. All of vm100's workloads migrated to warden and vm100 itself has been decommissioned (#51–#53 complete).
+`terraform/` provisions `pve` VMs via `bpg/proxmox`, authenticating with an API token pulled from Bitwarden Secrets Manager — no secrets committed, state is local-only. A Debian 13 cloud-init template exists (VMID 103, `debian-template`). `warden.tf` and `valet.tf` provision VMID 104/105 respectively. All of vm100's workloads migrated to warden and vm100 itself has been decommissioned (#51–#53 complete). `chimaera.tf` provisions the k3s node VM (#54, VMID 100 — reused from decommissioned vm100), DMZ VLAN 40 (`vlan_id = 40` on the shared `vmbr0` bridge, unlike `warden`/`valet`'s untagged VLAN 10 network device).
 
 ## Ansible
 
-`ansible/` configures `warden` — a shared `common` role (every host, including the future k3s node) plus a `utility-services` role (warden-only). Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
+`ansible/` configures `warden` — a shared `common` role (every host, including the k3s node) plus a `utility-services` role (warden-only). `chimaera` is in the inventory's `k3s` group but has no role applied yet — that's #99 (Ansible: configure chimaera), not yet started. Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
 
 - **`common`** — static hostname (set to match the inventory hostname), `qemu-guest-agent`, unattended-upgrades, timezone/NTP, SSH hardening (no password auth, no root login), `ufw` (deny-by-default, SSH + Tailscale allowed, plus routed-traffic rules for warden's subnet-router role).
 - **`utility-services`** — disables systemd-resolved's stub DNS listener (AdGuard Home needs `0.0.0.0:53`), Tailscale (reusable auth key from the same Bitwarden Secrets Manager project Terraform uses; rotates every 90 days; `--accept-dns=false`, see Network above), Docker + Compose plugin, and Doco-CD — deployed once via Ansible bootstrap, then self-managing via git push (see Workloads above for the doco-cd/doco-cd-updater split), no SSH needed after the initial bootstrap.
