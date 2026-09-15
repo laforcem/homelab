@@ -1,6 +1,18 @@
+<!-- AI AGENTS: READ THIS
+When editing this file, DO:
+- Be as clear and concise as possible
+- Write as few words as are grammatically necessary to convey important information
+- Add information that is descriptive of the current state and nothing more
+- Use technical terms when they are descriptive and necessary
+DO NOT:
+- Add any narratives, stories, or long tales
+- Be overly verbose
+- Use unnecessary jargon in places where plain English suffices
+ -->
+
 # Current State
 
-Last verified: 2026-09-14, against live hosts (`qm list`, `docker ps`, `pvesm status`, `ansible-playbook`, `tailscale status`) — not from the compose files alone.
+Last verified: 2026-09-15, against live hosts (`qm list`, `docker ps`, `pvesm status`, `ansible-playbook`, `tailscale status`, `pvesh`, `proxmox-backup-manager`) — not from the compose files alone.
 
 This file describes what's running today, on docker-compose. It gets rewritten wholesale at the k3s migration rather than incrementally patched toward that future — see the documentation plan (private, Obsidian vault) for why. Per `AGENTS.md`'s routing rule, anything a live system can answer belongs there, not here — this file stops at facts nothing live currently reports.
 
@@ -83,7 +95,7 @@ The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrat
 
 ## Backup
 
-- **PBS** — whole-VM backup for vm101/warden/valet's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore, via a single vzdump job (daily 03:00, `vmid: 101,104,105` — confirmed live via `pvesh get /cluster/backup` on 2026-09-15, after finding warden and valet had been missing from it since the migration). A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`).
+- **PBS** — whole-VM backup for vm101/warden/valet's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore, via a single vzdump job (daily 03:00, `vmid: 101,104,105`). A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`, bucket `starcliff-lab`). Both jobs are monitored via PVE's/PBS's native webhook notification system — a matcher on job type/severity routes success and failure to separate healthchecks.io check URLs. B2 bucket lifecycle should be set to "Keep only the last version of the file" (not the B2 default), otherwise PBS's own prune/GC deletes don't actually free B2 storage.
 - **vm101 media library** (`truelab`, `/mnt/lab`) — `media-backup/` rclone-syncs it to a Dropbox remote (`dropbox:Homelab/<name>`), independent of PBS.
 - **`audiobookshelf`** mounts a Dropbox rclone remote directly (`dropbox:Homelab/audiobookshelf/audiobooks`) rather than being backed up after the fact.
 - **`oci-backup`** (on warden) backs up OCI-hosted resources — see `oci-backup/README.md` for scope.
@@ -122,3 +134,4 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 - `speedtest-tracker`, `speedtest-grafana`, and `samba` run `:latest` rather than a pinned tag — the only unpinned images in the estate.
 - `speedtest-grafana`'s Telegram alerting was removed (not just disabled) after it turned out an empty bot token crash-loops Grafana's whole provisioning module rather than failing gracefully — will get rebuilt when alerting gets real attention.
 - `router-sync`'s AGH API user (`router-sync`, a dedicated AdGuard Home account, not the personal admin login) was created directly in AGH's live config — AGH has no web UI for user management, config-file only. Not reproducible from a fresh deploy without redoing this by hand.
+- speedtest-influxdb, speedtest-grafana, and doco-cd's own `/data` volume have no app-level backup yet (tracked in [#95](https://github.com/laforcem/homelab/issues/95)).
