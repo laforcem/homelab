@@ -11,14 +11,13 @@ This file describes what's running today, on docker-compose. It gets rewritten w
 | `pve` | Proxmox VE, physical, 6c/6t | `192.168.10.10` | PVE 9.2.10 |
 | `pbs` | VMID 102, Proxmox Backup Server | `192.168.10.11` | PBS 4.2.0 |
 | `warden` | VMID 104, vm100's successor — fully migrated (#51–#53), all workloads live here | `192.168.10.12` | Debian 13 |
-| `vm100` | VMID 100, docker-compose | `192.168.10.100` | Debian 12 |
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
-`vm100` has zero running containers as of today — every workload has migrated to `warden`. It's provisioned but not yet decommissioned (tracked separately).
+`vm100` has been fully decommissioned — VMID 100 no longer exists on `pve0` (confirmed live, not just emptied of containers).
 
-Static IP allocation on VLAN 10 (`192.168.10.0/24`): `.1-9` network equipment, `.10-19` servers/hypervisors, `.20-29` reserved for other static infra, `.100-254` DHCP pool. `warden`/`pve`/`pbs`/`valet` all sit in `.10-19`; `vm100` (`.100`) predates the scheme and goes away with the VM.
+Static IP allocation on VLAN 10 (`192.168.10.0/24`): `.1-9` network equipment, `.10-19` servers/hypervisors, `.20-29` reserved for other static infra, `.100-254` DHCP pool. `warden`/`pve`/`pbs`/`valet` all sit in `.10-19`; `vm100`'s old `.100` address predated the scheme and is now retired along with the VM.
 
 `mrgutsy` deliberately holds only workloads that don't belong on the home network: bandwidth/latency-sensitive voice and game traffic, plus a handful of services repatriated ahead of the k3s migration. Everything else runs on `pve`'s VMs.
 
@@ -84,7 +83,7 @@ The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrat
 
 ## Backup
 
-- **PBS** — whole-VM backup for vm100/vm101/warden/valet's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore. A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`). **`warden` and `valet` are not yet confirmed covered here** — worth verifying before vm100's decommission removes the last fallback for anything still relying on it.
+- **PBS** — whole-VM backup for vm101/warden/valet's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore, via a single vzdump job (daily 03:00, `vmid: 101,104,105` — confirmed live via `pvesh get /cluster/backup` on 2026-09-15, after finding warden and valet had been missing from it since the migration). A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`).
 - **vm101 media library** (`truelab`, `/mnt/lab`) — `media-backup/` rclone-syncs it to a Dropbox remote (`dropbox:Homelab/<name>`), independent of PBS.
 - **`audiobookshelf`** mounts a Dropbox rclone remote directly (`dropbox:Homelab/audiobookshelf/audiobooks`) rather than being backed up after the fact.
 - **`oci-backup`** (on warden) backs up OCI-hosted resources — see `oci-backup/README.md` for scope.
@@ -107,7 +106,7 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 
 ## Terraform
 
-`terraform/` provisions `pve` VMs via `bpg/proxmox`, authenticating with an API token pulled from Bitwarden Secrets Manager — no secrets committed, state is local-only. A Debian 13 cloud-init template exists (VMID 103, `debian-template`). `warden.tf` and `valet.tf` provision VMID 104/105 respectively. All of vm100's workloads have migrated to warden (#51–#53 complete); vm100's own decommission is tracked separately.
+`terraform/` provisions `pve` VMs via `bpg/proxmox`, authenticating with an API token pulled from Bitwarden Secrets Manager — no secrets committed, state is local-only. A Debian 13 cloud-init template exists (VMID 103, `debian-template`). `warden.tf` and `valet.tf` provision VMID 104/105 respectively. All of vm100's workloads migrated to warden and vm100 itself has been decommissioned (#51–#53 complete).
 
 ## Ansible
 
@@ -122,5 +121,3 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 - `speedtest-tracker`, `speedtest-grafana`, and `samba` run `:latest` rather than a pinned tag — the only unpinned images in the estate.
 - `speedtest-grafana`'s Telegram alerting was removed (not just disabled) after it turned out an empty bot token crash-loops Grafana's whole provisioning module rather than failing gracefully — will get rebuilt when alerting gets real attention.
 - `router-sync`'s AGH API user (`router-sync`, a dedicated AdGuard Home account, not the personal admin login) was created directly in AGH's live config — AGH has no web UI for user management, config-file only. Not reproducible from a fresh deploy without redoing this by hand.
-- vm100 itself is not yet decommissioned, despite running nothing — pending.
-- warden and valet's PBS backup coverage isn't independently confirmed (see Backup above).
