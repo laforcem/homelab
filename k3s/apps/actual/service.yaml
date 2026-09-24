@@ -7,5 +7,5 @@ spec:
   selector:
     app: actual
   ports:
-    - port: 5006
+    - port: 5006 # Actual default
       targetPort: 5006

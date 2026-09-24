@@ -13,6 +13,7 @@ spec:
       labels:
         app: actual
     spec:
+      enableServiceLinks: false
       containers:
         - name: actual
           image: actualbudget/actual-server:26.9.0
