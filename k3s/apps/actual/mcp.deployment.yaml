@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: actual-mcp
+  namespace: actual
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: actual-mcp
+  template:
+    metadata:
+      labels:
+        app: actual-mcp
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: actual-mcp
+          image: ghcr.io/agigante80/actual-mcp-server:0.22.6
+          ports:
+            - containerPort: 3600
+          env:
+            - name: TZ
+              value: America/Denver
+            - name: ACTUAL_SERVER_URL
+              value: http://actual:5006
+            - name: MCP_BRIDGE_PUBLIC_SCHEME
+              value: https
+            - name: MCP_BRIDGE_USE_TLS
+              value: "true"
+            - name: MCP_BRIDGE_HTTP_PATH
+              value: /mcp/http
+          envFrom:
+            - secretRef:
+                name: actual-mcp
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: actual-mcp-data
