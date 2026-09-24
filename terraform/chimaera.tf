@@ -6,10 +6,10 @@ resource "proxmox_virtual_environment_vm" "chimaera" {
     # host, not the qemu64 default — see valet.tf; same single-node
     # cluster, no live migration to budget for.
     cpu {
-        cores = 2
+        cores = 4
         type = "host"
     }
-    memory { dedicated = 4096 }
+    memory { dedicated = 8192 }
     agent {
         enabled = true
         timeout = "10s"
