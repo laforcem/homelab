@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vm101-caddy
+  namespace: vm101-ingress
+spec:
+  ports:
+    - port: 443
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: vm101-caddy
+  namespace: vm101-ingress
+  labels:
+    kubernetes.io/service-name: vm101-caddy
+addressType: IPv4
+ports:
+  - port: 443
+endpoints:
+  - addresses:
+      - 192.168.40.101
+    conditions:
+      ready: true
+      serving: true
+      terminating: false

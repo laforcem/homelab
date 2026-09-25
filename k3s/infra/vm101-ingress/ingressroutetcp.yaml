@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: vm101-ingress
+  namespace: vm101-ingress
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: HostSNI(`photos.$DOMAIN`) || HostSNI(`music.$DOMAIN`) || HostSNI(`nd.$DOMAIN`)
+      services:
+        - name: vm101-caddy
+          port: 443
+  tls:
+    passthrough: true

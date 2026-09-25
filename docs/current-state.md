@@ -14,9 +14,9 @@ DO NOT:
 
 # Current State
 
-Last verified: 2026-09-15, against live hosts (`qm list`, `docker ps`, `pvesm status`, `ansible-playbook`, `tailscale status`, `pvesh`, `proxmox-backup-manager`) — not from the compose files alone.
+Last verified: 2026-09-25, against live hosts (`qm list`, `docker ps`, `kubectl`, `pvesm status`, `ansible-playbook`, `tailscale status`, `pvesh`, `proxmox-backup-manager`) — not from the compose/manifest files alone.
 
-This file describes what's running today, on docker-compose. It gets rewritten wholesale at the k3s migration rather than incrementally patched toward that future — see the documentation plan (private, Obsidian vault) for why. Per `AGENTS.md`'s routing rule, anything a live system can answer belongs there, not here — this file stops at facts nothing live currently reports.
+This file describes what's running today, across docker-compose and k3s, and gets patched incrementally as things change. Per `AGENTS.md`'s routing rule, anything a live system can answer belongs there, not here — this file stops at facts nothing live currently reports.
 
 ## Hosts
 
@@ -27,7 +27,7 @@ This file describes what's running today, on docker-compose. It gets rewritten w
 | `warden` | VMID 104, vm100's successor — fully migrated (#51–#53), all workloads live here | `192.168.10.12` | Debian 13 |
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
-| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); no workloads migrated yet | `192.168.40.10` | Debian 13 |
+| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); runs Actual + actual-mcp in production, and is the public entrypoint for vm101's routes (TLS passthrough) | `192.168.40.10` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
 `vm100` was fully decommissioned, freeing VMID 100 for reuse — Proxmox's next-free-VMID allocation then assigned it to the unrelated `chimaera` VM described above.
@@ -54,7 +54,7 @@ doco-cd (main instance) polls this repo and deploys everything above except itse
 
 router-sync's image source lives in a separate repo ([`laforcem/router-sync`](https://github.com/laforcem/router-sync), public, GH Actions builds/pushes to GHCR) — this repo only holds its deployment config.
 
-**vm101** — external (`$DOMAIN`), VLAN 40 (DMZ):
+**vm101** — external (`$DOMAIN`), VLAN 40 (DMZ). Still owns its Caddy (TLS termination, cert issuance) and these routes; reached via chimaera's Traefik (TLS passthrough, not terminated) rather than directly — see **chimaera** below:
 
 | Service | Route |
 |---|---|
@@ -62,6 +62,16 @@ router-sync's image source lives in a separate repo ([`laforcem/router-sync`](ht
 | feishin | `music.$DOMAIN` |
 | navidrome | `nd.$DOMAIN` |
 | icloudpd, icloudpd-telegram-bot, samba, audiomuse-ai (flask + worker) | not proxied — samba serves two SMB shares off `/mnt/lab`: `[homelab]` (full tree, `malc` only) and `[music]` (`/mnt/lab/music`, read/write for `malc` and `moltron`, the latter for the OpenClaw agent on the home LAN) |
+
+**chimaera** — external (`$DOMAIN`), VLAN 40 (DMZ), k3s. Public entrypoint: the router's port-forward (`asusrouter`'s `vts_rulelist`, GUI/nvram-managed, not tracked in `.network/iptables.sh`) sends `80`/`443` here, not to vm101 anymore:
+
+| Service | Route |
+|---|---|
+| actual | `budget.$DOMAIN` |
+| actual-mcp | `budget.$DOMAIN/mcp` |
+| vm101's `photos`/`music`/`nd.$DOMAIN` | TLS passthrough (SNI-routed) to vm101's Caddy, via `IngressRouteTCP` in `k3s/infra/vm101-ingress/` — chimaera never terminates or sees these certs |
+
+Cluster infra (`ansible/roles/cert-manager/`, see below): `cert-manager` issues via Let's Encrypt HTTP-01 — `ingress-shim` only auto-creates a Certificate for an Ingress carrying the `cert-manager.io/cluster-issuer` annotation; `ingressShim.defaultIssuerName` alone does not trigger it. Traefik (k3s-bundled) redirects HTTP to HTTPS on every route except ACME challenge paths. The `vm101-ingress` EndpointSlice (hand-authored, no backing Service selector) must set `conditions.ready: true` explicitly, or Traefik silently drops the endpoint with no error.
 
 **valet** — trusted VLAN 10, admin access via Tailscale only:
 
@@ -73,8 +83,6 @@ router-sync's image source lives in a separate repo ([`laforcem/router-sync`](ht
 
 | Service | Route |
 |---|---|
-| actual | `budget.$DOMAIN` |
-| actual-mcp | `budget.$DOMAIN/mcp` |
 | audiobookshelf | `audiobooks.$DOMAIN` |
 | miniflux | `miniflux.$DOMAIN` |
 | tandoor-web | `recipes.$DOMAIN` |
@@ -114,7 +122,7 @@ VLANs, by number and purpose (router config: `.network/iptables.sh`):
 | 10 | `br0` | Servers — `pve` and its VMs |
 | 20 | `br52` (`IOT_BR`) | IoT |
 | 30 | `br54` (`GST_BR`) | Guest |
-| 40 | `br53` (`DMZ_BR`) | DMZ — `vm101` lives here |
+| 40 | `br53` (`DMZ_BR`) | DMZ — `vm101` and `chimaera` live here; chimaera is the current public `80`/`443` port-forward target |
 
 The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD`, `DMZ_FWD`, etc.) rather than relying on switch-level ACLs alone.
 
@@ -126,11 +134,12 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 
 ## Ansible
 
-`ansible/` configures `warden` and `chimaera` — a shared `common` role (every host) plus host-specific roles: `utility-services` (warden-only) and `k3s` (chimaera-only, #99). Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
+`ansible/` configures `warden` and `chimaera` — a shared `common` role (every host) plus host-specific roles: `utility-services` (warden-only), and `k3s` + `cert-manager` (chimaera-only, #99). Run via `cd ansible && set -a && source ../terraform/.env && set +a && ansible-playbook playbooks/main.yaml` (see `ansible/README.md`).
 
 - **`common`** — static hostname (set to match the inventory hostname), `qemu-guest-agent`, unattended-upgrades, timezone/NTP, SSH hardening (no password auth, no root login), `ufw` (deny-by-default, SSH + Tailscale allowed, plus routed-traffic rules for warden's subnet-router role).
 - **`utility-services`** — disables systemd-resolved's stub DNS listener (AdGuard Home needs `0.0.0.0:53`), Tailscale (reusable auth key from the same Bitwarden Secrets Manager project Terraform uses; rotates every 90 days; `--accept-dns=false`, see Network above), Docker + Compose plugin, and Doco-CD — deployed once via Ansible bootstrap, then self-managing via git push (see Workloads above for the doco-cd/doco-cd-updater split), no SSH needed after the initial bootstrap.
-- **`k3s`** — installs k3s with defaults (Traefik ingress, ServiceLB, `local-path-provisioner`), no per-app workloads yet. `--tls-san k3s.lan.$DOMAIN` is baked in at install time so the control plane is reachable by name instead of raw IP; `k3s.lan.$DOMAIN` is a manual AdGuard Home DNS rewrite to `192.168.40.10` (not tracked as code — AdGuard's config isn't a file in this repo). `ufw` opens `6443/tcp` (kube API) from the LAN (`192.168.10.0/24`) and Tailscale's range (`100.64.0.0/10`), and `443/tcp` (ingress, HTTPS only) from the DMZ subnet. The role also fetches the kubeconfig to the operator's `~/.kube/config` (rewritten to point at `k3s_tls_san` and named `starcliff`, per `group_vars/k3s.yaml`), plus a WSL-interop copy to the Windows-side `%USERPROFILE%\.kube\config`. Local `kubectl`/`kubectx`/`fzf` tooling and aliases are tracked in `laforcem/dotfiles`, not here.
+- **`k3s`** — installs k3s with defaults (Traefik ingress, ServiceLB, `local-path-provisioner`). `--tls-san k3s.lan.$DOMAIN` is baked in at install time so the control plane is reachable by name instead of raw IP; `k3s.lan.$DOMAIN` is a manual AdGuard Home DNS rewrite to `192.168.40.10` (not tracked as code — AdGuard's config isn't a file in this repo). `ufw` opens `6443/tcp` (kube API) from the LAN (`192.168.10.0/24`) and Tailscale's range (`100.64.0.0/10`), and `80/tcp`/`443/tcp` (ingress) from anywhere — chimaera is a public entrypoint, so ingress isn't DMZ-subnet-restricted the way the kube API is. The role also fetches the kubeconfig to the operator's `~/.kube/config` (rewritten to point at `k3s_tls_san` and named `starcliff`, per `group_vars/k3s.yaml`). Local `kubectl`/`kubectx`/`fzf` tooling and aliases are tracked in `laforcem/dotfiles`, not here.
+- **`cert-manager`** — installs cert-manager via Helm (`ingressShim.defaultIssuerName: letsencrypt`), a `letsencrypt` `ClusterIssuer` (HTTP-01), and a Traefik `HelmChartConfig` redirecting `web` (`80`) to `websecure` (`443`) except on ACME challenge paths.
 
 ## Known gaps as of this writing
 

@@ -17,12 +17,17 @@
     proto: tcp
     src: 100.64.0.0/10
 
-- name: Allow HTTPS ingress (443) from the DMZ subnet
+- name: Allow HTTP ingress (80) from anywhere — required for ACME HTTP-01 challenges
+  community.general.ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+
+- name: Allow HTTPS ingress (443) from anywhere
   community.general.ufw:
     rule: allow
     port: "443"
     proto: tcp
-    src: 192.168.40.0/24
 
 - name: Check k3s node readiness
   ansible.builtin.command:
@@ -79,41 +84,5 @@
       replace: "current-context: {{ k3s_cluster_name }}"
     - regexp: '^- name: default$'
       replace: "- name: {{ k3s_cluster_name }}"
-  delegate_to: localhost
-  become: false
-
-- name: Get Windows user profile path (WSL interop)
-  ansible.builtin.command: powershell.exe -NoProfile -Command "$env:USERPROFILE"
-  register: windows_userprofile
-  changed_when: false
-  delegate_to: localhost
-  become: false
-
-- name: Convert Windows user profile path to a WSL path
-  ansible.builtin.command:
-    argv:
-      - wslpath
-      - -u
-      - "{{ windows_userprofile.stdout | trim }}"
-  register: windows_home_wsl
-  changed_when: false
-  delegate_to: localhost
-  become: false
-
-- name: Ensure Windows-side .kube directory exists
-  ansible.builtin.file:
-    path: "{{ windows_home_wsl.stdout | trim }}/.kube"
-    state: directory
-    mode: "0700"
-  delegate_to: localhost
-  become: false
-
-- name: Copy kubeconfig to the Windows-side default location
-  ansible.builtin.copy:
-    src: "{{ lookup('env', 'HOME') }}/.kube/config"
-    dest: "{{ windows_home_wsl.stdout | trim }}/.kube/config"
-    mode: "0600"
-    remote_src: true
-    unsafe_writes: true
   delegate_to: localhost
   become: false
