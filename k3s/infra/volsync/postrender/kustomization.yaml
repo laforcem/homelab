@@ -1,0 +1,8 @@
+resources:
+  - all.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: volsync
+    path: tz-patch.yaml
