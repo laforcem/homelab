@@ -19,4 +19,8 @@ ports:
   - port: 443
 endpoints:
   - addresses:
-    - 192.168.40.101
+      - 192.168.40.101
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
