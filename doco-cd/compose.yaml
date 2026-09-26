@@ -81,8 +81,6 @@ services:
       - /opt/doco-cd-secrets:/secrets:ro
     cap_drop:
       - ALL
-    depends_on:
-      - docker-socket-proxy
     networks:
       - internal
     healthcheck:
@@ -92,45 +90,12 @@ services:
       timeout: 5s
       retries: 3
 
-  docker-socket-proxy:
-    container_name: docker-proxy
-    image: tecnativa/docker-socket-proxy:v0.5.0
-    restart: unless-stopped
-    cap_drop:
-      - ALL
-    environment:
-      PING: 1
-      VERSION: 1
-      INFO: 1
-      EVENTS: 1
-      CONTAINERS: 1
-      IMAGES: 1
-      NETWORKS: 1
-      VOLUMES: 1
-      DISTRIBUTION: 1
-      POST: 1
-      AUTH: 0
-      BUILD: 1
-      COMMIT: 0
-      EXEC: 1
-      PLUGINS: 0
-      SESSION: 1
-      GRPC: 1
-      SWARM: 0
-      SYSTEM: 0
-      SERVICES: 0
-      TASKS: 0
-      NODES: 0
-      SECRETS: 0
-      CONFIGS: 0
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - internal
-
 volumes:
   data:
 
 networks:
+  # Owned by proxy-compose.yaml (Ansible-provisioned, not redeployed here —
+  # see #108: force-recreating docker-socket-proxy through itself races).
   internal:
     name: doco-cd_internal
+    external: true

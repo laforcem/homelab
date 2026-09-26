@@ -2,3 +2,9 @@
   ansible.builtin.systemd:
     name: systemd-resolved
     state: restarted
+
+- name: Reload systemd and restart watchdog timer
+  ansible.builtin.systemd:
+    name: docker-proxy-watchdog.timer
+    daemon_reload: true
+    state: restarted

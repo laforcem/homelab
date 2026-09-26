@@ -105,6 +105,31 @@
     groups: docker
     append: true
 
+- name: Create tempdir for docker-socket-proxy
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: doco-cd-proxy
+  register: doco_cd_proxy_tempdir
+
+- name: Deploy docker-socket-proxy Compose file
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../doco-cd/proxy-compose.yaml"
+    dest: "{{ doco_cd_proxy_tempdir.path }}/compose.yaml"
+    mode: "0644"
+
+# Applied every run (not first-run-only like doco-cd/doco-cd-updater below):
+# this is the one piece Ansible owns going forward, precisely so it's never
+# put back in doco-cd-updater's auto-recreate loop. See #108.
+- name: Apply docker-socket-proxy
+  community.docker.docker_compose_v2:
+    project_src: "{{ doco_cd_proxy_tempdir.path }}"
+    state: present
+
+- name: Remove docker-socket-proxy tempdir
+  ansible.builtin.file:
+    path: "{{ doco_cd_proxy_tempdir.path }}"
+    state: absent
+
 - name: Create tempdir for doco-cd bootstrap
   ansible.builtin.tempfile:
     state: directory
@@ -160,3 +185,25 @@
   ansible.builtin.file:
     path: "{{ doco_cd_updater_tempdir.path }}"
     state: absent
+
+- name: Install docker-socket-proxy watchdog script
+  ansible.builtin.copy:
+    src: docker-proxy-watchdog.sh
+    dest: /usr/local/bin/docker-proxy-watchdog.sh
+    mode: "0755"
+
+- name: Install docker-socket-proxy watchdog systemd unit
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - docker-proxy-watchdog.service
+    - docker-proxy-watchdog.timer
+  notify: Reload systemd and restart watchdog timer
+
+- name: Enable docker-socket-proxy watchdog timer
+  ansible.builtin.systemd:
+    name: docker-proxy-watchdog.timer
+    enabled: true
+    state: started

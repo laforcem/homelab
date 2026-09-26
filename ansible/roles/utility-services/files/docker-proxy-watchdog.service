@@ -1,0 +1,8 @@
+[Unit]
+Description=Restart docker-socket-proxy if it's stopped
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/docker-proxy-watchdog.sh
