@@ -1,8 +1,11 @@
-name: doco-cd
-# Provisioned once by Ansible, not redeployed by doco-cd-updater (see #108):
-# doco-cd-updater force-recreates its "doco-cd" deployment on every poll,
-# and force-recreating docker-socket-proxy while doco-cd talks through it
-# to do so is an inherent race. Keeping the proxy out of that loop entirely
+name: docker-socket-proxy
+# Deliberately its own Compose project (not "doco-cd") — sharing that name
+# made doco-cd-updater's orphan cleanup treat this container as leftover
+# from its own project and kill it every recreate. Provisioned once by
+# Ansible, not redeployed by doco-cd-updater (see #108): doco-cd-updater
+# force-recreates its "doco-cd" deployment on every poll, and
+# force-recreating docker-socket-proxy while doco-cd talks through it to
+# do so is an inherent race. Keeping the proxy out of that loop entirely
 # means it only ever changes on a deliberate Ansible run.
 
 services:
@@ -45,3 +48,4 @@ services:
 networks:
   internal:
     name: doco-cd_internal
+    external: true
