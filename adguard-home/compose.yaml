@@ -29,6 +29,7 @@ services:
     restart: unless-stopped
     environment:
       BACKUP_CRON_EXPRESSION: "15 3 * * *" # nightly, offset from PBS's 03:00 snapshot and 04:30 B2 sync
+      TZ: "America/Denver" # crond defaults to UTC otherwise, 6h off from the schedule above
       BACKUP_FILENAME: "adguard-home-config-%Y-%m-%dT%H-%M-%S.tar.gz"
       BACKUP_RETENTION_DAYS: "30"
       BACKUP_PRUNING_PREFIX: "adguard-home-config-"
