@@ -1,7 +1,7 @@
 services:
   ppld-calendar:
     container_name: ppld-calendar
-    image: ghcr.io/laforcem/ppld-calendar:v0.1.0
+    image: ghcr.io/laforcem/ppld-calendar:v0.1.1
     restart: always
     environment:
       TZ: America/Denver # crond defaults to UTC otherwise
