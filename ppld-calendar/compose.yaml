@@ -1,0 +1,15 @@
+services:
+  ppld-calendar:
+    container_name: ppld-calendar
+    build: .
+    restart: always
+    environment:
+      TZ: America/Denver # crond defaults to UTC otherwise
+      SYNC_CRON: "0 6 * * *"
+      # From Bitwarden Secrets Manager via doco-cd's external_secrets
+      PPLD_CARD_NUMBER: ${PPLD_CARD_NUMBER}
+      PPLD_PIN: ${PPLD_PIN}
+      CALDAV_USERNAME: ${CALDAV_USERNAME}
+      CALDAV_APP_PASSWORD: ${CALDAV_APP_PASSWORD}
+      CALDAV_CALENDAR_URL: ${CALDAV_CALENDAR_URL}
+      HEALTHCHECK_URL: ${HEALTHCHECK_URL}
