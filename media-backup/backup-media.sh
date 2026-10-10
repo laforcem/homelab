@@ -16,6 +16,10 @@ declare -A EXTRA_EXCLUDES=(
   [immich]='--exclude encoded-video/** --exclude thumbs/**'
 )
 
+# Dropbox refuses these names outright, so rclone exits non-zero on every run
+# and the healthcheck gets a /fail ping even though everything else copied.
+DROPBOX_EXCLUDES=(--exclude '[Tt]humbs.db' --exclude '[Dd]esktop.ini')
+
 declare -A HC_UUIDS=(
   [icloud]="36ef3811-6cf7-4b2e-835f-b8bb49f21540"
   [immich]="f6e1e429-237c-4736-a55d-fdf08c750d28"
@@ -38,6 +42,7 @@ for name in icloud immich movies music; do
   if rclone copy "$src" "$dest" \
       --backup-dir "$backup_dir" \
       --transfers=4 --checkers=8 \
+      "${DROPBOX_EXCLUDES[@]}" \
       $excludes \
       --log-file "$log_file"; then
     curl -fsS --retry 3 "https://hc-ping.com/${uuid}" > /dev/null
