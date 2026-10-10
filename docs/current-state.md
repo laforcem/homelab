@@ -48,7 +48,7 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | speedtest-grafana | `grafana.lan.$DOMAIN` |
 | speedtest-tracker | `speedtest.lan.$DOMAIN` |
 | openclaw (proxied on warden, runs on `valet`) | `openclaw.lan.$DOMAIN` |
-| caddy, doco-cd (+ docker-socket-proxy), doco-cd-updater, oci-backup, porkbun-ddns, router-sync, speedtest-influxdb | not proxied |
+| caddy, doco-cd (+ docker-socket-proxy), doco-cd-updater, oci-backup, porkbun-ddns, ppld-calendar, router-sync, speedtest-influxdb | not proxied |
 
 doco-cd (main instance) polls this repo and deploys everything above except itself; a second, minimal `doco-cd-updater` instance (scheduler disabled) polls independently and redeploys the main instance, since a single instance can't safely redeploy itself (see [doco-cd's Self-Updating docs](https://doco.cd/latest/Advanced/Self-Updating/)). Both instances reach Docker through a shared `docker-socket-proxy` sidecar rather than mounting `/var/run/docker.sock` directly.
 

@@ -12,4 +12,5 @@ services:
       CALDAV_USERNAME: ${CALDAV_USERNAME}
       CALDAV_APP_PASSWORD: ${CALDAV_APP_PASSWORD}
       CALDAV_CALENDAR_URL: ${CALDAV_CALENDAR_URL}
-      HEALTHCHECK_URL: ${HEALTHCHECK_URL}
+      # Not a secret: a ping URL only allows sending pings (same as speedtest's committed hc-ping URL)
+      HEALTHCHECK_URL: "https://hc-ping.com/7d486912-c244-4997-b483-ebd6fb967bcf"
