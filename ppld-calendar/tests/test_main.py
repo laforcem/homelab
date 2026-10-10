@@ -82,6 +82,45 @@ class MainTests(unittest.TestCase):
         code, _, _, _, _ = self.run_main(holds=[{"someField": 1}])
         self.assertEqual(code, 0)
 
+    def test_holds_fetch_failure_is_ignored_and_checkouts_sync(self):
+        fake = FakeClient()
+        with mock.patch.object(app.ppld, "login", return_value="tok"), \
+             mock.patch.object(app.ppld, "fetch_checkouts", return_value=CHECKOUTS), \
+             mock.patch.object(app.ppld, "fetch_holds", side_effect=PpldError("HTTP 500 from /holds")), \
+             mock.patch.object(app, "CalDavClient", return_value=fake), \
+             mock.patch.object(app, "ping") as ping:
+            code = app.main(ENV)
+        self.assertEqual(code, 0)
+        self.assertEqual(len(fake.puts), 3)
+        ping.assert_called_once_with(HC)
+
+    def test_holds_dict_does_not_fail_run_and_logs_keys_only(self):
+        fake = FakeClient()
+        with mock.patch.object(app.ppld, "login", return_value="tok"), \
+             mock.patch.object(app.ppld, "fetch_checkouts", return_value=CHECKOUTS), \
+             mock.patch.object(app.ppld, "fetch_holds", return_value={"k": "secretvalue"}), \
+             mock.patch.object(app, "CalDavClient", return_value=fake), \
+             mock.patch.object(app, "ping"), \
+             self.assertLogs("ppld-calendar", level="INFO") as logs:
+            code = app.main(ENV)
+        self.assertEqual(code, 0)
+        self.assertEqual(len(fake.puts), 3)
+        out = "\n".join(logs.output)
+        self.assertIn("'k'", out)
+        self.assertNotIn("secretvalue", out)
+
+    def test_unexpected_exception_text_is_not_logged(self):
+        with mock.patch.object(app.ppld, "login", side_effect=ValueError("boom someone@example.com")), \
+             mock.patch.object(app, "CalDavClient"), \
+             mock.patch.object(app, "ping") as ping, \
+             self.assertLogs("ppld-calendar", level="INFO") as logs:
+            code = app.main(ENV)
+        self.assertEqual(code, 1)
+        ping.assert_called_once_with(HC, "/fail")
+        out = "\n".join(logs.output)
+        self.assertNotIn("someone@example.com", out)
+        self.assertIn("ValueError", out)
+
     def test_bad_checkout_record_fails_closed(self):
         bad = [dict(CHECKOUTS[0], dueDate="not-a-date")]
         code, fake, ping, _, _ = self.run_main(checkouts=bad)

@@ -6,7 +6,7 @@ import urllib.request
 from typing import Mapping
 
 from . import ppld
-from .caldav import CalDavClient
+from .caldav import CalDavClient, CalDavError
 from .events import checkout_to_event
 from .sync import run_sync
 
@@ -29,16 +29,36 @@ def ping(url: str, suffix: str = "") -> None:
         log.warning("healthcheck ping failed: %s", type(e).__name__)
 
 
+class SyncFailed(RuntimeError):
+    """Raised by main itself; its message is safe to log."""
+
+
+def _log_holds_shape(holds) -> None:
+    """Holds are not synced yet; log field names only, never values."""
+    if holds is None:
+        return
+    if isinstance(holds, list):
+        if holds and isinstance(holds[0], dict):
+            log.info("holds: %d; first hold fields: %s", len(holds), sorted(holds[0]))
+        else:
+            log.info("holds: %d", len(holds))
+    elif isinstance(holds, dict):
+        log.info("holds response keys: %s", sorted(holds))
+    else:
+        log.info("holds response type: %s", type(holds).__name__)
+
+
 def _sync_once(env: Mapping[str, str]) -> None:
     token = ppld.login(env["PPLD_CARD_NUMBER"], env["PPLD_PIN"])
     checkouts = ppld.fetch_checkouts(token)
-    holds = ppld.fetch_holds(token)
+    try:
+        holds = ppld.fetch_holds(token)
+    except ppld.PpldError as e:
+        log.warning("holds fetch failed (ignored): %s", e)
+        holds = None
     events = [checkout_to_event(item) for item in checkouts]  # parse everything before any write
-    log.info("fetched %d checkouts, %d holds", len(checkouts), len(holds))
-    if holds:
-        first = holds[0]
-        fields = sorted(first) if isinstance(first, dict) else type(first).__name__
-        log.info("holds are not synced yet; first hold fields: %s", fields)
+    log.info("fetched %d checkouts", len(checkouts))
+    _log_holds_shape(holds)
 
     client = CalDavClient(
         env["CALDAV_CALENDAR_URL"], env["CALDAV_USERNAME"], env["CALDAV_APP_PASSWORD"]
@@ -46,7 +66,7 @@ def _sync_once(env: Mapping[str, str]) -> None:
     result = run_sync(events, client, dry_run=env.get("DRY_RUN") == "1")
     log.info("put %d, deleted %d, errors %d", result.put, result.deleted, len(result.errors))
     if result.errors:
-        raise RuntimeError("CalDAV operations failed: " + "; ".join(result.errors))
+        raise SyncFailed("CalDAV operations failed: " + "; ".join(result.errors))
 
 
 def main(environ: Mapping[str, str] | None = None) -> int:
@@ -56,10 +76,13 @@ def main(environ: Mapping[str, str] | None = None) -> int:
     try:
         missing = [k for k in REQUIRED if not env.get(k)]
         if missing:
-            raise RuntimeError("missing env: " + ", ".join(missing))
+            raise SyncFailed("missing env: " + ", ".join(missing))
         _sync_once(env)
     except Exception as e:
-        log.error("sync failed: %s", e)
+        if isinstance(e, (ppld.PpldError, CalDavError, SyncFailed)):
+            log.error("sync failed: %s", e)
+        else:  # arbitrary exceptions may embed the calendar URL or account email
+            log.error("sync failed: %s", type(e).__name__)
         if hc:
             ping(hc, "/fail")
         return 1

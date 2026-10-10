@@ -38,16 +38,17 @@ def login(card: str, pin: str) -> str:
     return token
 
 
-def _authed_list(path: str, token: str) -> list:
-    data = _get_json(f"{API_BASE}/{path}", {**API_HEADERS, "Authorization": f"Bearer {token}"})
-    if not isinstance(data, list):
-        raise PpldError(f"{path} response was not a list")
-    return data
+def _authed_get(path: str, token: str):
+    return _get_json(f"{API_BASE}/{path}", {**API_HEADERS, "Authorization": f"Bearer {token}"})
 
 
 def fetch_checkouts(token: str) -> list[dict]:
-    return _authed_list("checkouts", token)
+    data = _authed_get("checkouts", token)
+    if not isinstance(data, list):
+        raise PpldError("checkouts response was not a list")
+    return data
 
 
-def fetch_holds(token: str) -> list:
-    return _authed_list("holds", token)
+def fetch_holds(token: str):
+    """Holds are informational only; the shape is unverified, so return it as-is."""
+    return _authed_get("holds", token)

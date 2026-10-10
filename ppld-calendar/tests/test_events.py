@@ -53,6 +53,11 @@ class CheckoutToEventTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             checkout_to_event(bad)
 
+    def test_trailing_newline_id_rejected(self):
+        bad = dict(FIXTURE[0], id="100001\n")
+        with self.assertRaises(ValueError):
+            checkout_to_event(bad)
+
 
 class RenderIcsTests(unittest.TestCase):
     def test_all_day_event_with_alarm(self):
@@ -69,6 +74,13 @@ class RenderIcsTests(unittest.TestCase):
         ics = render_ics(checkout_to_event(FIXTURE[1]))
         self.assertIn("SUMMARY:Due: Test Book Two\\, A Novel\r\n", ics)
         self.assertIn("DESCRIPTION:Not renewable\\nBook via gates\r\n", ics)
+
+    def test_control_characters_become_spaces(self):
+        ev = checkout_to_event(dict(FIXTURE[1], resource=dict(FIXTURE[1]["resource"], title="A\rB\x07C")))
+        ics = render_ics(ev)
+        self.assertIn("SUMMARY:Due: A B C\r\n", ics)
+        self.assertNotIn("\x07", ics)
+        self.assertEqual(ics.count("\r"), ics.count("\r\n"))
 
     def test_long_lines_fold_at_75_octets_and_unfold_losslessly(self):
         title = "É" * 60 + " " + "x" * 80

@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 LOCAL_TZ = ZoneInfo("America/Denver")
-_ID_RE = re.compile(r"^[A-Za-z0-9-]+$")
+_ID_RE = re.compile(r"[A-Za-z0-9-]+")
 
 
 @dataclass(frozen=True)
@@ -28,7 +28,7 @@ def local_date(value: str) -> date:
 
 def checkout_to_event(item: dict) -> Event:
     item_id = str(item["id"])
-    if not _ID_RE.match(item_id):
+    if not _ID_RE.fullmatch(item_id):
         raise ValueError(f"unexpected checkout id: {item_id!r}")
     resource = item["resource"]
     limit = item.get("renewalLimit", 0)
@@ -49,7 +49,11 @@ def checkout_to_event(item: dict) -> Event:
     )
 
 
+_CONTROL_RE = re.compile(r"[\x00-\x09\x0b-\x1f\x7f]")
+
+
 def _escape(text: str) -> str:
+    text = _CONTROL_RE.sub(" ", text)  # keep \n; it is escaped below
     return (
         text.replace("\\", "\\\\")
         .replace(";", "\\;")

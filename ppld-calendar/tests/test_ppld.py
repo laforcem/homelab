@@ -61,6 +61,16 @@ class FetchTests(unittest.TestCase):
         with mock.patch("urllib.request.urlopen", return_value=_resp([])):
             self.assertEqual(ppld.fetch_holds("tok"), [])
 
+    def test_holds_dict_is_returned_as_is(self):
+        with mock.patch("urllib.request.urlopen", return_value=_resp({"k": 1})):
+            self.assertEqual(ppld.fetch_holds("tok"), {"k": 1})
+
+    def test_holds_http_error_raises_ppld_error(self):
+        err = urllib.error.HTTPError("u", 500, "Err", {}, None)
+        with mock.patch("urllib.request.urlopen", side_effect=err):
+            with self.assertRaises(ppld.PpldError):
+                ppld.fetch_holds("tok")
+
     def test_fetch_http_error_raises_ppld_error(self):
         err = urllib.error.HTTPError("u", 403, "Forbidden", {}, None)
         with mock.patch("urllib.request.urlopen", side_effect=err):
