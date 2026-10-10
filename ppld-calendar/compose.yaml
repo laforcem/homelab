@@ -1,0 +1,16 @@
+services:
+  ppld-calendar:
+    container_name: ppld-calendar
+    image: ghcr.io/laforcem/ppld-calendar:v0.1.1
+    restart: always
+    environment:
+      TZ: America/Denver # crond defaults to UTC otherwise
+      SYNC_CRON: "0 6 * * *"
+      # From Bitwarden Secrets Manager via doco-cd's external_secrets
+      PPLD_CARD_NUMBER: ${PPLD_CARD_NUMBER}
+      PPLD_PIN: ${PPLD_PIN}
+      CALDAV_USERNAME: ${CALDAV_USERNAME}
+      CALDAV_APP_PASSWORD: ${CALDAV_APP_PASSWORD}
+      CALDAV_CALENDAR_URL: ${CALDAV_CALENDAR_URL}
+      # Not a secret: a ping URL only allows sending pings (same as speedtest's committed hc-ping URL)
+      HEALTHCHECK_URL: "https://hc-ping.com/7d486912-c244-4997-b483-ebd6fb967bcf"

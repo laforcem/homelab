@@ -76,6 +76,16 @@ services:
                 SUBDOMAIN: "40832d03-e0d3-49e6-80b8-b4ab00135d22"
                 API_KEY: "05d378b9-de09-465c-80ec-b4ab001378de"
                 SECRET_KEY: "e991c510-db7b-4e76-b885-b4ab00138c89"
+            - name: ppld-calendar
+              working_dir: ppld-calendar
+              compose_files:
+                - compose.yaml
+              external_secrets:
+                PPLD_CARD_NUMBER: "23779a68-949a-43df-af30-b4df01464ff8"
+                PPLD_PIN: "334a64c3-e1e2-4ad6-80f8-b4df014673b9"
+                CALDAV_USERNAME: "c6a154ff-d10e-4002-acad-b4df01468adf"
+                CALDAV_APP_PASSWORD: "7a655d96-b72a-4734-8806-b4df01473b42"
+                CALDAV_CALENDAR_URL: "8679ab16-75a4-40e6-83c8-b4df01477477"
     volumes:
       - data:/data
       - /opt/doco-cd-secrets:/secrets:ro
