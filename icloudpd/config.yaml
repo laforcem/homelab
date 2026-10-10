@@ -1,7 +1,7 @@
 app:
   log_level: info
   mfa_provider: webui
-  password_providers: [parameter, webui]
+  password_providers: [parameter]
   webui_port: 2011
   watch_with_interval: 86400
 
