@@ -27,7 +27,7 @@ services:
   icloudpd:
     container_name: icloudpd
     hostname: icloudpd
-    image: ghcr.io/laforcem/icloudpd:v1.1.0
+    image: ghcr.io/laforcem/icloudpd:v1.1.1
     networks:
       - icloudpd
     environment:
