@@ -1,0 +1,5 @@
+[
+  {"id": "100001", "renewalCount": 1, "renewalLimit": 2, "checkOutDate": "2026-09-20T19:42:58Z", "dueDate": "2026-10-13T05:59:59Z", "vendor": "gates", "resource": {"id": "r-1", "type": "FormatGroup", "title": "Test Book One", "materialType": "Book"}, "canItemBeRenewed": true},
+  {"id": "100002", "renewalCount": 2, "renewalLimit": 2, "checkOutDate": "2026-10-10T18:34:03Z", "dueDate": "2026-11-01T05:59:59Z", "vendor": "gates", "resource": {"id": "r-2", "type": "FormatGroup", "title": "Test Book Two, A Novel", "materialType": "Book"}, "canItemBeRenewed": false},
+  {"id": "00000000-0000-0000-0000-000000000003", "renewalCount": 0, "renewalLimit": 0, "checkOutDate": "2026-09-20T20:02:55Z", "dueDate": "2026-10-11T20:02:55Z", "vendor": "overdrive", "resource": {"id": "r-3", "type": "FormatGroup", "title": "Test Audiobook", "materialType": "Eaudiobook"}, "overdrive": {"reserveId": "00000000-0000-0000-0000-000000000003", "expireDate": "2026-10-11T20:02:55Z"}}
+]
