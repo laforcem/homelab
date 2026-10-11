@@ -50,7 +50,7 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | openclaw (proxied on warden, runs on `valet`) | `openclaw.lan.$DOMAIN` |
 | caddy, doco-cd (+ docker-socket-proxy), doco-cd-updater, oci-backup, porkbun-ddns, ppld-calendar, router-sync, speedtest-influxdb | not proxied |
 
-doco-cd (main instance) polls this repo and deploys everything above except itself; a second, minimal `doco-cd-updater` instance (scheduler disabled) polls independently and redeploys the main instance, since a single instance can't safely redeploy itself (see [doco-cd's Self-Updating docs](https://doco.cd/latest/Advanced/Self-Updating/)). Both instances reach Docker through a shared `docker-socket-proxy` sidecar rather than mounting `/var/run/docker.sock` directly.
+doco-cd (main instance) polls this repo and deploys everything above; self-update is enabled (v0.122+, `SELF_UPDATE_ENABLED`, stack defined in the repo-root `.doco-cd.yaml`) and the handover is being verified. Until then a second, minimal `doco-cd-updater` instance (scheduler disabled) polls independently and redeploys the main instance, since a single instance can't safely redeploy itself (see [doco-cd's Self-Updating docs](https://doco.cd/latest/Advanced/Self-Updating/)). Both instances reach Docker through a shared `docker-socket-proxy` sidecar rather than mounting `/var/run/docker.sock` directly.
 
 router-sync's image source lives in a separate repo ([`laforcem/router-sync`](https://github.com/laforcem/router-sync), public, GH Actions builds/pushes to GHCR) — this repo only holds its deployment config.
 
