@@ -117,9 +117,9 @@
     dest: "{{ doco_cd_proxy_tempdir.path }}/compose.yaml"
     mode: "0644"
 
-# Applied every run (not first-run-only like doco-cd/doco-cd-updater below):
-# this is the one piece Ansible owns going forward, precisely so it's never
-# put back in doco-cd-updater's auto-recreate loop. See #108.
+# Applied every run (not first-run-only like doco-cd below): this is the one
+# piece Ansible owns going forward, precisely so doco-cd never recreates the
+# socket proxy it talks through. See #108.
 - name: Apply docker-socket-proxy
   community.docker.docker_compose_v2:
     project_src: "{{ doco_cd_proxy_tempdir.path }}"
@@ -156,34 +156,6 @@
 - name: Remove doco-cd bootstrap tempdir
   ansible.builtin.file:
     path: "{{ doco_cd_tempdir.path }}"
-    state: absent
-
-- name: Create tempdir for doco-cd-updater bootstrap
-  ansible.builtin.tempfile:
-    state: directory
-    suffix: doco-cd-updater
-  register: doco_cd_updater_tempdir
-
-- name: Deploy doco-cd-updater Compose file
-  ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../../doco-cd-updater/compose.yaml"
-    dest: "{{ doco_cd_updater_tempdir.path }}/compose.yaml"
-    mode: "0644"
-
-- name: Check if doco-cd-updater is already running
-  community.docker.docker_container_info:
-    name: doco-cd-updater
-  register: doco_cd_updater_check
-
-- name: Bootstrap doco-cd-updater (first run only, after doco-cd owns the shared network)
-  community.docker.docker_compose_v2:
-    project_src: "{{ doco_cd_updater_tempdir.path }}"
-    state: present
-  when: not doco_cd_updater_check.exists
-
-- name: Remove doco-cd-updater bootstrap tempdir
-  ansible.builtin.file:
-    path: "{{ doco_cd_updater_tempdir.path }}"
     state: absent
 
 - name: Install docker-socket-proxy watchdog script

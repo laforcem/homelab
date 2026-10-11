@@ -1,8 +1,7 @@
 name: doco-cd
-# Main instance: deploys everything, including itself (SELF_UPDATE_ENABLED).
-# doco-cd-updater/ is a transitional second instance, no longer managed from
-# here and removed once self-update is verified — see doco-cd's Self-Updating
-# docs.
+# Single instance: deploys everything, including itself (SELF_UPDATE_ENABLED;
+# its own stack is defined in the repo-root .doco-cd.yaml). The old
+# doco-cd-updater instance is retired — see doco-cd's Self-Updating docs.
 
 services:
   app:
