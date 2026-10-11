@@ -3,7 +3,7 @@ name: doco-cd-updater
 services:
   app:
     container_name: doco-cd-updater
-    image: ghcr.io/kimdre/doco-cd:0.118.0
+    image: ghcr.io/kimdre/doco-cd:0.125.1
     restart: unless-stopped
     environment:
       TZ: America/Denver
@@ -29,7 +29,7 @@ services:
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "/doco-cd", "healthcheck"]
+      test: ["CMD", "/healthcheck"]
       start_period: 15s
       interval: 30s
       timeout: 5s
