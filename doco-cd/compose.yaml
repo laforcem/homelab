@@ -1,15 +1,17 @@
 name: doco-cd
-# Main instance: deploys everything except itself. doco-cd-updater/ is the
-# only thing that redeploys this stack — see doco-cd's Self-Updating docs.
+# Main instance: deploys everything, including itself (SELF_UPDATE_ENABLED).
+# doco-cd-updater/ is a transitional second instance, removed once self-update
+# is verified — see doco-cd's Self-Updating docs.
 
 services:
   app:
     container_name: doco-cd
-    image: ghcr.io/kimdre/doco-cd:0.118.0
+    image: ghcr.io/kimdre/doco-cd:0.125.1
     restart: unless-stopped
     environment:
       TZ: America/Denver
       DOCKER_HOST: tcp://docker-socket-proxy:2375
+      SELF_UPDATE_ENABLED: "true"
       SECRET_PROVIDER: bitwarden_sm
       SECRET_PROVIDER_ACCESS_TOKEN: ${SECRET_PROVIDER_ACCESS_TOKEN}
       POLL_CONFIG: |
@@ -21,6 +23,12 @@ services:
               working_dir: doco-cd-updater
               compose_files:
                 - compose.yaml
+            - name: doco-cd
+              working_dir: doco-cd
+              compose_files:
+                - compose.yaml
+              env_files:
+                - /secrets/doco-cd.env
             - name: adguard-home
               working_dir: adguard-home
               compose_files:
@@ -94,7 +102,7 @@ services:
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "/doco-cd", "healthcheck"]
+      test: ["CMD", "/healthcheck"]
       start_period: 15s
       interval: 30s
       timeout: 5s
