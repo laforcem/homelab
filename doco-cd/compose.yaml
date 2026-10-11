@@ -9,9 +9,6 @@ services:
     container_name: doco-cd
     image: ghcr.io/kimdre/doco-cd:0.125.1
     restart: unless-stopped
-    labels:
-      # Temporary: forces a config change to exercise self-update handover.
-      homelab.handover-test: "1"
     environment:
       TZ: America/Denver
       DOCKER_HOST: tcp://docker-socket-proxy:2375
