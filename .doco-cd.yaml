@@ -1,0 +1,8 @@
+# Read only by doco-cd's self-update to find its own stack. Polling uses the
+# inline POLL_CONFIG in doco-cd/compose.yaml, which overrides this file.
+name: doco-cd
+working_dir: doco-cd
+compose_files:
+  - compose.yaml
+env_files:
+  - /secrets/doco-cd.env
