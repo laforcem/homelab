@@ -16,7 +16,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: actual
-          image: actualbudget/actual-server:26.9.0
+          image: actualbudget/actual-server:26.10.0
           ports:
             - containerPort: 5006
           volumeMounts:
