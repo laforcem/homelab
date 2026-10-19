@@ -27,11 +27,14 @@ prometheusOperator:
     limits: { memory: 256Mi }
 
 prometheus:
-  # Warden's Grafana queries Prometheus on this port. ufw restricts it to
-  # warden's address (ansible/roles/k3s).
+  # Warden's Grafana queries Prometheus on this port.
   service:
     type: NodePort
     nodePort: 30090
+    # Keeps the caller's real address so the NetworkPolicy in
+    # nodeport.networkpolicy.yaml can match warden's. NodePort traffic skips
+    # ufw's input rules, so the NetworkPolicy is the real access control.
+    externalTrafficPolicy: Local
   prometheusSpec:
     # Any ServiceMonitor/PodMonitor in any namespace, no release label needed.
     serviceMonitorSelectorNilUsesHelmValues: false

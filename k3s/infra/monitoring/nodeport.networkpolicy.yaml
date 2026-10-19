@@ -1,0 +1,35 @@
+# NodePort traffic bypasses ufw's input rules (kube-proxy forwards it), so
+# access to Prometheus and Loki is restricted here instead. Warden is the only
+# outside address allowed; in-cluster traffic (pod network) is unchanged.
+# Needs externalTrafficPolicy: Local on the NodePort Services so the caller's
+# real address reaches the pod.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-ingress
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.42.0.0/16 }   # pod network (incl. node gateway, probes)
+        - ipBlock: { cidr: 192.168.10.12/32 }   # warden
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: loki-ingress
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: loki
+      app.kubernetes.io/component: single-binary
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.42.0.0/16 }
+        - ipBlock: { cidr: 192.168.10.12/32 }

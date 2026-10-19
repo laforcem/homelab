@@ -1,5 +1,6 @@
-# The chart's own Service is ClusterIP. Warden's Grafana reaches Loki here;
-# ufw on chimaera allows 30100/tcp from warden's address only.
+# The chart's own Service is ClusterIP. Warden's Grafana reaches Loki here.
+# Local keeps the caller's real address so nodeport.networkpolicy.yaml can
+# restrict access to warden.
 apiVersion: v1
 kind: Service
 metadata:
@@ -7,6 +8,7 @@ metadata:
   namespace: monitoring
 spec:
   type: NodePort
+  externalTrafficPolicy: Local
   selector:
     app.kubernetes.io/name: loki
     app.kubernetes.io/component: single-binary
