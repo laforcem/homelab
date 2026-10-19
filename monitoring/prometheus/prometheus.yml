@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Named node-exporter so the kube-prometheus-stack node dashboards
+  # (which filter on job="node-exporter") also work for warden.
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['monitoring-node-exporter:9100']
+        labels:
+          host: warden
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['monitoring-cadvisor:8080']
+        labels:
+          host: warden
+
+  - job_name: adguard
+    static_configs:
+      - targets: ['monitoring-adguard-exporter:9618']
+
+  # Tests run every 15 minutes, so a slower scrape loses nothing.
+  - job_name: speedtest-tracker
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: /prometheus
+    static_configs:
+      - targets: ['speedtest-tracker:80']

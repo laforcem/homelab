@@ -179,3 +179,26 @@
     name: docker-proxy-watchdog.timer
     enabled: true
     state: started
+
+- name: Create node-exporter textfile directory
+  ansible.builtin.file:
+    path: /var/lib/node-exporter/textfile
+    state: directory
+    mode: "0755"
+
+- name: Install Tailscale metrics systemd units
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - tailscale-metrics.service
+    - tailscale-metrics.timer
+  notify: Reload systemd and restart Tailscale metrics timer
+
+- name: Enable Tailscale metrics timer
+  ansible.builtin.systemd:
+    name: tailscale-metrics.timer
+    enabled: true
+    state: started
+    daemon_reload: true

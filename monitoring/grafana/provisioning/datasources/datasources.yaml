@@ -1,0 +1,24 @@
+apiVersion: 1
+
+datasources:
+  # Warden's own Prometheus (default).
+  - name: Prometheus (warden)
+    uid: prometheus-warden
+    type: prometheus
+    access: proxy
+    url: http://monitoring-prometheus:9090
+    isDefault: true
+
+  # The cluster's, over chimaera NodePorts. Reachable from warden only
+  # (NetworkPolicy in k3s/infra/monitoring/nodeport.networkpolicy.yaml).
+  - name: Prometheus (cluster)
+    uid: prometheus-cluster
+    type: prometheus
+    access: proxy
+    url: http://192.168.40.10:30090
+
+  - name: Loki (cluster)
+    uid: loki-cluster
+    type: loki
+    access: proxy
+    url: http://192.168.40.10:30100

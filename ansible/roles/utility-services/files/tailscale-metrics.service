@@ -1,0 +1,8 @@
+[Unit]
+Description=Write Tailscale client metrics for node-exporter's textfile collector
+After=tailscaled.service
+
+[Service]
+Type=oneshot
+# Write to a temp name and rename, so node-exporter never reads a half-written file.
+ExecStart=/bin/sh -c '/usr/bin/tailscale metrics write /var/lib/node-exporter/textfile/tailscaled.prom.tmp && mv /var/lib/node-exporter/textfile/tailscaled.prom.tmp /var/lib/node-exporter/textfile/tailscaled.prom'

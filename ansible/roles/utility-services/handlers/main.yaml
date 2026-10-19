@@ -8,3 +8,9 @@
     name: docker-proxy-watchdog.timer
     daemon_reload: true
     state: restarted
+
+- name: Reload systemd and restart Tailscale metrics timer
+  ansible.builtin.systemd:
+    name: tailscale-metrics.timer
+    daemon_reload: true
+    state: restarted
