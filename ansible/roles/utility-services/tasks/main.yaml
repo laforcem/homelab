@@ -179,3 +179,37 @@
     name: docker-proxy-watchdog.timer
     enabled: true
     state: started
+
+- name: Create node-exporter textfile directory
+  ansible.builtin.file:
+    path: /var/lib/node-exporter/textfile
+    state: directory
+    mode: "0755"
+
+- name: Install Tailscale metrics systemd units
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - tailscale-metrics.service
+    - tailscale-metrics.timer
+  notify: Reload systemd and restart Tailscale metrics timer
+
+- name: Enable Tailscale metrics timer
+  ansible.builtin.systemd:
+    name: tailscale-metrics.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+
+# node-exporter runs on the host network (real NIC metrics); Prometheus reaches
+# it from the caddy-internal Docker network. LAN hosts stay blocked by ufw's
+# default deny. Subnet is that network's current auto-assigned range — update
+# this if the network is ever recreated with a different one.
+- name: Allow node-exporter (9100) from the caddy-internal Docker network
+  community.general.ufw:
+    rule: allow
+    port: "9100"
+    proto: tcp
+    src: 172.21.0.0/16
