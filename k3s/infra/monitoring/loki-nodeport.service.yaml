@@ -1,0 +1,17 @@
+# The chart's own Service is ClusterIP. Warden's Grafana reaches Loki here;
+# ufw on chimaera allows 30100/tcp from warden's address only.
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-nodeport
+  namespace: monitoring
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/component: single-binary
+  ports:
+    - name: http-metrics
+      port: 3100
+      targetPort: 3100
+      nodePort: 30100
