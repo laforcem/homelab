@@ -25,6 +25,8 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=15d
+    extra_hosts:
+      - host.docker.internal:host-gateway
     networks:
       - caddy-internal
     volumes:
@@ -39,9 +41,11 @@ services:
     command:
       - --path.rootfs=/host
       - --collector.textfile.directory=/textfile
+    # Host network so network-interface metrics are the real NICs, not the
+    # container's. Prometheus reaches it via host.docker.internal; ufw allows
+    # that from Docker's caddy-internal subnet only (ansible/roles/utility-services).
+    network_mode: host
     pid: host
-    networks:
-      - caddy-internal
     volumes:
       - /:/host:ro,rslave
       # Written by the tailscale-metrics systemd timer (ansible/roles/utility-services)

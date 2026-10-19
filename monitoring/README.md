@@ -11,7 +11,7 @@ reach warden.
 | Container | Role |
 |---|---|
 | `monitoring-prometheus` | Warden's metrics, 15d retention |
-| `monitoring-node-exporter` | Host metrics, plus Tailscale metrics via the textfile collector |
+| `monitoring-node-exporter` | Host metrics (host network; ufw allows `:9100` from `caddy-internal` only), plus Tailscale metrics via the textfile collector |
 | `monitoring-cadvisor` | Per-container metrics |
 | `monitoring-adguard-exporter` | AdGuard Home stats, via its own `adguard-exporter` AGH account |
 | `monitoring-grafana` | `grafana.lan.$DOMAIN` |

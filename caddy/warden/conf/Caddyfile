@@ -15,6 +15,9 @@
     }
     @speedtest host speedtest.lan.{$DOMAIN}
     handle @speedtest {
+        # Prometheus scrapes /prometheus container-to-container, not through here.
+        @metrics path /prometheus*
+        respond @metrics 404
         reverse_proxy speedtest-tracker:80
     }
     @openclaw host openclaw.lan.{$DOMAIN}

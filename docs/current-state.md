@@ -146,9 +146,9 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 ## Known gaps as of this writing
 
 - Alerting doesn't exist yet (tracked in [#109](https://github.com/laforcem/homelab/issues/109)). The one Grafana on warden has no alert rules; the old Telegram alerting went with `speedtest-grafana`.
-- speedtest-tracker's own `/prometheus` endpoint has no allowed-IP restriction (its `prometheus_allowed_ips` setting is empty), so anything on the LAN can read it through `speedtest.lan.$DOMAIN/prometheus`. Low sensitivity, but not locked down.
+- speedtest-tracker's `/prometheus` endpoint has no allowed-IP restriction of its own (`prometheus_allowed_ips` is empty); it is kept off the LAN by a Caddy rule returning 404 for it on `speedtest.lan.$DOMAIN`, while Prometheus scrapes it container-to-container.
 - `monitoring-adguard-exporter` has its own AdGuard Home account (`adguard-exporter`), also created directly in AGH's live config (see the `router-sync` account above) — same not-reproducible-from-a-fresh-deploy caveat. AGH has no read-only role, so it still has full API access.
-- `monitoring-node-exporter` runs in a bridge network, so its network-interface metrics are the container's, not the host's; per-container network stats come from cAdvisor.
+- `monitoring-node-exporter` runs on the host network (real NIC metrics) and listens on `:9100`; ufw only allows that port from `172.21.0.0/16`, the `caddy-internal` Docker network's auto-assigned subnet (`ansible/roles/utility-services`). If that network is ever recreated with a different subnet, Prometheus loses the target until the rule is updated.
 - `speedtest-tracker` and `samba` run `:latest` rather than a pinned tag — the only unpinned images in the estate.
 - `router-sync`'s AGH API user (`router-sync`, a dedicated AdGuard Home account, not the personal admin login) was created directly in AGH's live config — AGH has no web UI for user management, config-file only. Not reproducible from a fresh deploy without redoing this by hand.
 - doco-cd's own `/data` volume has no app-level backup yet (tracked in [#95](https://github.com/laforcem/homelab/issues/95)).

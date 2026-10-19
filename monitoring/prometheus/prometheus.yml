@@ -11,7 +11,7 @@ scrape_configs:
   # (which filter on job="node-exporter") also work for warden.
   - job_name: node-exporter
     static_configs:
-      - targets: ['monitoring-node-exporter:9100']
+      - targets: ['host.docker.internal:9100']
         labels:
           host: warden
 
