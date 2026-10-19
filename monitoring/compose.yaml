@@ -73,10 +73,10 @@ services:
     restart: unless-stopped
     environment:
       ADGUARD_SERVERS: http://adguard-home
-      # Reuses router-sync's AdGuard Home account (AGH has no UI for adding
-      # users, config-file only). Both secrets come from Bitwarden via doco-cd.
-      ADGUARD_USERNAMES: router-sync
-      ADGUARD_PASSWORDS: ${AGH_PASSWORD}
+      # Its own AdGuard Home account (added to AdGuardHome.yaml by hand — AGH
+      # has no UI for users). The password comes from Bitwarden via doco-cd.
+      ADGUARD_USERNAMES: adguard-exporter
+      ADGUARD_PASSWORDS: ${ADGUARD_EXPORTER_PASSWORD}
       INTERVAL: 30s
     networks:
       - caddy-internal

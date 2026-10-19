@@ -147,7 +147,7 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 
 - Alerting doesn't exist yet (tracked in [#109](https://github.com/laforcem/homelab/issues/109)). The one Grafana on warden has no alert rules; the old Telegram alerting went with `speedtest-grafana`.
 - speedtest-tracker's own `/prometheus` endpoint has no allowed-IP restriction (its `prometheus_allowed_ips` setting is empty), so anything on the LAN can read it through `speedtest.lan.$DOMAIN/prometheus`. Low sensitivity, but not locked down.
-- `monitoring-adguard-exporter` reuses router-sync's AdGuard Home account rather than having its own.
+- `monitoring-adguard-exporter` has its own AdGuard Home account (`adguard-exporter`), also created directly in AGH's live config (see the `router-sync` account above) — same not-reproducible-from-a-fresh-deploy caveat. AGH has no read-only role, so it still has full API access.
 - `monitoring-node-exporter` runs in a bridge network, so its network-interface metrics are the container's, not the host's; per-container network stats come from cAdvisor.
 - `speedtest-tracker` and `samba` run `:latest` rather than a pinned tag — the only unpinned images in the estate.
 - `router-sync`'s AGH API user (`router-sync`, a dedicated AdGuard Home account, not the personal admin login) was created directly in AGH's live config — AGH has no web UI for user management, config-file only. Not reproducible from a fresh deploy without redoing this by hand.

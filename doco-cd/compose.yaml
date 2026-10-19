@@ -57,7 +57,7 @@ services:
               external_secrets:
                 GRAFANA_ADMIN_PASSWORD: "174165f9-dc39-4ef1-8656-b4c50184ab41"
                 DOMAIN: "4d3bfd3c-0a5d-496e-8eeb-b4ab00128f57"
-                AGH_PASSWORD: "0d135bea-e776-4677-a546-b4c5017fd9ce"
+                ADGUARD_EXPORTER_PASSWORD: "cb730d28-66b8-4ba3-ac75-b4e80158047a"
             - name: router-sync
               working_dir: router-sync
               compose_files:

@@ -13,7 +13,7 @@ reach warden.
 | `monitoring-prometheus` | Warden's metrics, 15d retention |
 | `monitoring-node-exporter` | Host metrics, plus Tailscale metrics via the textfile collector |
 | `monitoring-cadvisor` | Per-container metrics |
-| `monitoring-adguard-exporter` | AdGuard Home stats (uses router-sync's AGH account) |
+| `monitoring-adguard-exporter` | AdGuard Home stats, via its own `adguard-exporter` AGH account |
 | `monitoring-grafana` | `grafana.lan.$DOMAIN` |
 
 speedtest-tracker publishes its own metrics at `/prometheus`; Prometheus scrapes
