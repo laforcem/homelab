@@ -1,9 +1,7 @@
 name: speedtest
 
 volumes:
-  speedtest-influxdb:
   speedtest-tracker:
-  speedtest-grafana:
 
 networks:
   speedtest-internal:
@@ -22,40 +20,11 @@ services:
     environment:
       - APP_KEY=${APP_KEY}
       - DB_CONNECTION=sqlite
-      - INFLUXDB_URL=http://speedtest-influxdb:8086
-      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
-      - INFLUXDB_BUCKET=speedtest
-      - INFLUXDB_ORG=homelab
+      - PROMETHEUS_ENABLED=true
       - SPEEDTEST_SCHEDULE=*/15 * * * *
-    depends_on:
-      influxdb:
-        condition: service_healthy
     volumes:
       - speedtest-tracker:/config
       - ./custom-cont-init.d:/custom-cont-init.d:ro
-
-  influxdb:
-    image: influxdb:2
-    container_name: speedtest-influxdb
-    restart: unless-stopped
-    networks:
-      - speedtest-internal
-    environment:
-      - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=admin
-      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
-      - DOCKER_INFLUXDB_INIT_ORG=homelab
-      - DOCKER_INFLUXDB_INIT_BUCKET=speedtest
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
-      - DOCKER_INFLUXDB_INIT_RETENTION=2160h
-    volumes:
-      - speedtest-influxdb:/var/lib/influxdb2
-    healthcheck:
-      test: ["CMD", "influx", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
 
   speedtest-tracker-backup:
     container_name: speedtest-tracker-backup
@@ -77,23 +46,3 @@ services:
       DROPBOX_REMOTE_PATH: "/Homelab/speedtest-tracker"
     volumes:
       - speedtest-tracker:/backup/speedtest-tracker-config:ro
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: speedtest-grafana
-    restart: unless-stopped
-    networks:
-      - speedtest-internal
-      - caddy-internal
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
-      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
-      - GF_SERVER_ROOT_URL=https://grafana.lan.${DOMAIN}
-      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
-      - INFLUXDB_ORG=homelab
-    volumes:
-      - speedtest-grafana:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
-    depends_on:
-      influxdb:
-        condition: service_healthy
