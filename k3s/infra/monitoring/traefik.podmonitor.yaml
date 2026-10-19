@@ -1,0 +1,17 @@
+# Traefik serves Prometheus metrics on container port 9100 ("metrics"), but its
+# Service doesn't publish that port, so this is a PodMonitor, not a ServiceMonitor.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: traefik
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics

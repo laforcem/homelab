@@ -1,0 +1,65 @@
+# kube-prometheus-stack 92.10.1 — metrics only. Grafana runs on warden, not
+# here (see docs/superpowers/plans/2026-10-19-cluster-observability.md).
+
+grafana:
+  enabled: false
+  # Still render the chart's dashboards as ConfigMaps so they can be
+  # extracted with `helm template` and loaded on warden.
+  forceDeployDashboards: true
+
+alertmanager:
+  enabled: false
+
+# k3s embeds these control-plane components in its own process, so there is
+# nothing for Prometheus to scrape.
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheusOperator:
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+    limits: { memory: 256Mi }
+
+prometheus:
+  # Warden's Grafana queries Prometheus on this port.
+  service:
+    type: NodePort
+    nodePort: 30090
+    # Keeps the caller's real address so the NetworkPolicy in
+    # nodeport.networkpolicy.yaml can match warden's. NodePort traffic skips
+    # ufw's input rules, so the NetworkPolicy is the real access control.
+    externalTrafficPolicy: Local
+  prometheusSpec:
+    # Any ServiceMonitor/PodMonitor in any namespace, no release label needed.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    # Nothing is pushed into the cluster.
+    enableRemoteWriteReceiver: false
+    retention: 10d
+    resources:
+      requests: { cpu: 200m, memory: 512Mi }
+      limits: { memory: 1536Mi }
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+kube-state-metrics:
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { memory: 128Mi }
+
+prometheus-node-exporter:
+  resources:
+    requests: { cpu: 10m, memory: 24Mi }
+    limits: { memory: 64Mi }

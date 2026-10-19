@@ -1,0 +1,19 @@
+# The chart's own Service is ClusterIP. Warden's Grafana reaches Loki here.
+# Local keeps the caller's real address so nodeport.networkpolicy.yaml can
+# restrict access to warden.
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-nodeport
+  namespace: monitoring
+spec:
+  type: NodePort
+  externalTrafficPolicy: Local
+  selector:
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/component: single-binary
+  ports:
+    - name: http-metrics
+      port: 3100
+      targetPort: 3100
+      nodePort: 30100
