@@ -1,0 +1,26 @@
+# Lives in `monitoring` so it can use Prometheus's token Secret (secret refs
+# resolve in the ServiceMonitor's own namespace); selects across to volsync-system.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: volsync
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - volsync-system
+  selector:
+    matchLabels:
+      control-plane: volsync-controller
+  endpoints:
+    - port: https
+      path: /metrics
+      scheme: https
+      interval: 30s
+      tlsConfig:
+        insecureSkipVerify: true # volsync serves a self-signed cert
+      authorization:
+        type: Bearer
+        credentials:
+          name: kube-prometheus-stack-prometheus-token
+          key: token
