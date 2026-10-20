@@ -11,8 +11,6 @@ networks:
     external: true
   miniflux-caddy:
     external: true
-  tandoor-caddy:
-    external: true
 
 services:
   caddy:
@@ -35,4 +33,3 @@ services:
     networks:
       - actual-caddy
       - miniflux-caddy
-      - tandoor-caddy
