@@ -10,11 +10,6 @@
         }
     }
     
-    @miniflux host miniflux.{$DOMAIN}
-    handle @miniflux {
-        reverse_proxy miniflux:8080
-    }
-    
     handle {
         abort
     }    

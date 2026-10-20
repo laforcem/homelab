@@ -9,8 +9,6 @@ volumes:
 networks:
   actual-caddy:
     external: true
-  miniflux-caddy:
-    external: true
 
 services:
   caddy:
@@ -32,4 +30,3 @@ services:
       - config:/config
     networks:
       - actual-caddy
-      - miniflux-caddy

@@ -27,7 +27,7 @@ This file describes what's running today, across docker-compose and k3s, and get
 | `warden` | VMID 104, vm100's successor — fully migrated (#51–#53), all workloads live here | `192.168.10.12` | Debian 13 |
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
-| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); runs Actual, actual-mcp, Audiobookshelf and Tandoor in production, and is the public entrypoint for vm101's routes (TLS passthrough) | `192.168.40.10` | Debian 13 |
+| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); runs Actual, actual-mcp, Audiobookshelf, Miniflux and Tandoor in production, and is the public entrypoint for vm101's routes (TLS passthrough) | `192.168.40.10` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
 `vm100` was fully decommissioned, freeing VMID 100 for reuse — Proxmox's next-free-VMID allocation then assigned it to the unrelated `chimaera` VM described above.
@@ -72,6 +72,7 @@ ppld-calendar's image source lives in a separate repo ([`laforcem/ppld-calendar`
 | actual | `budget.$DOMAIN` |
 | actual-mcp | `budget.$DOMAIN/mcp` |
 | audiobookshelf | `audiobooks.$DOMAIN` |
+| miniflux (+ its own Postgres) | `miniflux.$DOMAIN` |
 | tandoor | `recipes.$DOMAIN` |
 | vm101's `photos`/`music`/`nd.$DOMAIN` | TLS passthrough (SNI-routed) to vm101's Caddy, via `IngressRouteTCP` in `k3s/infra/vm101-ingress/` — chimaera never terminates or sees these certs |
 
@@ -87,7 +88,6 @@ Cluster infra (`ansible/roles/cert-manager/`, see below): `cert-manager` issues 
 
 | Service | Route |
 |---|---|
-| miniflux | `miniflux.$DOMAIN` |
 | teamspeak | has its own subdomain, but not through Caddy — it's raw UDP (9987), not HTTP, so it can't be reverse-proxied; the DNS record points straight at mrgutsy |
 | herobrines-mansion, mc-sloth-kingdom (Minecraft) | not proxied, no subdomain — voice/game traffic, kept off the home network deliberately |
 
@@ -110,7 +110,7 @@ The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrat
 - **PBS** — whole-VM backup for vm101/warden/valet/chimaera's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore, via a single vzdump job (daily 03:00, `vmid: 101,104,105,100`). A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`, bucket `starcliff-lab`). Both jobs are healthchecks.io-monitored via PVE's/PBS's native webhook+matcher notifications (success/failure ping separate check URLs). B2 bucket lifecycle must be "Keep only the last version of the file" (not the B2 default), so PBS's own prune/GC deletes actually free B2 storage. Retention is a PBS prune job per datastore (`backups-prune` 05:30, `b2-offsite-prune` 05:45; keep 7 daily / 4 weekly / 3 monthly), with weekly GC (Sun 06:30 local, 07:00 B2). The sync job runs with `remove-vanished false`, so B2 is trimmed only by its own prune job, never by an empty or damaged local store.
 - **vm101 media library** (`truelab`, `/mnt/lab`) — `media-backup/` rclone-syncs it to a Dropbox remote (`dropbox:Homelab/<name>`), independent of PBS.
 - **Audiobookshelf's library** lives on vm101's `lab` drive (`/mnt/lab/audiobooks`), exported over NFS to chimaera and backed up to `dropbox:Homelab/audiobooks` by `media-backup/`. Its config and metadata are a k3s PVC.
-- **k3s PVCs** (Actual, Audiobookshelf, Tandoor) — VolSync restic to `dropbox:Homelab/backups/<app>`, nightly, 7 daily / 4 weekly / 3 monthly. Tandoor's Postgres is backed up as a nightly `pg_dump` onto its own PVC (`tandoor-dump`, repo `tandoor-dump`); its media PVC has its own repo (`tandoor-media`). rclone must be given the Dropbox app's client id/secret (the token is bound to that app); never leave `spec.trigger.manual` set on a `ReplicationSource`, it pauses the schedule.
+- **k3s PVCs** (Actual, Audiobookshelf, Miniflux, Tandoor) — VolSync restic to `dropbox:Homelab/backups/<app>`, nightly, 7 daily / 4 weekly / 3 monthly. Tandoor's Postgres is backed up as a nightly `pg_dump` onto its own PVC (`tandoor-dump`, repo `tandoor-dump`); its media PVC has its own repo (`tandoor-media`). rclone must be given the Dropbox app's client id/secret (the token is bound to that app); never leave `spec.trigger.manual` set on a `ReplicationSource`, it pauses the schedule. Miniflux's Postgres is not backed up by copying its data directory: a nightly `pg-dump` CronJob (02:30) writes `miniflux.dump` to a separate PVC, and VolSync backs up that PVC.
 - **`oci-backup`** (on warden) backs up OCI-hosted resources — see `oci-backup/README.md` for scope.
 - **AdGuard Home's config** (warden, `adguard-home_config` volume) — an `offen/docker-volume-backup` sidecar tars it nightly (03:15) to Dropbox (`Homelab/adguard-home`), 30-day retention, healthchecks.io-monitored.
 - **speedtest-tracker's config/DB** (warden, `speedtest-tracker` volume) — same pattern, nightly at 03:30, to `Homelab/speedtest-tracker`, 30-day retention, healthchecks.io-monitored. Grafana's state and Prometheus's data are deliberately not backed up this way — dashboards and datasources are provisioned from git and metrics are regenerable.
@@ -148,7 +148,7 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 ## Known gaps as of this writing
 
 - vm101 exports `/mnt/lab/audiobooks` over NFS (hand-set `/etc/exports`, not in Ansible) to chimaera only, as an interim until the `lab` drive moves to chimaera; then the library PV becomes a local PV.
-- VolSync metrics are scraped but nothing alerts on them, and a stopped backup once went unnoticed for nine days. Candidate alerts are in [#109](https://github.com/laforcem/homelab/issues/109). Audiobookshelf has a `/healthcheck` probe (`k3s/apps/audiobookshelf/health-probe.cronjob.yaml`, every 5 min) that pings a Healthchecks check, so it alerts without Alertmanager; its `/fail` path is untested.
+- VolSync metrics are scraped but nothing alerts on them, and a stopped backup once went unnoticed for nine days. Candidate alerts are in [#109](https://github.com/laforcem/homelab/issues/109). Audiobookshelf and Miniflux each have a `/healthcheck` probe (`k3s/apps/<app>/health-probe.cronjob.yaml`, every 5 min) that pings a Healthchecks check, so it alerts without Alertmanager; its `/fail` path is untested.
 - Alerting doesn't exist yet (tracked in [#109](https://github.com/laforcem/homelab/issues/109)). The one Grafana on warden has no alert rules; the old Telegram alerting went with `speedtest-grafana`.
 - speedtest-tracker's `/prometheus` endpoint has no allowed-IP restriction of its own (`prometheus_allowed_ips` is empty); it is kept off the LAN by a Caddy rule returning 404 for it on `speedtest.lan.$DOMAIN`, while Prometheus scrapes it container-to-container.
 - `monitoring-adguard-exporter` has its own AdGuard Home account (`adguard-exporter`), also created directly in AGH's live config (see the `router-sync` account above) — same not-reproducible-from-a-fresh-deploy caveat. AGH has no read-only role, so it still has full API access.
