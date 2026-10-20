@@ -11,17 +11,24 @@ Commands and gotchas: `runbook.md` in this directory. Current topology: `docs/cu
 
 ## Phases
 
-1. **Inventory.** From the compose file and the live host, list each volume: path or driver, size, owner uid, what it holds. Note the DB engine, the Caddy route, env and secrets, and any rclone-plugin volumes.
+0. **Start a task list** (TaskCreate), one task per phase below plus each "hand the user" step, so the user can follow along. Mark each task `in_progress` when its phase starts and `completed` when it ends.
+1. **Inventory.** From the compose file and the live host, list each volume: path or driver, size, owner uid, what it holds. Note the DB engine, the Caddy route, env and secrets, and any rclone-plugin volumes. Then look things up before building anything by hand. Make this its own task and report the answers to the user before Phase 2:
+   - From the app's docs or DeepWiki: is there an official Helm chart or manifests (and is any community chart one of those)? Does the app have its own backup/export?
+   - `grep -ri <app> docs/` for plans that promise app-specific follow-ups (metrics, alerts).
+   - `gh pr list` for open migration PRs: they edit the same Caddy and docs lines.
+   - If the app needs a new secret, ask the user for it now (alphanumeric, 32 chars, so it survives a connection URL), so every manifest can apply in one pass.
 2. **Place each volume.**
    - DB, config, small state → a `local-path` PVC. SQLite never goes on a network filesystem.
+   - Postgres/MySQL → never back up or migrate by copying the live data directory. Migrate with a logical dump and restore. Back up with a nightly dump CronJob onto its own small PVC, and point the `ReplicationSource` at that PVC.
+   - An app with a DB dump PVC and a media or config PVC gets one `ReplicationSource` and one restic ExternalSecret per PVC, each with its own `RESTIC_REPOSITORY` path (`.../backups/<app>-media`, `.../backups/<app>-dump`).
    - Bulk media → the `lab` drive on vm101, exported over NFS to chimaera only (interim until the drive moves). Back it up through `media-backup/`, not VolSync.
-3. **Write the manifests.** Namespace, PVCs, Deployment (`strategy: Recreate`, `replicas: 0` until data is restored, `enableServiceLinks: false`, requests and limits, image tag pinned to what the source runs), Service, Ingress (cert-manager annotation, host `<app>.$DOMAIN`), restic ExternalSecret and ReplicationSource copied from an existing app. Apply with `envsubst '$DOMAIN'`.
-4. **Cut over.** Pre-seed bulk data while the source still serves. Record a baseline from the source's DB (item counts, one in-progress record). Stop the source. Delta-copy and verify, export config, restore it into the PVC through a temporary pod, set `replicas: 1`. Verify with `curl --resolve` and compare against the baseline. Then hand the DNS change to the user.
+3. **Write the manifests.** Namespace, PVCs, Deployment (`strategy: Recreate`, `replicas: 0` until data is restored, `enableServiceLinks: false`, requests and limits, image tag pinned to what the source runs; size memory from `docker stats --no-stream` on the source *before* stopping it, with extra headroom for apps that build assets at start), Service, Ingress (cert-manager annotation, host `<app>.$DOMAIN`), restic ExternalSecret and ReplicationSource copied from an existing app. Apply with `envsubst '$DOMAIN'`.
+4. **Cut over.** Pre-seed bulk data while the source still serves. Record a baseline from the source's DB (item counts, one in-progress record). Stop the source app (leave its database running if you will dump it). Delta-copy and verify, export config, restore it into the PVC through a temporary pod, set `replicas: 1`. Verify with `curl --resolve` and compare against the baseline. Then hand the DNS change to the user.
 5. **Gate, then decommission.**
    - **Gate:** a VolSync backup finished (`status.latestMoverStatus.result` is `Successful`), the app answers on its public name with a Let's Encrypt cert whose serial matches the cluster Secret, and the user confirmed from a phone on cellular.
-   - **After the gate:** remove the container and volumes by name, drop the Caddy route and network, recreate Caddy, delete the compose directory, update `docs/current-state.md`. Keep the config export until the first scheduled backup passes.
-6. **Make it observable.** Add a probe CronJob and a Healthchecks check, and a `media-backup` entry for any bulk library.
-7. **Hand off.** File a GitHub issue with the verification that can only happen later (the first scheduled backup run) and the exact commands to check it. A new session must not need this one's history.
+   - **After the gate:** the repo edits (Caddy route and network, compose directory, `docs/current-state.md`) go in a PR first (`git fetch` and merge `main` into the branch before opening it); the source host pulls from `main`, so merge before touching it. Then on the source host: pull, recreate Caddy, remove **every** container of the stack (app and database) and the network, by name. Keep the data volumes until the first scheduled backup passes; the user deletes them.
+6. **Make it observable.** Add a probe CronJob and a Healthchecks check, and a `media-backup` entry for any bulk library. Do it before the PR so it ships together. Then confirm in Prometheus that the VolSync sources and the probe CronJob report (commands in `runbook.md`), and tell the user what is and isn't alerted on.
+7. **Hand off.** File a GitHub issue with the verification that can only happen later (the first scheduled backup run) and the exact commands to check it, including deleting the old volumes. A new session must not need this one's history.
 
 ## Hand the user these, then wait
 
@@ -34,4 +41,7 @@ The DNS change, any `sudo` on vm101 or mrgutsy (it asks for a password), creatin
 | Leaving `spec.trigger.manual` on a `ReplicationSource` | It pauses the schedule. Trigger with a unique value, wait for `status.lastManualSync` to match, then patch `manual` to `null`. |
 | rclone token without the app's client id/secret | Refreshes go through rclone's default app and fail after 4h. Copy the ExternalSecret from an existing app. |
 | New Bitwarden secret, ExternalSecret stuck `SecretSyncedError` | Grant the external-secrets machine account read on that secret. |
+| Copying a live Postgres data directory (migration or backup) | Not consistent. `pg_dump -Fc` and `pg_restore --no-owner --clean --if-exists`; compare counts with the baseline. |
+| Stopping only the app container on the source | Its database keeps running. Stop and remove both at decommission. |
+| Remote `docker stop`/`rm` denied in the session | Hand the user the exact command to run with `!`. Do not retry variations. |
 | Declaring a long check done | Only the next scheduled run proves a token fix. Write it into the handoff issue. |
