@@ -3,6 +3,11 @@
   args:
     creates: /usr/local/bin/k3s
 
+- name: Install NFS client — kubelet needs mount.nfs for NFS PersistentVolumes
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+
 - name: Allow kube API (6443) from LAN
   community.general.ufw:
     rule: allow

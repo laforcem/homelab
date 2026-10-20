@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audiobookshelf
+  namespace: audiobookshelf
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # SQLite on RWO — never two pods at once
+  selector:
+    matchLabels:
+      app: audiobookshelf
+  template:
+    metadata:
+      labels:
+        app: audiobookshelf
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: audiobookshelf
+          image: ghcr.io/advplyr/audiobookshelf:2.33.1
+          ports:
+            - containerPort: 80
+          env:
+            - name: TZ
+              value: America/Denver
+          volumeMounts:
+            - name: data
+              mountPath: /config
+              subPath: config
+            - name: data
+              mountPath: /metadata
+              subPath: metadata
+            - name: library
+              mountPath: /audiobooks
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: audiobookshelf-data
+        - name: library
+          persistentVolumeClaim:
+            claimName: audiobookshelf-library

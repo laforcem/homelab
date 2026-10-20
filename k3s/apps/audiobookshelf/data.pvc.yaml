@@ -1,0 +1,13 @@
+# /config (SQLite DB) and /metadata, as subPaths — ABS requires /config on local disk.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: audiobookshelf-data
+  namespace: audiobookshelf
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
