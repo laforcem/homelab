@@ -1,0 +1,67 @@
+# Dead-man's-switch probe for TeamSpeak on mrgutsy: sends a TS3INIT1 handshake
+# to ts3.$DOMAIN:9987/udp over the public internet and pings the Healthchecks
+# check only if the server answers with step 1; sends /fail otherwise. A missed
+# run (cluster or CronJob down) lets the check time out. Ping URLs are not
+# secret (same as the other committed hc-ping.com URLs).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: teamspeak
+  namespace: external-probes
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 60
+      template:
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: probe
+              image: python:3.13.1-alpine3.21
+              command:
+                - python3
+                - -I
+                - -c
+                - |
+                  import os, socket, struct, sys, time, urllib.request
+                  ping = "https://hc-ping.com/3973fe61-5ff2-44fe-b559-2878b4d76601"
+                  # MAC "TS3INIT1", packet id 0x65, client id 0, type 0x88 (Init1),
+                  # client version, step 0, timestamp, random, 8 reserved bytes.
+                  pkt = (b"TS3INIT1" + struct.pack(">HHBIBI", 0x65, 0, 0x88, 1566914096, 0, int(time.time()))
+                         + os.urandom(4) + bytes(8))
+                  ok = False
+                  for _ in range(3):
+                      try:
+                          s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                          s.settimeout(5)
+                          s.sendto(pkt, ("ts3.$DOMAIN", 9987))
+                          data = s.recv(64)
+                          ok = data[:8] == b"TS3INIT1" and len(data) > 11 and data[11] == 1
+                      except OSError as e:
+                          print("probe error:", e)
+                      if ok:
+                          break
+                  urllib.request.urlopen(ping if ok else ping + "/fail", timeout=10)
+                  print("ok" if ok else "no valid TS3INIT1 reply")
+                  sys.exit(0 if ok else 1)
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 65534
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
