@@ -28,7 +28,7 @@ This file describes what's running today, across docker-compose and k3s, and get
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
 | `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); runs Actual, actual-mcp, Audiobookshelf, Miniflux and Tandoor in production, and is the public entrypoint for vm101's routes (TLS passthrough) | `192.168.40.10` | Debian 13 |
-| `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
+| `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 26.04 |
 
 `vm100` was fully decommissioned, freeing VMID 100 for reuse — Proxmox's next-free-VMID allocation then assigned it to the unrelated `chimaera` VM described above.
 
@@ -88,7 +88,7 @@ Cluster infra (`ansible/roles/cert-manager/`, see below): `cert-manager` issues 
 
 | Service | Route |
 |---|---|
-| teamspeak | has its own subdomain, but not through Caddy — it's raw UDP (9987), not HTTP, so it can't be reverse-proxied; the DNS record points straight at mrgutsy |
+| teamspeak | has its own subdomain, but not through Caddy — it's raw UDP (9987), not HTTP, so it can't be reverse-proxied; the DNS record points straight at mrgutsy. amd64-only image, run under QEMU emulation registered at boot by the host's `qemu-user-binfmt` package (see `teamspeak/README.md`). Probed from chimaera (`k3s/infra/external-probes/`, UDP handshake every 5 min → Healthchecks) |
 | herobrines-mansion, mc-sloth-kingdom (Minecraft) | not proxied, no subdomain — voice/game traffic, kept off the home network deliberately |
 
 Portainer is retired outright (not carried to warden or anywhere else) — Doco-CD replaces it for GitOps-style compose deploys.
@@ -148,7 +148,7 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 ## Known gaps as of this writing
 
 - vm101 exports `/mnt/lab/audiobooks` over NFS (hand-set `/etc/exports`, not in Ansible) to chimaera only, as an interim until the `lab` drive moves to chimaera; then the library PV becomes a local PV.
-- VolSync metrics are scraped but nothing alerts on them, and a stopped backup once went unnoticed for nine days. Candidate alerts are in [#109](https://github.com/laforcem/homelab/issues/109). Audiobookshelf and Miniflux each have a `/healthcheck` probe (`k3s/apps/<app>/health-probe.cronjob.yaml`, every 5 min) that pings a Healthchecks check, so it alerts without Alertmanager; its `/fail` path is untested.
+- VolSync metrics are scraped but nothing alerts on them, and a stopped backup once went unnoticed for nine days. Candidate alerts are in [#109](https://github.com/laforcem/homelab/issues/109). Audiobookshelf and Miniflux each have a `/healthcheck` probe (`k3s/apps/<app>/health-probe.cronjob.yaml`, every 5 min) that pings a Healthchecks check, so it alerts without Alertmanager; its `/fail` path is untested. TeamSpeak on mrgutsy gets the same treatment from `k3s/infra/external-probes/teamspeak.cronjob.yaml`, a UDP handshake over the public internet.
 - Alerting doesn't exist yet (tracked in [#109](https://github.com/laforcem/homelab/issues/109)). The one Grafana on warden has no alert rules; the old Telegram alerting went with `speedtest-grafana`.
 - speedtest-tracker's `/prometheus` endpoint has no allowed-IP restriction of its own (`prometheus_allowed_ips` is empty); it is kept off the LAN by a Caddy rule returning 404 for it on `speedtest.lan.$DOMAIN`, while Prometheus scrapes it container-to-container.
 - `monitoring-adguard-exporter` has its own AdGuard Home account (`adguard-exporter`), also created directly in AGH's live config (see the `router-sync` account above) — same not-reproducible-from-a-fresh-deploy caveat. AGH has no read-only role, so it still has full API access.
