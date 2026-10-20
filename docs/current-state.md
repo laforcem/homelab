@@ -34,7 +34,7 @@ This file describes what's running today, across docker-compose and k3s, and get
 
 Static IP allocation on VLAN 10 (`192.168.10.0/24`): `.1-9` network equipment, `.10-19` servers/hypervisors, `.20-29` reserved for other static infra, `.100-254` DHCP pool. `warden`/`pve`/`pbs`/`valet` all sit in `.10-19`; `vm100`'s old `.100` address predated the scheme and is now retired along with the VM. VLAN 40 (`192.168.40.0/24`) has no formal ranges yet — `vm101` (`.101`) predates any scheme, `chimaera` (`.10`) follows VLAN 10's "servers start at `.10`" convention.
 
-`mrgutsy` deliberately holds only workloads that don't belong on the home network: bandwidth/latency-sensitive voice and game traffic, plus a handful of services repatriated ahead of the k3s migration. Everything else runs on `pve`'s VMs.
+`mrgutsy` deliberately holds only workloads that don't belong on the home network: bandwidth/latency-sensitive voice and game traffic (TeamSpeak, Minecraft). Everything else runs on `pve`'s VMs.
 
 ## Workloads
 
