@@ -10,11 +10,6 @@
         }
     }
     
-    @miniflux host miniflux.{$DOMAIN}
-    handle @miniflux {
-        reverse_proxy miniflux:8080
-    }
-    
     @recipes host recipes.{$DOMAIN}
     handle @recipes {
         reverse_proxy tandoor-web:80
