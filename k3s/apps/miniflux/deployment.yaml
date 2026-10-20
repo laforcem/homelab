@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miniflux
+  namespace: miniflux
+spec:
+  replicas: 0 # raised after the data is restored
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: miniflux
+  template:
+    metadata:
+      labels:
+        app: miniflux
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: miniflux
+          image: miniflux/miniflux:2.3.3
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: miniflux-pg
+                  key: DATABASE_URL
+            - name: RUN_MIGRATIONS
+              value: "1"
+            - name: BASE_URL
+              value: https://miniflux.$DOMAIN
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 8080
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
