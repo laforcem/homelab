@@ -10,6 +10,7 @@ declare -A SOURCES=(
   [immich]="/mnt/lab/immich"
   [movies]="/mnt/lab/movies"
   [music]="/mnt/lab/music"
+  [audiobooks]="/mnt/lab/audiobooks"
 )
 
 declare -A EXTRA_EXCLUDES=(
@@ -25,11 +26,12 @@ declare -A HC_UUIDS=(
   [immich]="f6e1e429-237c-4736-a55d-fdf08c750d28"
   [movies]="e64a6457-86e2-4fcd-8991-bcb77f1df478"
   [music]="6f9bbd04-0ce0-419a-ab29-c65b814e9ed9"
+  [audiobooks]="65fbc18d-7a68-4bf7-b816-796781f27b1a"
 )
 
 mkdir -p "$LOG_DIR"
 
-for name in icloud immich movies music; do
+for name in icloud immich movies music audiobooks; do
   src="${SOURCES[$name]}"
   dest="dropbox:Homelab/${name}"
   backup_dir="dropbox:Homelab/${name}-deleted/${DATE_TAG}"
@@ -52,7 +54,7 @@ for name in icloud immich movies music; do
 done
 
 RETENTION_CUTOFF=$(date -d "-${RETENTION_DAYS} days" +%Y-%m-%d)
-for name in icloud immich movies music; do
+for name in icloud immich movies music audiobooks; do
   prefix="Homelab/${name}-deleted"
   rclone lsf "dropbox:${prefix}" --dirs-only 2>/dev/null | sed 's#/$##' | while read -r folder; do
     if [[ "$folder" < "$RETENTION_CUTOFF" ]]; then

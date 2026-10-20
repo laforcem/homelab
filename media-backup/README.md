@@ -1,6 +1,6 @@
 # media-backup
 
-Backs up all four vm101 `/mnt/lab` sources (icloud, immich, movies, music) to Dropbox nightly.
+Backs up all five vm101 `/mnt/lab` sources (icloud, immich, movies, music, audiobooks) to Dropbox nightly.
 
 Replaces the old separate icloud/immich cron jobs (see homelab#41) — running
 all four sources sequentially in one script structurally prevents the
