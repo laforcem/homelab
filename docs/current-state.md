@@ -27,7 +27,7 @@ This file describes what's running today, across docker-compose and k3s, and get
 | `warden` | VMID 104, vm100's successor — fully migrated (#51–#53), all workloads live here | `192.168.10.12` | Debian 13 |
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
-| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); runs Actual + actual-mcp in production, and is the public entrypoint for vm101's routes (TLS passthrough) | `192.168.40.10` | Debian 13 |
+| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); runs Actual, actual-mcp and Audiobookshelf in production, and is the public entrypoint for vm101's routes (TLS passthrough) | `192.168.40.10` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 24.04 |
 
 `vm100` was fully decommissioned, freeing VMID 100 for reuse — Proxmox's next-free-VMID allocation then assigned it to the unrelated `chimaera` VM described above.
@@ -71,6 +71,7 @@ ppld-calendar's image source lives in a separate repo ([`laforcem/ppld-calendar`
 |---|---|
 | actual | `budget.$DOMAIN` |
 | actual-mcp | `budget.$DOMAIN/mcp` |
+| audiobookshelf | `audiobooks.$DOMAIN` |
 | vm101's `photos`/`music`/`nd.$DOMAIN` | TLS passthrough (SNI-routed) to vm101's Caddy, via `IngressRouteTCP` in `k3s/infra/vm101-ingress/` — chimaera never terminates or sees these certs |
 
 Cluster infra (`ansible/roles/cert-manager/`, see below): `cert-manager` issues via Let's Encrypt HTTP-01 — `ingress-shim` only auto-creates a Certificate for an Ingress carrying the `cert-manager.io/cluster-issuer` annotation; `ingressShim.defaultIssuerName` alone does not trigger it. Traefik (k3s-bundled) redirects HTTP to HTTPS on every route except ACME challenge paths. The `vm101-ingress` EndpointSlice (hand-authored, no backing Service selector) must set `conditions.ready: true` explicitly, or Traefik silently drops the endpoint with no error.
@@ -85,7 +86,6 @@ Cluster infra (`ansible/roles/cert-manager/`, see below): `cert-manager` issues 
 
 | Service | Route |
 |---|---|
-| audiobookshelf | `audiobooks.$DOMAIN` |
 | miniflux | `miniflux.$DOMAIN` |
 | tandoor-web | `recipes.$DOMAIN` |
 | teamspeak | has its own subdomain, but not through Caddy — it's raw UDP (9987), not HTTP, so it can't be reverse-proxied; the DNS record points straight at mrgutsy |
@@ -109,7 +109,8 @@ The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrat
 
 - **PBS** — whole-VM backup for vm101/warden/valet/chimaera's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore, via a single vzdump job (daily 03:00, `vmid: 101,104,105,100`). A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`, bucket `starcliff-lab`). Both jobs are healthchecks.io-monitored via PVE's/PBS's native webhook+matcher notifications (success/failure ping separate check URLs). B2 bucket lifecycle must be "Keep only the last version of the file" (not the B2 default), so PBS's own prune/GC deletes actually free B2 storage. Retention is a PBS prune job per datastore (`backups-prune` 05:30, `b2-offsite-prune` 05:45; keep 7 daily / 4 weekly / 3 monthly), with weekly GC (Sun 06:30 local, 07:00 B2). The sync job runs with `remove-vanished false`, so B2 is trimmed only by its own prune job, never by an empty or damaged local store.
 - **vm101 media library** (`truelab`, `/mnt/lab`) — `media-backup/` rclone-syncs it to a Dropbox remote (`dropbox:Homelab/<name>`), independent of PBS.
-- **`audiobookshelf`** mounts a Dropbox rclone remote directly (`dropbox:Homelab/audiobookshelf/audiobooks`) rather than being backed up after the fact.
+- **Audiobookshelf's library** lives on vm101's `lab` drive (`/mnt/lab/audiobooks`), exported over NFS to chimaera and backed up to `dropbox:Homelab/audiobooks` by `media-backup/`. Its config and metadata are a k3s PVC.
+- **k3s PVCs** (Actual, Audiobookshelf) — VolSync restic to `dropbox:Homelab/backups/<app>`, nightly, 7 daily / 4 weekly / 3 monthly. rclone must be given the Dropbox app's client id/secret (the token is bound to that app); never leave `spec.trigger.manual` set on a `ReplicationSource`, it pauses the schedule.
 - **`oci-backup`** (on warden) backs up OCI-hosted resources — see `oci-backup/README.md` for scope.
 - **AdGuard Home's config** (warden, `adguard-home_config` volume) — an `offen/docker-volume-backup` sidecar tars it nightly (03:15) to Dropbox (`Homelab/adguard-home`), 30-day retention, healthchecks.io-monitored.
 - **speedtest-tracker's config/DB** (warden, `speedtest-tracker` volume) — same pattern, nightly at 03:30, to `Homelab/speedtest-tracker`, 30-day retention, healthchecks.io-monitored. Grafana's state and Prometheus's data are deliberately not backed up this way — dashboards and datasources are provisioned from git and metrics are regenerable.
@@ -141,10 +142,13 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 - **`utility-services`** — disables systemd-resolved's stub DNS listener (AdGuard Home needs `0.0.0.0:53`), Tailscale (reusable auth key from the same Bitwarden Secrets Manager project Terraform uses; rotates every 90 days; `--accept-dns=false`, see Network above), Docker + Compose plugin, and Doco-CD — deployed once via Ansible bootstrap, then self-managing via git push (self-update, see Workloads above), no SSH needed after the initial bootstrap.
 - **`k3s`** — installs k3s with defaults (Traefik ingress, ServiceLB, `local-path-provisioner`). `--tls-san k3s.lan.$DOMAIN` is baked in at install time so the control plane is reachable by name instead of raw IP; `k3s.lan.$DOMAIN` is a manual AdGuard Home DNS rewrite to `192.168.40.10` (not tracked as code — AdGuard's config isn't a file in this repo). `ufw` opens `6443/tcp` (kube API) from the LAN (`192.168.10.0/24`) and Tailscale's range (`100.64.0.0/10`), and `80/tcp`/`443/tcp` (ingress) from anywhere — chimaera is a public entrypoint, so ingress isn't DMZ-subnet-restricted the way the kube API is. The role also fetches the kubeconfig to the operator's `~/.kube/config` (rewritten to point at `k3s_tls_san` and named `starcliff`, per `group_vars/k3s.yaml`). Local `kubectl`/`kubectx`/`fzf` tooling and aliases are tracked in `laforcem/dotfiles`, not here.
 - **`k3s/infra/monitoring/`** — cluster-side observability, three Helm releases in the `monitoring` namespace (hand-run, see its README): `kube-prometheus-stack` (Prometheus, node-exporter, kube-state-metrics; Grafana and Alertmanager off), `loki` (single binary, 14-day retention) and `alloy` (DaemonSet shipping every container's logs to Loki). Prometheus and Loki are published as NodePorts `30090`/`30100` for warden's Grafana, restricted to warden (`192.168.10.12`) by a NetworkPolicy plus `externalTrafficPolicy: Local` — ufw can't restrict NodePort traffic. Nothing is pushed out of the cluster, and the DMZ never initiates a connection to the trusted network. Traefik (PodMonitor) and cert-manager (ServiceMonitor) are scraped. The single Grafana lives on warden (`monitoring/`) and queries these over the NodePorts.
+- **NFS client** — the `k3s` role also installs `nfs-common` (kubelet needs it for the Audiobookshelf library PV).
 - **`cert-manager`** — installs cert-manager via Helm (`ingressShim.defaultIssuerName: letsencrypt`), a `letsencrypt` `ClusterIssuer` (HTTP-01), and a Traefik `HelmChartConfig` redirecting `web` (`80`) to `websecure` (`443`) except on ACME challenge paths.
 
 ## Known gaps as of this writing
 
+- vm101 exports `/mnt/lab/audiobooks` over NFS (hand-set `/etc/exports`, not in Ansible) to chimaera only, as an interim until the `lab` drive moves to chimaera; then the library PV becomes a local PV.
+- A stopped VolSync backup raises no alert, and went unnoticed for nine days once. Covered by [#109](https://github.com/laforcem/homelab/issues/109).
 - Alerting doesn't exist yet (tracked in [#109](https://github.com/laforcem/homelab/issues/109)). The one Grafana on warden has no alert rules; the old Telegram alerting went with `speedtest-grafana`.
 - speedtest-tracker's `/prometheus` endpoint has no allowed-IP restriction of its own (`prometheus_allowed_ips` is empty); it is kept off the LAN by a Caddy rule returning 404 for it on `speedtest.lan.$DOMAIN`, while Prometheus scrapes it container-to-container.
 - `monitoring-adguard-exporter` has its own AdGuard Home account (`adguard-exporter`), also created directly in AGH's live config (see the `router-sync` account above) — same not-reproducible-from-a-fresh-deploy caveat. AGH has no read-only role, so it still has full API access.

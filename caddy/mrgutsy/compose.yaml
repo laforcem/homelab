@@ -9,8 +9,6 @@ volumes:
 networks:
   actual-caddy:
     external: true
-  audiobookshelf-caddy:
-    external: true
   miniflux-caddy:
     external: true
   tandoor-caddy:
@@ -36,6 +34,5 @@ services:
       - config:/config
     networks:
       - actual-caddy
-      - audiobookshelf-caddy
       - miniflux-caddy
       - tandoor-caddy
