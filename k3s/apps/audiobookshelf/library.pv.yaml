@@ -1,0 +1,19 @@
+# Interim: vm101 exports the lab drive over NFS. When the drive moves to
+# chimaera, replace this with a `local` PV of the same name — the PVC and
+# Deployment don't change.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: audiobookshelf-library
+spec:
+  capacity:
+    storage: 100Gi # nominal, NFS doesn't enforce it
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.40.101
+    path: /mnt/lab/audiobooks
