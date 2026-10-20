@@ -4,7 +4,6 @@
 
 router-sync/.env
 router-sync/id_ed25519
-.claude/
 docs/superpowers/
 docs/research/
 
@@ -14,3 +13,5 @@ docs/research/
 *.tfvars
 .bw-provider-state
 *.tfstate.*.backup
+.claude/settings.local.json
+.claude/worktrees/
