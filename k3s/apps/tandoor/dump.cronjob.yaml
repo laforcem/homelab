@@ -1,0 +1,50 @@
+# Nightly logical backup, ahead of the 03:00 VolSync run. Writes to a temp
+# file and renames, so a failed dump never replaces the last good one.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-dump
+  namespace: tandoor
+spec:
+  schedule: "30 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: pg-dump
+              image: postgres:16.4-alpine
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  pg_dump -h postgres -U djangouser -Fc -f /dump/tandoor.dump.tmp djangodb
+                  mv /dump/tandoor.dump.tmp /dump/tandoor.dump
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: tandoor-secrets
+                      key: POSTGRES_PASSWORD
+              volumeMounts:
+                - name: dump
+                  mountPath: /dump
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+          volumes:
+            - name: dump
+              persistentVolumeClaim:
+                claimName: tandoor-dump
