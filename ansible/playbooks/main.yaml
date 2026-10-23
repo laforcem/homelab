@@ -1,5 +1,6 @@
+# valet is managed by the Moltron repo; only its music mount is configured here.
 - name: Configure all hosts
-  hosts: all
+  hosts: all:!agent
   become: true
   roles:
     - common
@@ -16,3 +17,9 @@
   roles:
     - k3s
     - cert-manager
+
+- name: Configure agent host(s)
+  hosts: agent
+  become: true
+  roles:
+    - valet-music
