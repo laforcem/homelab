@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: HostSNI(`photos.$DOMAIN`) || HostSNI(`music.$DOMAIN`) || HostSNI(`nd.$DOMAIN`)
+    - match: HostSNI(`photos.$DOMAIN`)
       services:
         - name: vm101-caddy
           port: 443

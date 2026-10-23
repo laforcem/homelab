@@ -1,0 +1,35 @@
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: navidrome-data
+  namespace: navidrome
+spec:
+  sourcePVC: navidrome-data
+  trigger:
+    schedule: "30 3 * * *"
+  restic:
+    repository: restic-config-data
+    copyMethod: Direct
+    pruneIntervalDays: 15
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: audiomuse-dump
+  namespace: navidrome
+spec:
+  sourcePVC: audiomuse-dump
+  trigger:
+    schedule: "45 3 * * *"
+  restic:
+    repository: restic-config-dump
+    copyMethod: Direct
+    pruneIntervalDays: 15
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3

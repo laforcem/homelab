@@ -9,8 +9,6 @@ volumes:
 networks:
   immich-caddy:
     external: true
-  navidrome-caddy:
-    external: true
 
 services:
   caddy:
@@ -32,4 +30,3 @@ services:
       - config:/config
     networks:
       - immich-caddy
-      - navidrome-caddy

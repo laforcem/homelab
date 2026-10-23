@@ -1,0 +1,19 @@
+# chimaera resolves DNS through 1.1.1.1 (not AdGuard), and the DMZ can't reach
+# its own public address (no hairpin NAT). cert-manager's HTTP-01 self-check
+# therefore times out unless the name resolves to the node itself. This makes
+# these names resolve to chimaera inside the cluster; outside, DNS is unchanged.
+# k3s imports every `*.server` key as its own CoreDNS server block (the main
+# block already uses `hosts`, which is allowed once per block).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  navidrome.server: |
+    music.$DOMAIN:53 nd.$DOMAIN:53 {
+      errors
+      hosts {
+        192.168.40.10 music.$DOMAIN nd.$DOMAIN
+      }
+    }

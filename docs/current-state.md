@@ -48,6 +48,7 @@ Each host's Caddy config (`caddy/<host>/conf/Caddyfile`) is the source of truth 
 | monitoring-grafana | `grafana.lan.$DOMAIN` |
 | speedtest-tracker | `speedtest.lan.$DOMAIN` |
 | openclaw (proxied on warden, runs on `valet`) | `openclaw.lan.$DOMAIN` |
+| audiomuse-ai (proxied on warden, runs on `chimaera`) | `audiomuse.lan.$DOMAIN` |
 | caddy, doco-cd (+ docker-socket-proxy), oci-backup, porkbun-ddns, ppld-calendar, router-sync, monitoring-prometheus, monitoring-node-exporter, monitoring-cadvisor, monitoring-adguard-exporter | not proxied |
 | icloudpd, icloudpd-telegram-bot | not proxied — kept on the trusted VLAN so Apple credentials stay out of the DMZ. Writes the library over NFS to the lab drive (`/mnt/lab/icloud`, automounted by `utility-services`); `require_mount_marker` skips a run if `.mounted` is missing. `state.db` and sign-in sessions live in the local `icloudpd_sessions` volume |
 
@@ -62,9 +63,7 @@ ppld-calendar's image source lives in a separate repo ([`laforcem/ppld-calendar`
 | Service | Route |
 |---|---|
 | immich_server | `photos.$DOMAIN` |
-| feishin | `music.$DOMAIN` |
-| navidrome | `nd.$DOMAIN` |
-| samba, audiomuse-ai (flask + worker) | not proxied — samba serves two SMB shares off `/mnt/lab`: `[homelab]` (full tree, `malc` only) and `[music]` (`/mnt/lab/music`, read/write for `malc` and `moltron`, the latter for the OpenClaw agent on the home LAN) |
+| samba | not proxied — samba serves two SMB shares off `/mnt/lab`: `[homelab]` (full tree, `malc` only) and `[music]` (`/mnt/lab/music`, read/write for `malc` and `moltron`, the latter for the OpenClaw agent on the home LAN) |
 
 **chimaera** — external (`$DOMAIN`), VLAN 40 (DMZ), k3s. Public entrypoint: the router's port-forward (`asusrouter`'s `vts_rulelist`, GUI/nvram-managed, not tracked in `.network/iptables.sh`) sends `80`/`443` here, not to vm101 anymore:
 
@@ -74,8 +73,9 @@ ppld-calendar's image source lives in a separate repo ([`laforcem/ppld-calendar`
 | actual-mcp | `budget.$DOMAIN/mcp` |
 | audiobookshelf | `audiobooks.$DOMAIN` |
 | miniflux (+ its own Postgres) | `miniflux.$DOMAIN` |
+| navidrome (stock web UI), plus AudioMuse-AI (flask + worker, its own Postgres and Redis) | `music.$DOMAIN`; `nd.$DOMAIN` 302-redirects to it (old mobile-app address). Music is vm101's `/mnt/lab/music`, read-only over NFS, so the scan runs hourly (`ND_SCANSCHEDULE`) instead of relying on the file watcher. AudioMuse has no public route: warden's Caddy serves it at `audiomuse.lan.$DOMAIN`, via a NodePort restricted to warden |
 | tandoor | `recipes.$DOMAIN` |
-| vm101's `photos`/`music`/`nd.$DOMAIN` | TLS passthrough (SNI-routed) to vm101's Caddy, via `IngressRouteTCP` in `k3s/infra/vm101-ingress/` — chimaera never terminates or sees these certs |
+| vm101's `photos.$DOMAIN` | TLS passthrough (SNI-routed) to vm101's Caddy, via `IngressRouteTCP` in `k3s/infra/vm101-ingress/` — chimaera never terminates or sees these certs |
 
 Cluster infra (`ansible/roles/cert-manager/`, see below): `cert-manager` issues via Let's Encrypt HTTP-01 — `ingress-shim` only auto-creates a Certificate for an Ingress carrying the `cert-manager.io/cluster-issuer` annotation; `ingressShim.defaultIssuerName` alone does not trigger it. Traefik (k3s-bundled) redirects HTTP to HTTPS on every route except ACME challenge paths. The `vm101-ingress` EndpointSlice (hand-authored, no backing Service selector) must set `conditions.ready: true` explicitly, or Traefik silently drops the endpoint with no error.
 
@@ -149,8 +149,9 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 
 ## Known gaps as of this writing
 
-- vm101 exports `/mnt/lab/audiobooks` over NFS (hand-set `/etc/exports`, not in Ansible) to chimaera only, as an interim until the `lab` drive moves to chimaera; then the library PV becomes a local PV.
+- vm101 exports `/mnt/lab/audiobooks` and `/mnt/lab/music` (the latter read-only) over NFS (hand-set `/etc/exports`, not in Ansible) to chimaera only, as an interim until the `lab` drive moves to chimaera; then the library PVs become local PVs.
 - vm101 also exports `/mnt/lab/icloud` to warden only (same hand-set file). When the `lab` drive moves to chimaera, chimaera must export it to warden instead, and the mount's `src` in `utility-services` changes.
+- **`k3s/infra/coredns-custom/`** — makes `music.$DOMAIN` and `nd.$DOMAIN` resolve to chimaera inside the cluster. chimaera resolves DNS through 1.1.1.1 (not AdGuard) and the DMZ can't reach its own public address (no hairpin NAT), so cert-manager's HTTP-01 self-check otherwise times out. Other apps' names (miniflux, tandoor, etc.) are not overridden and may hit the same problem at renewal.
 - VolSync metrics are scraped but nothing alerts on them, and a stopped backup once went unnoticed for nine days. Candidate alerts are in [#109](https://github.com/laforcem/homelab/issues/109). Audiobookshelf and Miniflux each have a `/healthcheck` probe (`k3s/apps/<app>/health-probe.cronjob.yaml`, every 5 min) that pings a Healthchecks check, so it alerts without Alertmanager; its `/fail` path is untested. TeamSpeak on mrgutsy gets the same treatment from `k3s/infra/external-probes/teamspeak.cronjob.yaml`, a UDP handshake over the public internet.
 - Alerting doesn't exist yet (tracked in [#109](https://github.com/laforcem/homelab/issues/109)). The one Grafana on warden has no alert rules; the old Telegram alerting went with `speedtest-grafana`.
 - speedtest-tracker's `/prometheus` endpoint has no allowed-IP restriction of its own (`prometheus_allowed_ips` is empty); it is kept off the LAN by a Caddy rule returning 404 for it on `speedtest.lan.$DOMAIN`, while Prometheus scrapes it container-to-container.

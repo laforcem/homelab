@@ -30,6 +30,13 @@
         }
     }
 
+    @audiomuse host audiomuse.lan.{$DOMAIN}
+    handle @audiomuse {
+        # Runs on chimaera; its NodePort is restricted to warden (see
+        # k3s/apps/navidrome/audiomuse-flask.yaml).
+        reverse_proxy 192.168.40.10:30800
+    }
+
     handle {
         abort
     }

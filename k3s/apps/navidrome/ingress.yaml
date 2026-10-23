@@ -1,0 +1,63 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: navidrome
+  namespace: navidrome
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - music.$DOMAIN
+      secretName: music-tls
+  rules:
+    - host: music.$DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: navidrome
+                port:
+                  number: 4533
+---
+# The old name. Mobile apps still point here; send them to music.$DOMAIN.
+# Temporary (302) redirect, so it can be reversed without clients caching it.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: nd-redirect
+  namespace: navidrome
+spec:
+  redirectRegex:
+    regex: '^https://nd\.([^/]+)/(.*)'
+    replacement: 'https://music.${1}/${2}'
+    permanent: false
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: navidrome-legacy
+  namespace: navidrome
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    traefik.ingress.kubernetes.io/router.middlewares: navidrome-nd-redirect@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - nd.$DOMAIN
+      secretName: nd-tls
+  rules:
+    - host: nd.$DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: navidrome
+                port:
+                  number: 4533

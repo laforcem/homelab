@@ -1,0 +1,14 @@
+# Navidrome's /data: SQLite DB, cache, and the plugin files. SQLite must stay
+# on local disk.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: navidrome-data
+  namespace: navidrome
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
