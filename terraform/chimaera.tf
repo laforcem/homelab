@@ -9,7 +9,7 @@ resource "proxmox_virtual_environment_vm" "chimaera" {
         cores = 4
         type = "host"
     }
-    memory { dedicated = 8192 }
+    memory { dedicated = 16384 }
     agent {
         enabled = true
         timeout = "10s"

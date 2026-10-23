@@ -1,0 +1,48 @@
+# Dead-man's-switch probe: pings the Healthchecks check only while Immich's
+# /api/server/ping answers; sends /fail otherwise. A missed run (cluster or
+# CronJob down) lets the check time out. Ping URLs are not secret (same as
+# the other committed hc-ping.com URLs).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: health-probe
+  namespace: immich
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 60
+      template:
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: probe
+              image: curlimages/curl:8.11.1
+              command:
+                - sh
+                - -c
+                - |
+                  if curl -fsS --max-time 10 -o /dev/null http://immich-server:2283/api/server/ping; then
+                    curl -fsS --retry 3 -o /dev/null https://hc-ping.com/c95dc275-7a2a-4082-b5ea-c4c76aada6a7
+                  else
+                    curl -fsS --retry 3 -o /dev/null https://hc-ping.com/c95dc275-7a2a-4082-b5ea-c4c76aada6a7/fail
+                    exit 1
+                  fi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
