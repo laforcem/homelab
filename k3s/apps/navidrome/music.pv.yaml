@@ -1,23 +1,22 @@
-# Interim: vm101 exports the lab drive over NFS, read-only. Navidrome's file
-# watcher can't see changes made on vm101 (samba writes), so the scan runs on
-# a schedule instead. When the drive moves to chimaera, replace this with a
-# `local` PV of the same name — the PVC and Deployment don't change, and the
-# watcher works again.
+# The lab drive is mounted on chimaera at /mnt/lab (ansible/roles/k3s). Read-only
+# is enforced by the PVC and the volumeMount, not here.
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: navidrome-music
 spec:
   capacity:
-    storage: 100Gi # nominal, NFS doesn't enforce it
+    storage: 100Gi # nominal, local PVs don't enforce it
   accessModes:
     - ReadOnlyMany
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
-  mountOptions:
-    - nfsvers=4.2
-    - ro
-  nfs:
-    server: 192.168.40.101
+  local:
     path: /mnt/lab/music
-    readOnly: true
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [chimaera]

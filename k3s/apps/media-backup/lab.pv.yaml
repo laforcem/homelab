@@ -1,0 +1,22 @@
+# The whole lab drive (mounted on chimaera at /mnt/lab, ansible/roles/k3s).
+# Its own PV: a PV binds to one PVC.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-backup-lab
+spec:
+  capacity:
+    storage: 500Gi # nominal, local PVs don't enforce it
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  local:
+    path: /mnt/lab
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [chimaera]

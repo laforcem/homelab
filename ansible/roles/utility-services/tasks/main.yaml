@@ -219,13 +219,13 @@
     name: nfs-common
     state: present
 
-# The lab drive lives on vm101 until it moves to chimaera; repoint src then.
+# The lab drive lives on chimaera (see the k3s role).
 # automount + hard: if the server is down, access blocks instead of falling
 # through to the empty local mountpoint and filling warden's disk.
 - name: Mount the lab drive's icloud/ library
   ansible.posix.mount:
     path: /mnt/lab/icloud
-    src: 192.168.40.101:/mnt/lab/icloud
+    src: 192.168.40.10:/mnt/lab/icloud
     fstype: nfs
     opts: nfsvers=4.2,hard,_netdev,nofail,x-systemd.automount
     state: mounted

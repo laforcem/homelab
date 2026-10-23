@@ -1,0 +1,18 @@
+# SMB must not be reachable from the DMZ or the internet (chimaera is the
+# public host). ufw doesn't see traffic ServiceLB forwards, so the allow-list
+# lives here. Needs externalTrafficPolicy: Local on the Service.
+# Tailscale (100.64.0.0/10) is deliberately absent: chimaera isn't on the tailnet.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: samba-ingress
+  namespace: samba
+spec:
+  podSelector:
+    matchLabels:
+      app: samba
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.42.0.0/16 }       # pod network (incl. node gateway, probes)
+        - ipBlock: { cidr: 192.168.10.0/24 }    # trusted LAN

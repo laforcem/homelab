@@ -34,6 +34,42 @@
     port: "443"
     proto: tcp
 
+# The lab drive (media library, 456G XFS, a thin LV on pve's truelab pool).
+# No nofail: if it's missing at boot, the mount unit fails visibly instead of
+# local PVs silently landing on an empty /mnt/lab on the 32G root disk.
+- name: Mount the lab drive
+  ansible.posix.mount:
+    path: /mnt/lab
+    src: UUID=245490a9-3440-4deb-89ae-27ee6a42ce85
+    fstype: xfs
+    opts: defaults
+    state: mounted
+
+- name: Install NFS server — warden's icloudpd writes its library to the lab drive over NFS
+  ansible.builtin.apt:
+    name: nfs-kernel-server
+    state: present
+
+- name: Export the lab drive's icloud/ to warden only
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: "/mnt/lab/icloud 192.168.10.12(rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=1000)"
+    regexp: '^/mnt/lab/icloud\s'
+    create: true
+  register: lab_exports
+
+- name: Re-export NFS shares
+  ansible.builtin.command: exportfs -ra
+  when: lab_exports.changed
+
+# NFSv4 only (port 2049); rpcbind (111) isn't needed.
+- name: Allow NFS (2049) from warden only
+  community.general.ufw:
+    rule: allow
+    port: "2049"
+    proto: tcp
+    src: 192.168.10.12
+
 - name: Check k3s node readiness
   ansible.builtin.command:
     argv:

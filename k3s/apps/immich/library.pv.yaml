@@ -1,39 +1,44 @@
-# Interim: vm101 exports the lab drive over NFS. When the drive moves to
-# chimaera, replace these with `local` PVs of the same names — the PVCs
-# and the release don't change.
+# The lab drive is mounted on chimaera at /mnt/lab (ansible/roles/k3s).
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: immich-library
 spec:
   capacity:
-    storage: 100Gi # nominal, NFS doesn't enforce it
+    storage: 100Gi # nominal, local PVs don't enforce it
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
-  mountOptions:
-    - nfsvers=4.2
-  nfs:
-    server: 192.168.40.101
+  local:
     path: /mnt/lab/immich
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [chimaera]
 ---
-# External libraries (icloudpd's output). Mounted read-only.
+# External libraries (icloudpd's output). Mounted read-only by the release's
+# advancedMounts, not here.
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: immich-icloud
 spec:
   capacity:
-    storage: 200Gi # nominal
+    storage: 200Gi # nominal, local PVs don't enforce it
   accessModes:
     - ReadOnlyMany
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
-  mountOptions:
-    - nfsvers=4.2
-    - ro
-  nfs:
-    server: 192.168.40.101
+  local:
     path: /mnt/lab/icloud
-    readOnly: true
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [chimaera]
