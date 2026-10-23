@@ -12,16 +12,9 @@ metadata:
   namespace: kube-system
 data:
   public-hosts.server: |
-    music.$DOMAIN:53 nd.$DOMAIN:53 budget.$DOMAIN:53 audiobooks.$DOMAIN:53 miniflux.$DOMAIN:53 recipes.$DOMAIN:53 {
+    music.$DOMAIN:53 nd.$DOMAIN:53 budget.$DOMAIN:53 audiobooks.$DOMAIN:53 miniflux.$DOMAIN:53 recipes.$DOMAIN:53 photos.$DOMAIN:53 {
       errors
       hosts {
-        192.168.40.10 music.$DOMAIN nd.$DOMAIN budget.$DOMAIN audiobooks.$DOMAIN miniflux.$DOMAIN recipes.$DOMAIN
-      }
-    }
-  immich.server: |
-    photos.$DOMAIN:53 {
-      errors
-      hosts {
-        192.168.40.10 photos.$DOMAIN
+        192.168.40.10 music.$DOMAIN nd.$DOMAIN budget.$DOMAIN audiobooks.$DOMAIN miniflux.$DOMAIN recipes.$DOMAIN photos.$DOMAIN
       }
     }
