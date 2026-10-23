@@ -25,10 +25,11 @@ This file describes what's running today, across docker-compose and k3s, and get
 | `pve` | Proxmox VE, physical, 6c/6t | `192.168.10.10` | PVE 9.2.10 |
 | `pbs` | VMID 102, Proxmox Backup Server | `192.168.10.11` | PBS 4.2.0 |
 | `warden` | VMID 104, vm100's successor — fully migrated (#51–#53), all workloads live here | `192.168.10.12` | Debian 13 |
-| `vm101` | VMID 101 — retired and powered off; its `lab` drive moved to chimaera. Pending `qm destroy` | `192.168.40.101` | Debian 12 |
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
 | `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); runs Actual, actual-mcp, Audiobookshelf, Immich, Miniflux, Navidrome (+ AudioMuse) and Tandoor in production, and is the public entrypoint (router port-forward) | `192.168.40.10` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 26.04 |
+
+`vm101` (VMID 101, the old docker-compose host) was retired and destroyed once its `lab` drive moved to chimaera (#144, #145); its PBS snapshots remain in the datastore until pruned by hand.
 
 `vm100` was fully decommissioned, freeing VMID 100 for reuse — Proxmox's next-free-VMID allocation then assigned it to the unrelated `chimaera` VM described above.
 
