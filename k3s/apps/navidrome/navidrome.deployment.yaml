@@ -97,11 +97,10 @@ spec:
               value: /music
             - name: ND_DATAFOLDER
               value: /data
-            # The file watcher can't see changes made on vm101 over NFS, so
-            # new music appears on this schedule. Back to a long interval
-            # (and the watcher) once the lab drive is local.
-            - name: ND_SCANSCHEDULE
-              value: "@every 1h"
+            # The lab drive is local, so the file watcher sees changes (samba
+            # writes included); this daily scan is only a backstop.
+            - name: ND_SCANNER_SCHEDULE
+              value: "@every 24h"
             - name: ND_AGENTS
               value: apple-music,deezer,listenbrainz,lastfm,audiomuseai
             - name: ND_LASTFM_SCROBBLEFIRSTARTISTONLY
