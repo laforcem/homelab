@@ -11,7 +11,7 @@ valkey:
   enabled: true
   controllers:
     main:
-      replicas: 0
+      replicas: 1
       containers:
         main:
           resources:
@@ -21,7 +21,7 @@ valkey:
 server:
   controllers:
     main:
-      replicas: 0
+      replicas: 1
       strategy: Recreate
       containers:
         main:
@@ -72,7 +72,7 @@ server:
 machine-learning:
   controllers:
     main:
-      replicas: 0
+      replicas: 1
       strategy: Recreate
       containers:
         main:

@@ -4,7 +4,7 @@ metadata:
   name: postgres
   namespace: immich
 spec:
-  replicas: 0 # raised after the data is restored
+  replicas: 1
   strategy:
     type: Recreate # one writer on an RWO volume
   selector:
