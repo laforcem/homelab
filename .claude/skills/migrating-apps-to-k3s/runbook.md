@@ -68,7 +68,27 @@ kubectl -n <app> exec <pod> -- sh -c 'tar -xzf /tmp/x.tgz -C /tmp/x && cp -a /tm
 - After the user flips DNS, delete the stale CertificateRequest so cert-manager retries immediately (HTTP-01 fails while DNS is wrong, then backs off). Compare `openssl s_client` serial with the Secret's `tls.crt`.
 - DNS: a host that is a CNAME to the home A record needs no DDNS change. Add a host to the porkbun-ddns `SUBDOMAIN` Bitwarden secret only if it has its own A record. Check with `dig +short <host>`.
 
+## Certificate won't issue
+
+Symptom: the Certificate stays `Ready: False` and the Challenge reason is `failed to perform self check GET request ... context deadline exceeded`.
+
+- cert-manager runs on chimaera. chimaera resolves DNS through 1.1.1.1, not AdGuard, so AdGuard rewrites never reach the cluster. The DMZ has no hairpin NAT: a pod or the host calling the home's public address on port 80 times out, while the same URL answers from the LAN.
+- Look before asking the user to change DNS. From a throwaway pod run `nslookup <host>` and `wget -T 8 http://<host>/.well-known/acme-challenge/x`. A name that resolves to the WAN address or to vm101 fails here.
+- Fix in the cluster: add the host to `k3s/infra/coredns-custom/coredns-custom.configmap.yaml` (a `*.server` key, one server block, `hosts { 192.168.40.10 <host> }`), apply with `envsubst '$DOMAIN'`, `kubectl -n kube-system rollout restart deploy/coredns`, and re-run the pod test. A `*.override` key containing `hosts` crash-loops CoreDNS: the main block already uses `hosts`, which is allowed once per block.
+- Then `kubectl -n <app> delete challenge --all` and `delete certificaterequest --all` so cert-manager retries now.
+- Read readiness by type: `kubectl get certificate -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}'`. `conditions[0]` is `Issuing`, which reads `True` while the cert is still pending.
+- Other apps' names carry no override, so their renewals may time out the same way.
+
 ## Gate and decommission (Phase 5)
+
+Dump first, then back up every PVC by hand. A DB app's dump PVC is empty until the dump job has run once:
+
+```bash
+kubectl -n <app> create job --from=cronjob/pg-dump pg-dump-manual-1
+kubectl -n <app> wait job/pg-dump-manual-1 --for=condition=complete --timeout=120s
+kubectl -n <app> delete job pg-dump-manual-1
+# then one manual trigger per ReplicationSource, as below
+```
 
 ```bash
 kubectl -n <app> patch replicationsource <app> --type merge -p '{"spec":{"trigger":{"manual":"first-1"}}}'
@@ -107,6 +127,8 @@ kubectl -n <app> get replicationsource <app> -o jsonpath='{.status.latestMoverSt
 
 ## Session mechanics
 
+- Use `ssh -n` for any `ssh` inside a `while read` loop; without it `ssh` swallows the loop's stdin and only the first item runs.
+- Secrets already in the source host's `.env`: copy each into the `homelab` Bitwarden project by pipe, never printing it. Read the value into a shell variable with `ssh -n <host> "grep -m1 '^KEY=' <path>/.env | cut -d= -f2-"`, run `bws secret create <name> "$v" <project-id>` with output redirected to a file, and verify by value length. Take the new ids from the output file and write them into the ExternalSecrets. The external-secrets machine account needs read access on each new secret before the ExternalSecret syncs; ask the user to grant it.
 - A long `sleep` is blocked; wait with `timeout N bash -c 'until <check>; do sleep 5; done'`.
 - Check a long-running command's output file before launching a second copy of it.
 - Redirect anything that could touch a secret to a file and inspect it structurally.
