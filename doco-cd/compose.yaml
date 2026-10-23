@@ -94,6 +94,20 @@ services:
                 CALDAV_USERNAME: "c6a154ff-d10e-4002-acad-b4df01468adf"
                 CALDAV_APP_PASSWORD: "7a655d96-b72a-4734-8806-b4df01473b42"
                 CALDAV_CALENDAR_URL: "8679ab16-75a4-40e6-83c8-b4df01477477"
+            - name: icloudpd
+              working_dir: icloudpd
+              compose_files:
+                - compose.yaml
+              external_secrets:
+                APPLE_ID_MALC: "fb76e1f6-9a06-4e9e-ae00-b4ec01022ec9"
+                APPLE_ID_GRUG: "04eb259b-8993-467b-a237-b4ec01022f13"
+                APPLE_PASSWORD_MALC: "56a56b87-9799-4e6d-838a-b4ec01022f5e"
+                APPLE_PASSWORD_GRUG: "7022bf83-d6ce-45bd-912c-b4ec01022fa0"
+                TELEGRAM_BOT_TOKEN: "0000df5a-ef56-49d0-a10c-b4ec01022fe2"
+                TELEGRAM_ALLOWED_CHAT_IDS: "48059eed-255a-440a-847d-b4ec01023021"
+                DROPBOX_APP_KEY: "491fc480-9679-4992-a726-b4c601069133"
+                DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
+                DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
     volumes:
       - data:/data
       - /opt/doco-cd-secrets:/secrets:ro
