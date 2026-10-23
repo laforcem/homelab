@@ -1,0 +1,39 @@
+# Interim: vm101 exports the lab drive over NFS. When the drive moves to
+# chimaera, replace these with `local` PVs of the same names — the PVCs
+# and the release don't change.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-library
+spec:
+  capacity:
+    storage: 100Gi # nominal, NFS doesn't enforce it
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.2
+  nfs:
+    server: 192.168.40.101
+    path: /mnt/lab/immich
+---
+# External libraries (icloudpd's output). Mounted read-only.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-icloud
+spec:
+  capacity:
+    storage: 200Gi # nominal
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.2
+    - ro
+  nfs:
+    server: 192.168.40.101
+    path: /mnt/lab/icloud
+    readOnly: true

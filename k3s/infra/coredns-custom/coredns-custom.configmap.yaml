@@ -17,3 +17,10 @@ data:
         192.168.40.10 music.$DOMAIN nd.$DOMAIN
       }
     }
+  immich.server: |
+    photos.$DOMAIN:53 {
+      errors
+      hosts {
+        192.168.40.10 photos.$DOMAIN
+      }
+    }

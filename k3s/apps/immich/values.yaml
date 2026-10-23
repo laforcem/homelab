@@ -1,0 +1,89 @@
+# helm upgrade --install immich oci://ghcr.io/immich-app/immich-charts/immich \
+#   --version 0.13.4 -n immich -f <(DOMAIN=... envsubst '$DOMAIN' < values.yaml)
+# The chart ships no Postgres: see postgres.*.yaml. Replicas are 0 until the
+# database is restored; raise them here, then re-run helm upgrade.
+immich:
+  persistence:
+    library:
+      existingClaim: immich-library
+
+valkey:
+  enabled: true
+  controllers:
+    main:
+      replicas: 0
+      containers:
+        main:
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+
+server:
+  controllers:
+    main:
+      replicas: 0
+      strategy: Recreate
+      containers:
+        main:
+          image:
+            tag: v3.2.2 # what vm101 runs; the chart defaults to v3.2.0
+          env:
+            DB_HOSTNAME: postgres
+            DB_USERNAME: postgres
+            DB_DATABASE_NAME: immich
+            DB_PASSWORD:
+              valueFrom:
+                secretKeyRef:
+                  name: immich-pg
+                  key: DB_PASSWORD
+          resources:
+            requests: {cpu: 500m, memory: 2Gi}
+            limits: {cpu: "3", memory: 6Gi}
+  persistence:
+    icloud:
+      enabled: true
+      type: persistentVolumeClaim
+      existingClaim: immich-icloud
+      advancedMounts:
+        main:
+          main:
+            - path: /mnt/media/icloud/malc
+              subPath: malc
+              readOnly: true
+            - path: /mnt/media/icloud/grug
+              subPath: grug
+              readOnly: true
+  ingress:
+    main:
+      enabled: true
+      className: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+      hosts:
+        - host: photos.$DOMAIN
+          paths:
+            - path: /
+              service:
+                identifier: main
+      tls:
+        - hosts: [photos.$DOMAIN]
+          secretName: immich-tls
+
+machine-learning:
+  controllers:
+    main:
+      replicas: 0
+      strategy: Recreate
+      containers:
+        main:
+          image:
+            tag: v3.2.2
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "3", memory: 2Gi}
+  persistence:
+    cache:
+      type: persistentVolumeClaim
+      accessMode: ReadWriteOnce # local-path has no RWX
+      storageClass: local-path
+      size: 10Gi

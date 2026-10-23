@@ -1,0 +1,15 @@
+# Holds the nightly pg_dump. VolSync backs up this PVC, not the live
+# Postgres data directory (a file copy of a running database isn't a
+# consistent backup).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-dump
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
