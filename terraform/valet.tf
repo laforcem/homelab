@@ -7,10 +7,10 @@ resource "proxmox_virtual_environment_vm" "valet" {
     # budget for — qemu64's baseline-SSE2 feature set made Claude Code's
     # native binary spin in an infinite loop at startup (moltron issue #17).
     cpu {
-        cores = 2
+        cores = 4
         type = "host"
     }
-    memory { dedicated = 8192 }
+    memory { dedicated = 16384 }
     agent {
         enabled = true
         timeout = "10s"
