@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audiomuse-postgres
+  namespace: navidrome
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # one writer on an RWO volume
+  selector:
+    matchLabels:
+      app: audiomuse-postgres
+  template:
+    metadata:
+      labels:
+        app: audiomuse-postgres
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: postgres
+          image: postgres:15.18 # matches vm101
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: audiomuse
+            - name: POSTGRES_DB
+              value: audiomusedb
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: audiomuse
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: db
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "audiomuse"]
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: db
+          persistentVolumeClaim:
+            claimName: audiomuse-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audiomuse-postgres
+  namespace: navidrome
+spec:
+  selector:
+    app: audiomuse-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+# Nightly logical backup, ahead of the VolSync run. Writes to a temp file and
+# renames, so a failed dump never replaces the last good one.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-dump
+  namespace: navidrome
+spec:
+  schedule: "40 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: pg-dump
+              image: postgres:15.18
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  pg_dump -h audiomuse-postgres -U audiomuse -Fc -f /dump/audiomuse.dump.tmp audiomusedb
+                  mv /dump/audiomuse.dump.tmp /dump/audiomuse.dump
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: audiomuse
+                      key: POSTGRES_PASSWORD
+              volumeMounts:
+                - name: dump
+                  mountPath: /dump
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+          volumes:
+            - name: dump
+              persistentVolumeClaim:
+                claimName: audiomuse-dump

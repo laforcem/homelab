@@ -1,0 +1,23 @@
+# Interim: vm101 exports the lab drive over NFS, read-only. Navidrome's file
+# watcher can't see changes made on vm101 (samba writes), so the scan runs on
+# a schedule instead. When the drive moves to chimaera, replace this with a
+# `local` PV of the same name — the PVC and Deployment don't change, and the
+# watcher works again.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: navidrome-music
+spec:
+  capacity:
+    storage: 100Gi # nominal, NFS doesn't enforce it
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.2
+    - ro
+  nfs:
+    server: 192.168.40.101
+    path: /mnt/lab/music
+    readOnly: true

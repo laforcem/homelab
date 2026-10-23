@@ -1,0 +1,117 @@
+# Service names match the compose file (navidrome, audiomuse-ai-flask), so the
+# URL stored inside Navidrome's plugin settings keeps working after the move.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audiomuse-ai-flask
+  namespace: navidrome
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: audiomuse-ai-flask
+  template:
+    metadata:
+      labels:
+        app: audiomuse-ai-flask
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: flask
+          image: ghcr.io/neptunehub/audiomuse-ai:3.6.4
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: audiomuse
+          env:
+            - name: SERVICE_TYPE
+              value: flask
+            - name: TZ
+              value: America/Denver
+            - name: POSTGRES_USER
+              value: audiomuse
+            - name: POSTGRES_DB
+              value: audiomusedb
+            - name: POSTGRES_HOST
+              value: audiomuse-postgres
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: REDIS_URL
+              value: redis://audiomuse-redis:6379/0
+            - name: TEMP_DIR
+              value: /app/temp_audio
+            - name: MEDIASERVER_TYPE
+              value: navidrome
+            - name: NAVIDROME_URL
+              value: http://navidrome:4533
+            - name: NAVIDROME_USER
+              value: audiomuse
+            - name: AUDIOMUSE_USER
+              value: admin
+            - name: AUTH_ENABLED
+              value: "True"
+          volumeMounts:
+            - name: temp-audio
+              mountPath: /app/temp_audio
+          readinessProbe:
+            tcpSocket:
+              port: 8000
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 384Mi # 240 MiB in use on vm101
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: temp-audio
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audiomuse-ai-flask
+  namespace: navidrome
+spec:
+  selector:
+    app: audiomuse-ai-flask
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+# Reached by warden's Caddy for audiomuse.lan.$DOMAIN. Local keeps the
+# caller's real address so audiomuse.networkpolicy.yaml can restrict access to
+# warden (ufw can't restrict NodePort traffic).
+apiVersion: v1
+kind: Service
+metadata:
+  name: audiomuse-nodeport
+  namespace: navidrome
+spec:
+  type: NodePort
+  externalTrafficPolicy: Local
+  selector:
+    app: audiomuse-ai-flask
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30800
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: audiomuse-flask-ingress
+  namespace: navidrome
+spec:
+  podSelector:
+    matchLabels:
+      app: audiomuse-ai-flask
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.42.0.0/16 } # pod network (Navidrome, probes)
+        - ipBlock: { cidr: 192.168.10.12/32 } # warden

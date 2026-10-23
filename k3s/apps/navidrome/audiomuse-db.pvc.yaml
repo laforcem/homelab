@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: audiomuse-db
+  namespace: navidrome
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
+---
+# Holds the nightly pg_dump. VolSync backs up this PVC, not the live
+# Postgres data directory.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: audiomuse-dump
+  namespace: navidrome
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi

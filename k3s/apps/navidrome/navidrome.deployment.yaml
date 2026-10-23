@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: navidrome
+  namespace: navidrome
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # SQLite on RWO — never two pods at once
+  selector:
+    matchLabels:
+      app: navidrome
+  template:
+    metadata:
+      labels:
+        app: navidrome
+    spec:
+      enableServiceLinks: false
+      # Each fetches one plugin into /data/plugins, only when its pinned
+      # version differs from the installed one (same logic as the compose file).
+      initContainers:
+        - name: audiomuseai-plugin
+          image: curlimages/curl:8.11.1
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              v=v8
+              mkdir -p /data/plugins
+              installed="$(cat /data/plugins/audiomuseai.version 2>/dev/null || true)"
+              if [ "$installed" != "$v" ]; then
+                curl -fsSL -o /data/plugins/audiomuseai.ndp "https://github.com/NeptuneHub/AudioMuse-AI-NV-plugin/releases/download/$v/audiomuseai.ndp"
+                echo "$v" > /data/plugins/audiomuseai.version
+              fi
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 200m, memory: 64Mi}
+        - name: discord-rich-presence-plugin
+          image: curlimages/curl:8.11.1
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              v=v2.0.0
+              mkdir -p /data/plugins
+              installed="$(cat /data/plugins/discord-rich-presence.version 2>/dev/null || true)"
+              if [ "$installed" != "$v" ]; then
+                curl -fsSL -o /data/plugins/discord-rich-presence.ndp "https://github.com/navidrome/discord-rich-presence-plugin/releases/download/$v/discord-rich-presence.ndp"
+                echo "$v" > /data/plugins/discord-rich-presence.version
+              fi
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 200m, memory: 64Mi}
+        - name: apple-music-plugin
+          image: curlimages/curl:8.11.1
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              v=v0.2.0
+              mkdir -p /data/plugins
+              installed="$(cat /data/plugins/apple-music.version 2>/dev/null || true)"
+              if [ "$installed" != "$v" ]; then
+                curl -fsSL -o /data/plugins/apple-music.ndp "https://github.com/navidrome/apple-music-plugin/releases/download/$v/apple-music.ndp"
+                echo "$v" > /data/plugins/apple-music.version
+              fi
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 200m, memory: 64Mi}
+      containers:
+        - name: navidrome
+          image: deluan/navidrome:0.64.2
+          ports:
+            - containerPort: 4533
+          envFrom:
+            - secretRef:
+                name: navidrome
+          env:
+            - name: TZ
+              value: America/Denver
+            - name: ND_MUSICFOLDER
+              value: /music
+            - name: ND_DATAFOLDER
+              value: /data
+            # The file watcher can't see changes made on vm101 over NFS, so
+            # new music appears on this schedule. Back to a long interval
+            # (and the watcher) once the lab drive is local.
+            - name: ND_SCANSCHEDULE
+              value: "@every 1h"
+            - name: ND_AGENTS
+              value: apple-music,deezer,listenbrainz,lastfm,audiomuseai
+            - name: ND_LASTFM_SCROBBLEFIRSTARTISTONLY
+              value: "true"
+            - name: ND_PLUGINS_ENABLED
+              value: "true"
+            - name: ND_PLUGINS_AUTORELOAD
+              value: "true"
+            - name: ND_BASEURL
+              value: https://music.$DOMAIN
+            - name: ND_COVERARTPRIORITY
+              value: cover.webp,folder.webp,front.webp,cover.*,folder.*,front.*,embedded,external
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: music
+              mountPath: /music
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 4533
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 4533
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 768Mi # 1.4 GiB in use on vm101
+            limits:
+              cpu: "2"
+              memory: 2Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: navidrome-data
+        - name: music
+          persistentVolumeClaim:
+            claimName: navidrome-music
+            readOnly: true
