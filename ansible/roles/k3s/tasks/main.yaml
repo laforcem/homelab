@@ -58,9 +58,17 @@
     create: true
   register: lab_exports
 
+- name: Export the lab drive's music/ to valet only
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: "/mnt/lab/music 192.168.10.14(rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=1000)"
+    regexp: '^/mnt/lab/music\s'
+    create: true
+  register: lab_music_exports
+
 - name: Re-export NFS shares
   ansible.builtin.command: exportfs -ra
-  when: lab_exports.changed
+  when: lab_exports.changed or lab_music_exports.changed
 
 # NFSv4 only (port 2049); rpcbind (111) isn't needed.
 - name: Allow NFS (2049) from warden only
@@ -69,6 +77,13 @@
     port: "2049"
     proto: tcp
     src: 192.168.10.12
+
+- name: Allow NFS (2049) from valet only
+  community.general.ufw:
+    rule: allow
+    port: "2049"
+    proto: tcp
+    src: 192.168.10.14
 
 - name: Check k3s node readiness
   ansible.builtin.command:

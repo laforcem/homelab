@@ -34,18 +34,11 @@ spec:
               value: "true"
             - name: UID_malc
               value: "1000"
-            - name: UID_moltron
-              value: "1001"
             - name: ACCOUNT_malc
               valueFrom:
                 secretKeyRef: {name: samba, key: ACCOUNT_malc}
-            - name: ACCOUNT_moltron
-              valueFrom:
-                secretKeyRef: {name: samba, key: ACCOUNT_moltron}
             - name: SAMBA_VOLUME_CONFIG_lab
               value: "[homelab]; path = /shares/lab; valid users = malc; read only = no; browseable = yes; guest ok = no"
-            - name: SAMBA_VOLUME_CONFIG_music
-              value: "[music]; path = /shares/lab/music; valid users = malc,moltron; force user = malc; read only = no; browseable = yes; guest ok = no"
           volumeMounts:
             - name: lab
               mountPath: /shares/lab

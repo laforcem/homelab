@@ -1,0 +1,14 @@
+- name: Install NFS client — valet mounts the music library from chimaera
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+
+# automount + hard: if chimaera is down, access blocks instead of falling
+# through to the empty local mountpoint.
+- name: Mount the lab drive's music/ library
+  ansible.posix.mount:
+    path: /mnt/music
+    src: 192.168.40.10:/mnt/lab/music
+    fstype: nfs
+    opts: nfsvers=4.2,hard,_netdev,nofail,x-systemd.automount
+    state: mounted

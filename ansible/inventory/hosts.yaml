@@ -10,3 +10,7 @@ all:
       hosts:
         chimaera:
           ansible_host: 192.168.40.10
+    agent:
+      hosts:
+        valet:
+          ansible_host: 192.168.10.14
