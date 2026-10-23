@@ -1,19 +1,21 @@
-# Interim: vm101 exports the lab drive over NFS. When the drive moves to
-# chimaera, replace this with a `local` PV of the same name — the PVC and
-# Deployment don't change.
+# The lab drive is mounted on chimaera at /mnt/lab (ansible/roles/k3s).
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: audiobookshelf-library
 spec:
   capacity:
-    storage: 100Gi # nominal, NFS doesn't enforce it
+    storage: 100Gi # nominal, local PVs don't enforce it
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
-  mountOptions:
-    - nfsvers=4.2
-  nfs:
-    server: 192.168.40.101
+  local:
     path: /mnt/lab/audiobooks
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [chimaera]
