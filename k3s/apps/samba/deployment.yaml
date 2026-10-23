@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samba
+  namespace: samba
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: samba
+  template:
+    metadata:
+      labels:
+        app: samba
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: samba
+          # Pinned by digest: the exact image vm101 ran (built 2026-06-16, tag
+          # `latest`; the project publishes no stable tag for it).
+          image: ghcr.io/servercontainers/samba@sha256:f608b5c5a045a012eb40a15c697dcca2ec19bf779ea47e74af03a1689836c797
+          ports:
+            - containerPort: 445
+          env:
+            - name: TZ
+              value: America/Denver
+            - name: AVAHI_DISABLE
+              value: "true"
+            - name: WSDD2_DISABLE
+              value: "true"
+            - name: NETBIOS_DISABLE
+              value: "true"
+            - name: UID_malc
+              value: "1000"
+            - name: UID_moltron
+              value: "1001"
+            - name: ACCOUNT_malc
+              valueFrom:
+                secretKeyRef: {name: samba, key: ACCOUNT_malc}
+            - name: ACCOUNT_moltron
+              valueFrom:
+                secretKeyRef: {name: samba, key: ACCOUNT_moltron}
+            - name: SAMBA_VOLUME_CONFIG_lab
+              value: "[homelab]; path = /shares/lab; valid users = malc; read only = no; browseable = yes; guest ok = no"
+            - name: SAMBA_VOLUME_CONFIG_music
+              value: "[music]; path = /shares/lab/music; valid users = malc,moltron; force user = malc; read only = no; browseable = yes; guest ok = no"
+          volumeMounts:
+            - name: lab
+              mountPath: /shares/lab
+          readinessProbe:
+            tcpSocket:
+              port: 445
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "2"
+              memory: 512Mi
+      volumes:
+        - name: lab
+          persistentVolumeClaim:
+            claimName: samba-lab

@@ -1,0 +1,104 @@
+# Nightly rclone copy of the lab drive's five libraries to Dropbox. Replaces
+# media-backup/backup-media.sh, which ran from vm101's crontab. Each source
+# pings its own Healthchecks check (the ping URLs are not secret, same as the
+# other committed hc-ping.com URLs). `copy`, never `sync`: Dropbox must never
+# lose a file because the source went missing. Changed/deleted files are kept
+# under <name>-deleted/<date> for 30 days.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: media-backup
+  namespace: media-backup
+spec:
+  schedule: "0 1 * * *"
+  timeZone: America/Denver
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 21600
+      template:
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: rclone
+              image: rclone/rclone:1.73.3
+              envFrom:
+                - secretRef:
+                    name: rclone-dropbox
+              env:
+                - name: HOME
+                  value: /tmp
+              securityContext:
+                runAsUser: 1000
+                runAsGroup: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              command:
+                - sh
+                - -c
+                - |
+                  set -u
+                  DATE_TAG=$(date +%Y-%m-%d)
+                  RETENTION_DAYS=30
+
+                  ping() { wget -q -O /dev/null --tries=3 --timeout=15 "https://hc-ping.com/$1$2"; }
+
+                  # run <name> <healthcheck uuid> [extra rclone flags]
+                  # Dropbox refuses Thumbs.db/desktop.ini outright, so rclone
+                  # would exit non-zero on every run without the excludes.
+                  run() {
+                    name=$1; uuid=$2; shift 2
+                    echo "=== ${name} ==="
+                    if rclone copy "/mnt/lab/${name}" "dropbox:Homelab/${name}" \
+                        --backup-dir "dropbox:Homelab/${name}-deleted/${DATE_TAG}" \
+                        --transfers=4 --checkers=8 \
+                        --exclude '[Tt]humbs.db' --exclude '[Dd]esktop.ini' \
+                        "$@"; then
+                      ping "$uuid" ""
+                    else
+                      ping "$uuid" /fail
+                    fi
+                  }
+
+                  run icloud     36ef3811-6cf7-4b2e-835f-b8bb49f21540
+                  run immich     f6e1e429-237c-4736-a55d-fdf08c750d28 --exclude 'encoded-video/**' --exclude 'thumbs/**'
+                  run movies     e64a6457-86e2-4fcd-8991-bcb77f1df478
+                  run music      6f9bbd04-0ce0-419a-ab29-c65b814e9ed9
+                  run audiobooks 65fbc18d-7a68-4bf7-b816-796781f27b1a
+
+                  cutoff=$(date -d "@$(( $(date +%s) - RETENTION_DAYS * 86400 ))" +%Y-%m-%d)
+                  for name in icloud immich movies music audiobooks; do
+                    prefix="Homelab/${name}-deleted"
+                    rclone lsf "dropbox:${prefix}" --dirs-only 2>/dev/null | sed 's#/$##' | while read -r folder; do
+                      if [ "$(expr "$folder" '<' "$cutoff")" = 1 ]; then
+                        echo "Pruning dropbox:${prefix}/${folder} (older than ${RETENTION_DAYS}d)"
+                        rclone purge "dropbox:${prefix}/${folder}"
+                      fi
+                    done
+                  done
+              volumeMounts:
+                - name: lab
+                  mountPath: /mnt/lab
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: "2"
+                  memory: 1Gi
+          volumes:
+            - name: lab
+              persistentVolumeClaim:
+                claimName: media-backup-lab
+                readOnly: true
+            - name: tmp
+              emptyDir: {}

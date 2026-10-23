@@ -1,0 +1,16 @@
+# ServiceLB binds 445 on chimaera. Local keeps the caller's real address so
+# networkpolicy.yaml can restrict who connects (ufw can't see forwarded traffic).
+apiVersion: v1
+kind: Service
+metadata:
+  name: samba
+  namespace: samba
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  selector:
+    app: samba
+  ports:
+    - name: smb
+      port: 445
+      targetPort: 445
