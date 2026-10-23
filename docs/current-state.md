@@ -27,7 +27,7 @@ This file describes what's running today, across docker-compose and k3s, and get
 | `warden` | VMID 104, vm100's successor — fully migrated (#51–#53), all workloads live here | `192.168.10.12` | Debian 13 |
 | `vm101` | VMID 101, docker-compose | `192.168.40.101` | Debian 12 |
 | `valet` | VMID 105, personal assistant host — workload config lives in the separate Moltron repo, not this one | `192.168.10.14` | Debian 13 |
-| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); runs Actual, actual-mcp, Audiobookshelf, Miniflux and Tandoor in production, and is the public entrypoint for vm101's routes (TLS passthrough) | `192.168.40.10` | Debian 13 |
+| `chimaera` | VMID 100, vm101's successor — single-node k3s cluster, DMZ VLAN 40, provisioned via Terraform (#54) and configured via Ansible (#99); runs Actual, actual-mcp, Audiobookshelf, Immich, Miniflux, Navidrome (+ AudioMuse) and Tandoor in production, and is the public entrypoint (router port-forward) | `192.168.40.10` | Debian 13 |
 | `mrgutsy` | Cloud VM (OCI), docker-compose | not committed — see AGENTS.md | Ubuntu 26.04 |
 
 `vm100` was fully decommissioned, freeing VMID 100 for reuse — Proxmox's next-free-VMID allocation then assigned it to the unrelated `chimaera` VM described above.
@@ -58,11 +58,10 @@ router-sync's image source lives in a separate repo ([`laforcem/router-sync`](ht
 
 ppld-calendar's image source lives in a separate repo ([`laforcem/ppld-calendar`](https://github.com/laforcem/ppld-calendar), public, GH Actions builds/pushes to GHCR on `v*` tags) — this repo only holds its deployment config, pinned to a version tag.
 
-**vm101** — external (`$DOMAIN`), VLAN 40 (DMZ). Still owns its Caddy (TLS termination, cert issuance) and these routes; reached via chimaera's Traefik (TLS passthrough, not terminated) rather than directly — see **chimaera** below:
+**vm101** — VLAN 40 (DMZ). No Caddy and no public route any more; it only serves the `lab` drive:
 
 | Service | Route |
 |---|---|
-| immich_server | `photos.$DOMAIN` |
 | samba | not proxied — samba serves two SMB shares off `/mnt/lab`: `[homelab]` (full tree, `malc` only) and `[music]` (`/mnt/lab/music`, read/write for `malc` and `moltron`, the latter for the OpenClaw agent on the home LAN) |
 
 **chimaera** — external (`$DOMAIN`), VLAN 40 (DMZ), k3s. Public entrypoint: the router's port-forward (`asusrouter`'s `vts_rulelist`, GUI/nvram-managed, not tracked in `.network/iptables.sh`) sends `80`/`443` here, not to vm101 anymore:
@@ -75,9 +74,9 @@ ppld-calendar's image source lives in a separate repo ([`laforcem/ppld-calendar`
 | miniflux (+ its own Postgres) | `miniflux.$DOMAIN` |
 | navidrome (stock web UI), plus AudioMuse-AI (flask + worker, its own Postgres and Redis) | `music.$DOMAIN`; `nd.$DOMAIN` 302-redirects to it (old mobile-app address). Music is vm101's `/mnt/lab/music`, read-only over NFS, so the scan runs hourly (`ND_SCANSCHEDULE`) instead of relying on the file watcher. AudioMuse has no public route: warden's Caddy serves it at `audiomuse.lan.$DOMAIN`, via a NodePort restricted to warden |
 | tandoor | `recipes.$DOMAIN` |
-| vm101's `photos.$DOMAIN` | TLS passthrough (SNI-routed) to vm101's Caddy, via `IngressRouteTCP` in `k3s/infra/vm101-ingress/` — chimaera never terminates or sees these certs |
+| immich (server, ML, Valkey via the official Helm chart; its own Postgres) | `photos.$DOMAIN`. Uploads (`/mnt/lab/immich`) and the read-only external libraries (`/mnt/lab/icloud`) are vm101's `lab` drive over NFS; `values.yaml` and manifests in `k3s/apps/immich/`, release applied by hand (`helm upgrade --install`, see the header of `values.yaml`) |
 
-Cluster infra (`ansible/roles/cert-manager/`, see below): `cert-manager` issues via Let's Encrypt HTTP-01 — `ingress-shim` only auto-creates a Certificate for an Ingress carrying the `cert-manager.io/cluster-issuer` annotation; `ingressShim.defaultIssuerName` alone does not trigger it. Traefik (k3s-bundled) redirects HTTP to HTTPS on every route except ACME challenge paths. The `vm101-ingress` EndpointSlice (hand-authored, no backing Service selector) must set `conditions.ready: true` explicitly, or Traefik silently drops the endpoint with no error.
+Cluster infra (`ansible/roles/cert-manager/`, see below): `cert-manager` issues via Let's Encrypt HTTP-01 — `ingress-shim` only auto-creates a Certificate for an Ingress carrying the `cert-manager.io/cluster-issuer` annotation; `ingressShim.defaultIssuerName` alone does not trigger it. Traefik (k3s-bundled) redirects HTTP to HTTPS on every route except ACME challenge paths.
 
 **valet** — trusted VLAN 10, admin access via Tailscale only:
 
@@ -111,6 +110,7 @@ The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrat
 - **PBS** — whole-VM backup for vm101/warden/valet/chimaera's OS disks (vm101's media disk exceeds the datastore and is out of scope), landing in the local `backups` datastore, via a single vzdump job (daily 03:00, `vmid: 101,104,105,100`). A nightly sync job (`backups-to-b2`, 04:30, via a loopback remote) copies it offsite into a second, Backblaze B2-backed datastore (`b2-offsite`, bucket `starcliff-lab`). Both jobs are healthchecks.io-monitored via PVE's/PBS's native webhook+matcher notifications (success/failure ping separate check URLs). B2 bucket lifecycle must be "Keep only the last version of the file" (not the B2 default), so PBS's own prune/GC deletes actually free B2 storage. Retention is a PBS prune job per datastore (`backups-prune` 05:30, `b2-offsite-prune` 05:45; keep 7 daily / 4 weekly / 3 monthly), with weekly GC (Sun 06:30 local, 07:00 B2). The sync job runs with `remove-vanished false`, so B2 is trimmed only by its own prune job, never by an empty or damaged local store.
 - **vm101 media library** (`truelab`, `/mnt/lab`) — `media-backup/` rclone-syncs it to a Dropbox remote (`dropbox:Homelab/<name>`), independent of PBS.
 - **Audiobookshelf's library** lives on vm101's `lab` drive (`/mnt/lab/audiobooks`), exported over NFS to chimaera and backed up to `dropbox:Homelab/audiobooks` by `media-backup/`. Its config and metadata are a k3s PVC.
+- **Immich** — uploads are `/mnt/lab/immich` (covered by `media-backup/`, thumbs and encoded video excluded). Its Postgres is not backed up by copying its data directory: a nightly `pg-dump` CronJob (02:30) writes `immich.dump` to a separate PVC, VolSync backs that PVC up to `dropbox:Homelab/backups/immich-dump`. The ML model cache is not backed up (re-downloadable).
 - **k3s PVCs** (Actual, Audiobookshelf, Miniflux, Tandoor) — VolSync restic to `dropbox:Homelab/backups/<app>`, nightly, 7 daily / 4 weekly / 3 monthly. Tandoor's Postgres is backed up as a nightly `pg_dump` onto its own PVC (`tandoor-dump`, repo `tandoor-dump`); its media PVC has its own repo (`tandoor-media`). rclone must be given the Dropbox app's client id/secret (the token is bound to that app); never leave `spec.trigger.manual` set on a `ReplicationSource`, it pauses the schedule. Miniflux's Postgres is not backed up by copying its data directory: a nightly `pg-dump` CronJob (02:30) writes `miniflux.dump` to a separate PVC, and VolSync backs up that PVC.
 - **`oci-backup`** (on warden) backs up OCI-hosted resources — see `oci-backup/README.md` for scope.
 - **AdGuard Home's config** (warden, `adguard-home_config` volume) — an `offen/docker-volume-backup` sidecar tars it nightly (03:15) to Dropbox (`Homelab/adguard-home`), 30-day retention, healthchecks.io-monitored.
@@ -149,7 +149,7 @@ The router enforces isolation between VLANs via custom iptables chains (`IOT_FWD
 
 ## Known gaps as of this writing
 
-- vm101 exports `/mnt/lab/audiobooks` and `/mnt/lab/music` (the latter read-only) over NFS (hand-set `/etc/exports`, not in Ansible) to chimaera only, as an interim until the `lab` drive moves to chimaera; then the library PVs become local PVs.
+- vm101 exports `/mnt/lab/audiobooks`, `/mnt/lab/music` (read-only), `/mnt/lab/immich` and `/mnt/lab/icloud` (read-only) over NFS (hand-set `/etc/exports`, not in Ansible) to chimaera only, as an interim until the `lab` drive moves to chimaera; then the library PVs become local PVs.
 - vm101 also exports `/mnt/lab/icloud` to warden only (same hand-set file). When the `lab` drive moves to chimaera, chimaera must export it to warden instead, and the mount's `src` in `utility-services` changes.
 - **`k3s/infra/coredns-custom/`** — makes `music.$DOMAIN` and `nd.$DOMAIN` resolve to chimaera inside the cluster. chimaera resolves DNS through 1.1.1.1 (not AdGuard) and the DMZ can't reach its own public address (no hairpin NAT), so cert-manager's HTTP-01 self-check otherwise times out. Other apps' names (miniflux, tandoor, etc.) are not overridden and may hit the same problem at renewal.
 - VolSync metrics are scraped but nothing alerts on them, and a stopped backup once went unnoticed for nine days. Candidate alerts are in [#109](https://github.com/laforcem/homelab/issues/109). Audiobookshelf and Miniflux each have a `/healthcheck` probe (`k3s/apps/<app>/health-probe.cronjob.yaml`, every 5 min) that pings a Healthchecks check, so it alerts without Alertmanager; its `/fail` path is untested. TeamSpeak on mrgutsy gets the same treatment from `k3s/infra/external-probes/teamspeak.cronjob.yaml`, a UDP handshake over the public internet.
