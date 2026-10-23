@@ -29,9 +29,9 @@ spec:
                 - -c
                 - |
                   if curl -fsS --max-time 10 -o /dev/null http://immich-server:2283/api/server/ping; then
-                    curl -fsS --retry 3 -o /dev/null https://hc-ping.com/REPLACE-WITH-HEALTHCHECK-UUID
+                    curl -fsS --retry 3 -o /dev/null https://hc-ping.com/c95dc275-7a2a-4082-b5ea-c4c76aada6a7
                   else
-                    curl -fsS --retry 3 -o /dev/null https://hc-ping.com/REPLACE-WITH-HEALTHCHECK-UUID/fail
+                    curl -fsS --retry 3 -o /dev/null https://hc-ping.com/c95dc275-7a2a-4082-b5ea-c4c76aada6a7/fail
                     exit 1
                   fi
               securityContext:
