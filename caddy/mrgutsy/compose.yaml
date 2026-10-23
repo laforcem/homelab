@@ -6,10 +6,6 @@ volumes:
   config:
     name: caddy-mrgutsy_config
 
-networks:
-  actual-caddy:
-    external: true
-
 services:
   caddy:
     build: ..
@@ -28,5 +24,3 @@ services:
       - ./conf:/etc/caddy:ro
       - data:/data
       - config:/config
-    networks:
-      - actual-caddy

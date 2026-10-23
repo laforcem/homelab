@@ -77,7 +77,7 @@ Symptom: the Certificate stays `Ready: False` and the Challenge reason is `faile
 - Fix in the cluster: add the host to `k3s/infra/coredns-custom/coredns-custom.configmap.yaml` (a `*.server` key, one server block, `hosts { 192.168.40.10 <host> }`), apply with `envsubst '$DOMAIN'`, `kubectl -n kube-system rollout restart deploy/coredns`, and re-run the pod test. A `*.override` key containing `hosts` crash-loops CoreDNS: the main block already uses `hosts`, which is allowed once per block.
 - Then `kubectl -n <app> delete challenge --all` and `delete certificaterequest --all` so cert-manager retries now.
 - Read readiness by type: `kubectl get certificate -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}'`. `conditions[0]` is `Issuing`, which reads `True` while the cert is still pending.
-- Other apps' names carry no override, so their renewals may time out the same way.
+- Every host chimaera serves belongs in `coredns-custom`; add a new app's host there at migration time, or its first renewal fails the same way.
 
 ## Gate and decommission (Phase 5)
 
