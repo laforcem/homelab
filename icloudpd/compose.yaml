@@ -4,39 +4,39 @@ networks:
     driver: bridge
 
 volumes:
+  # Sign-in sessions (cookie_directory) and state.db (state_directory), both
+  # under .pyicloud: the image only creates and chowns that path.
   icloudpd_sessions:
     name: icloudpd_sessions
 
+# From Bitwarden Secrets Manager via doco-cd's external_secrets.
 secrets:
   apple_id_malc:
-    file: ./secrets/apple_id_malc.txt
+    environment: APPLE_ID_MALC
   apple_id_grug:
-    file: ./secrets/apple_id_grug.txt
+    environment: APPLE_ID_GRUG
   apple_password_malc:
-    file: ./secrets/apple_password_malc.txt
+    environment: APPLE_PASSWORD_MALC
   apple_password_grug:
-    file: ./secrets/apple_password_grug.txt
+    environment: APPLE_PASSWORD_GRUG
   telegram_bot_token:
-    file: ./secrets/telegram_bot_token.txt
+    environment: TELEGRAM_BOT_TOKEN
   telegram_allowed_chat_ids:
-    file: ./secrets/telegram_allowed_chat_ids.txt
-  icloudpd_webui_external_url:
-    file: ./secrets/icloudpd_webui_external_url.txt
+    environment: TELEGRAM_ALLOWED_CHAT_IDS
 
 services:
   icloudpd:
     container_name: icloudpd
     hostname: icloudpd
-    image: ghcr.io/laforcem/icloudpd:v1.1.1
+    image: ghcr.io/laforcem/icloudpd:v1.2.0
     networks:
       - icloudpd
     environment:
       - TZ=America/Denver
     restart: always
-    ports:
-      - "2011:2011"
     volumes:
       - icloudpd_sessions:/home/icloudpd/.pyicloud
+      # NFS automount from the lab drive (ansible/roles/utility-services)
       - /mnt/lab/icloud/malc:/data/malc
       - /mnt/lab/icloud/grug:/data/grug
       - ./config.yaml:/etc/icloudpd/config.yaml:ro
@@ -49,16 +49,35 @@ services:
   icloudpd-telegram-bot:
     container_name: icloudpd-telegram-bot
     hostname: icloudpd-telegram-bot
-    image: ghcr.io/laforcem/icloudpd-telegram-bot:v1.1.0
+    image: ghcr.io/laforcem/icloudpd-telegram-bot:v1.2.0
     networks:
       - icloudpd
     environment:
       - TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
       - TELEGRAM_ALLOWED_CHAT_IDS_FILE=/run/secrets/telegram_allowed_chat_ids
       - ICLOUDPD_BASE_URL=http://icloudpd:2011
-      - ICLOUDPD_WEBUI_EXTERNAL_URL_FILE=/run/secrets/icloudpd_webui_external_url
     secrets:
       - telegram_bot_token
       - telegram_allowed_chat_ids
-      - icloudpd_webui_external_url
     restart: always
+
+  # Copies the volume live. state.db is only written during a download run and
+  # rebuilds itself on the next scan if lost; the sessions are what matters.
+  backup:
+    container_name: icloudpd-backup
+    image: offen/docker-volume-backup:v2.49.0
+    restart: unless-stopped
+    environment:
+      BACKUP_CRON_EXPRESSION: "45 3 * * *" # nightly, after AdGuard (03:15) and speedtest (03:30)
+      TZ: "America/Denver"
+      BACKUP_FILENAME: "icloudpd-%Y-%m-%dT%H-%M-%S.tar.gz"
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_PRUNING_PREFIX: "icloudpd-"
+      NOTIFICATION_LEVEL: "info"
+      NOTIFICATION_URLS: "generic+https://hc-ping.com/d944550e-87dd-4861-8e75-be839a9bec08"
+      DROPBOX_APP_KEY: ${DROPBOX_APP_KEY}
+      DROPBOX_APP_SECRET: ${DROPBOX_APP_SECRET}
+      DROPBOX_REFRESH_TOKEN: ${DROPBOX_REFRESH_TOKEN}
+      DROPBOX_REMOTE_PATH: "/Homelab/icloudpd"
+    volumes:
+      - icloudpd_sessions:/backup/icloudpd:ro
