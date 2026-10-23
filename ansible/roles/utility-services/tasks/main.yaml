@@ -214,6 +214,23 @@
     proto: tcp
     src: 172.21.0.0/16
 
+# Music Assistant (music-assistant/) runs on the host network. Caddy reaches its
+# web UI from caddy-internal; the Google Cast speakers on the IoT VLAN fetch audio
+# from its stream server. The router's IOT_FWD chain must also allow VLAN 20 -> 8097.
+- name: Allow Music Assistant web UI (8095) from the caddy-internal Docker network
+  community.general.ufw:
+    rule: allow
+    port: "8095"
+    proto: tcp
+    src: 172.21.0.0/16
+
+- name: Allow Music Assistant stream server (8097) from the IoT VLAN
+  community.general.ufw:
+    rule: allow
+    port: "8097"
+    proto: tcp
+    src: 192.168.20.0/24
+
 - name: Install NFS client — icloudpd writes its library to the lab drive over NFS
   ansible.builtin.apt:
     name: nfs-common

@@ -25,5 +25,8 @@ services:
       - ./conf:/etc/caddy:ro
       - data:/data
       - config:/config
+    # Music Assistant runs on the host network; reach it as host.docker.internal:8095.
+    extra_hosts:
+      - host.docker.internal:host-gateway
     networks:
       - caddy-internal

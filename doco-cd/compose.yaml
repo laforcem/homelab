@@ -33,6 +33,14 @@ services:
                 DROPBOX_APP_KEY: "491fc480-9679-4992-a726-b4c601069133"
                 DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
                 DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
+            - name: music-assistant
+              working_dir: music-assistant
+              compose_files:
+                - compose.yaml
+              external_secrets:
+                DROPBOX_APP_KEY: "491fc480-9679-4992-a726-b4c601069133"
+                DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
+                DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
             - name: caddy-lan
               working_dir: caddy/warden
               compose_files:

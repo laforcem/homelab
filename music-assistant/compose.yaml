@@ -1,0 +1,37 @@
+volumes:
+  data:
+
+services:
+  music-assistant:
+    container_name: music-assistant
+    image: ghcr.io/music-assistant/server:2.10.8
+    restart: unless-stopped
+    # Host networking is mandatory: Cast/AirPlay discovery is mDNS multicast, and the
+    # speakers (VLAN 20) fetch audio from MA's stream server (8097) directly.
+    # Web UI is 8095; Caddy reaches it via host.docker.internal (see caddy/warden).
+    # ufw (ansible/roles/utility-services) allows 8095 from caddy-internal and 8097
+    # from the IoT VLAN; the router's IOT_FWD chain allows VLAN 20 -> 8097 on warden.
+    network_mode: host
+    volumes:
+      - data:/data
+
+  backup:
+    container_name: music-assistant-backup
+    image: offen/docker-volume-backup:v2.49.0
+    restart: unless-stopped
+    environment:
+      BACKUP_CRON_EXPRESSION: "0 4 * * *" # nightly, after the 03:00-03:45 app backups, before the 04:30 B2 sync
+      TZ: "America/Denver" # crond defaults to UTC otherwise, 6h off from the schedule above
+      BACKUP_FILENAME: "music-assistant-data-%Y-%m-%dT%H-%M-%S.tar.gz"
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_PRUNING_PREFIX: "music-assistant-data-"
+      NOTIFICATION_LEVEL: "info" # ping on success too, not just failure
+      NOTIFICATION_URLS: "generic+https://hc-ping.com/4309696a-5313-4913-b5a6-95d02b9dbec4"
+      # From Bitwarden Secrets Manager via doco-cd's external_secrets
+      DROPBOX_APP_KEY: ${DROPBOX_APP_KEY}
+      DROPBOX_APP_SECRET: ${DROPBOX_APP_SECRET}
+      DROPBOX_REFRESH_TOKEN: ${DROPBOX_REFRESH_TOKEN}
+      # Not a secret — path, committed plain
+      DROPBOX_REMOTE_PATH: "/Homelab/music-assistant"
+    volumes:
+      - data:/backup/music-assistant-data:ro
