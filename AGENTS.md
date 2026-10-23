@@ -12,7 +12,7 @@ Everything below runs on **docker-compose today**. The lab is migrating to k3s +
 
 ## Hosts
 
-- **pve** (`192.168.10.10`) — Proxmox VE, single physical host, 6c/6t. Runs four VMs: **vm100** (`192.168.10.100`), **vm101** (`192.168.40.101`), **pbs** (`192.168.10.11`, Proxmox Backup Server), and **warden** (`192.168.10.12`, VMID 104) — vm100's in-progress successor from #51/#52/#53. `pve` is only the SSH/DNS target — its actual Proxmox cluster node name (needed for Terraform's `node_name`) is **pve0**.
+- **pve** (`192.168.10.10`) — Proxmox VE, single physical host, 6c/6t. Runs VMs including **chimaera** (VMID 100, the k3s host and owner of the `lab` drive), **pbs** (`192.168.10.11`, Proxmox Backup Server), and **warden** (`192.168.10.12`, VMID 104) — vm100's in-progress successor from #51/#52/#53. `pve` is only the SSH/DNS target — its actual Proxmox cluster node name (needed for Terraform's `node_name`) is **pve0**.
 - **mrgutsy** — a separate cloud VM (OCI), not on the home network. **Its address is deliberately not committed to this repo — do not add it to any tracked file.**
 
 What runs on each host, and the routes serving it, is inventory — see "Where state lives" below rather than assuming this list is current.
