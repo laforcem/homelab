@@ -26,7 +26,7 @@ for f in k3s/apps/<app>/*.yaml; do DOMAIN=$DOMAIN envsubst '$DOMAIN' < $f | kube
 - If the app validates the Host header (Django `ALLOWED_HOSTS`), readiness and health probes send `httpHeaders: [{name: Host, value: <app>.$DOMAIN}]`; the pod IP is rejected with 400.
 - Two PVCs, two repos: copy `restic.externalsecret.yaml` once per PVC, rename the secret (`restic-config-media`, `restic-config-dump`), change the `RESTIC_REPOSITORY` suffix, and point each `ReplicationSource` at its own secret.
 - Dropbox credentials for VolSync are the `volsync_dropbox_*` Bitwarden secrets. The restic ExternalSecret builds the rclone token from the refresh token with an already-expired `expiry`; copy it from `k3s/apps/audiobookshelf/restic.externalsecret.yaml`. Never print their values; redirect to a file and check structure.
-- Static NFS PV: `storageClassName: ""`, `persistentVolumeReclaimPolicy: Retain`, `mountOptions: [nfsvers=4.2]`, and a PVC with `volumeName` set. The export on vm101 is hand-set (`/etc/exports`, `all_squash`, anonuid/anongid of the data owner, chimaera's address only). Prove the restriction: mount from `pve` and expect `access denied`.
+- Bulk-data PV: a `local` PV (`local.path: /mnt/lab/<dir>`, `nodeAffinity` on `kubernetes.io/hostname: chimaera`, `storageClassName: ""`, `persistentVolumeReclaimPolicy: Retain`) and a PVC with `volumeName` set. Copy `k3s/apps/audiobookshelf/library.pv.yaml`. Read-only is set on the PVC and the volumeMount, not the PV. Files are `1000:1000`. A PV's source can't be edited in place: delete the PVC and PV (data stays, `Retain`) and re-apply. To let another host write the directory, export it from chimaera in `ansible/roles/k3s` (per-client, `all_squash`, anonuid/anongid of the data owner, ufw allow-list) and prove the restriction from a host not on the list.
 
 ## Postgres apps
 
@@ -48,7 +48,7 @@ Reference: `k3s/apps/miniflux/` (Postgres Deployment, `pg-dump` CronJob, dump PV
 ## Cutover (Phase 4)
 
 ```bash
-# bulk data, while the source still serves (run on vm101; backgrounded for big sets)
+# bulk data, while the source still serves (run on chimaera; backgrounded for big sets)
 rclone copy dropbox:<src> /mnt/lab/<app> --transfers=4 --checkers=8 --log-file=<log>
 rclone check dropbox:<src> /mnt/lab/<app> --one-way      # expect 0 differences
 
@@ -73,7 +73,7 @@ kubectl -n <app> exec <pod> -- sh -c 'tar -xzf /tmp/x.tgz -C /tmp/x && cp -a /tm
 Symptom: the Certificate stays `Ready: False` and the Challenge reason is `failed to perform self check GET request ... context deadline exceeded`.
 
 - cert-manager runs on chimaera. chimaera resolves DNS through 1.1.1.1, not AdGuard, so AdGuard rewrites never reach the cluster. The DMZ has no hairpin NAT: a pod or the host calling the home's public address on port 80 times out, while the same URL answers from the LAN.
-- Look before asking the user to change DNS. From a throwaway pod run `nslookup <host>` and `wget -T 8 http://<host>/.well-known/acme-challenge/x`. A name that resolves to the WAN address or to vm101 fails here.
+- Look before asking the user to change DNS. From a throwaway pod run `nslookup <host>` and `wget -T 8 http://<host>/.well-known/acme-challenge/x`. A name that resolves to the WAN address or to the old host fails here.
 - Fix in the cluster: add the host to `k3s/infra/coredns-custom/coredns-custom.configmap.yaml` (a `*.server` key, one server block, `hosts { 192.168.40.10 <host> }`), apply with `envsubst '$DOMAIN'`, `kubectl -n kube-system rollout restart deploy/coredns`, and re-run the pod test. A `*.override` key containing `hosts` crash-loops CoreDNS: the main block already uses `hosts`, which is allowed once per block.
 - Then `kubectl -n <app> delete challenge --all` and `delete certificaterequest --all` so cert-manager retries now.
 - Read readiness by type: `kubectl get certificate -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}'`. `conditions[0]` is `Issuing`, which reads `True` while the cert is still pending.

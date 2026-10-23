@@ -1,6 +1,6 @@
 ---
 name: migrating-apps-to-k3s
-description: Use when moving a docker-compose service from warden, vm101 or mrgutsy onto the chimaera k3s cluster, or adding a new workload under k3s/apps/.
+description: Use when moving a docker-compose service from warden or mrgutsy onto the chimaera k3s cluster, or adding a new workload under k3s/apps/.
 ---
 
 # Migrating an app to chimaera
@@ -21,7 +21,7 @@ Commands and gotchas: `runbook.md` in this directory. Current topology: `docs/cu
    - DB, config, small state → a `local-path` PVC. SQLite never goes on a network filesystem.
    - Postgres/MySQL → never back up or migrate by copying the live data directory. Migrate with a logical dump and restore. Back up with a nightly dump CronJob onto its own small PVC, and point the `ReplicationSource` at that PVC.
    - An app with a DB dump PVC and a media or config PVC gets one `ReplicationSource` and one restic ExternalSecret per PVC, each with its own `RESTIC_REPOSITORY` path (`.../backups/<app>-media`, `.../backups/<app>-dump`).
-   - Bulk media → the `lab` drive on vm101, exported over NFS to chimaera only (interim until the drive moves). Back it up through `media-backup/`, not VolSync.
+   - Bulk media → the `lab` drive, mounted at `/mnt/lab` on chimaera: a `local` PV (`nodeAffinity` to chimaera, `Retain`) on a subdirectory. Back it up through `media-backup/`, not VolSync.
 3. **Write the manifests.** Namespace, PVCs, Deployment (`strategy: Recreate`, `replicas: 0` until data is restored, `enableServiceLinks: false`, requests and limits, image tag pinned to what the source runs; size memory from `docker stats --no-stream` on the source *before* stopping it, with extra headroom for apps that build assets at start), Service, Ingress (cert-manager annotation, host `<app>.$DOMAIN`), restic ExternalSecret and ReplicationSource copied from an existing app. Apply with `envsubst '$DOMAIN'`.
 4. **Cut over.** Pre-seed bulk data while the source still serves. Record a baseline from the source's DB (item counts, one in-progress record). Stop the source app (leave its database running if you will dump it). Delta-copy and verify, export config, restore it into the PVC through a temporary pod, set `replicas: 1`. Verify with `curl --resolve` and compare against the baseline. Then hand the DNS change to the user.
 5. **Gate, then decommission.**
@@ -32,7 +32,7 @@ Commands and gotchas: `runbook.md` in this directory. Current topology: `docs/cu
 
 ## Hand the user these, then wait
 
-The DNS change, any `sudo` on vm101 or mrgutsy (it asks for a password), creating Bitwarden secrets, `rclone authorize`, and deleting a source's data. Give the exact command; check the result with read-only commands.
+The DNS change, any `sudo` on mrgutsy (it asks for a password), creating Bitwarden secrets, `rclone authorize`, and deleting a source's data. Give the exact command; check the result with read-only commands.
 
 ## Common mistakes
 
