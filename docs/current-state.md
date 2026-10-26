@@ -106,6 +106,7 @@ DMZ VLAN 40, k3s. The router forwards ports 80 and 443 here (set in the router G
 - Media sits on the lab drive (`/mnt/lab`) as local persistent volumes. Navidrome mounts music read-only and rescans on file changes, plus daily.
 - nd-simple-rpc is a Discord Rich Presence companion for Navidrome. Its plugin is installed into Navidrome's `/data/plugins` by an init container. Only its public port is routed; the internal port stays in-cluster.
 - AudioMuse is reached through a NodePort that a NetworkPolicy limits to warden.
+- AudioMuse keeps its settings in its database (`app_config`), and they override env vars. Lyrics analysis is off there (`LYRICS_ENABLED`, `LYRICS_ASR_ENABLE`; SemGrove weights audio 1.0, lyrics 0.0) because Whisper OOM-kills the worker. After Navidrome renames or moves files, run a sweep (`POST /api/servers/<id>/sweep`) so AudioMuse re-matches the new track IDs. Navidrome's `ND_AGENTS` lists `audiomuseai` second so it answers Instant Mix.
 - **Samba** has one share, `[homelab]`, covering `/mnt/lab` for `malc` only. A NetworkPolicy limits it to the trusted LAN and the pod network, because ufw can't see this traffic. The tailnet can't reach it. The password comes from Bitwarden through an ExternalSecret.
 - **external-secrets** reads Bitwarden Secrets Manager through the `bitwarden-secretsmanager` ClusterSecretStore.
 - **cert-manager** issues Let's Encrypt certificates over HTTP-01, only for Ingresses annotated `cert-manager.io/cluster-issuer`. Traefik redirects HTTP to HTTPS except on ACME challenge paths.
