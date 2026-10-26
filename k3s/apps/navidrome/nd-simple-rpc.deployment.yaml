@@ -20,7 +20,7 @@ spec:
         fsGroup: 65532 # distroless nonroot; makes the PVC writable
       containers:
         - name: nd-simple-rpc
-          image: ghcr.io/laforcem/nd-simple-rpc:v0.1.0
+          image: ghcr.io/laforcem/nd-simple-rpc:v0.1.1
           ports:
             - name: public
               containerPort: 8080
