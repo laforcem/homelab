@@ -1,14 +1,25 @@
-<!-- AI AGENTS: READ THIS
-When editing this file:
-- Describe the current state and nothing else. No history, no narrative.
-- Use the fewest words that carry the fact. Use plain English; use a technical term only when it is the precise word.
-- Include hardware, which changes less than software.
-- Leave out anything a live system can report: versions, sizes, usage, health.
--->
+---
+title: Current State
+last_verified: 2026-10-26
+verified_against:
+  - pve (qm, pvesm, lsblk, vzdump jobs)
+  - pbs (datastores, sync, prune, garbage collection)
+  - warden (docker, ufw, tailscale, NFS mount)
+  - chimaera (kubectl, helm, ufw, NFS exports, fstab)
+  - valet (listening ports, mounts)
+  - Healthchecks (check list)
+not_verified:
+  - mrgutsy (no access from this machine; only the TeamSpeak probe result was checked)
+  - Router (VLAN bridge names, port-forward, iptables rules)
+  - Whether each backup lands in Dropbox or B2 (only schedules and job state were checked)
+editing_rules:
+  - Describe the current state and nothing else. No history, no narrative.
+  - Use the fewest words that carry the fact. Use plain English; use a technical term only when it is the precise word.
+  - Include hardware, which changes less than software.
+  - Leave out anything a live system can report: versions, sizes, usage, health.
+---
 
 # Current State
-
-Last verified: 2026-09-25, against the live hosts.
 
 For anything a running system can answer, query it. This file records only what nothing live reports.
 
@@ -19,7 +30,7 @@ For anything a running system can answer, query it. This file records only what 
 | `pve` | Proxmox VE hypervisor (physical, 6 cores) | `192.168.10.10` | Proxmox |
 | `pbs` | Proxmox Backup Server (VM 102) | `192.168.10.11` | Proxmox |
 | `warden` | Docker Compose host (VM 104). Runs the trusted-network services. | `192.168.10.12` | Debian 13 |
-| `valet` | Personal assistant host (VM 105). Its config lives in the Moltron repo. | `192.168.10.14` | Debian 13 |
+| `valet` | Personal assistant host (VM 105). Its config lives in the Moltron repo. Not on the tailnet. | `192.168.10.14` | Debian 13 |
 | `chimaera` | Single-node k3s cluster (VM 100). Public entry point. | `192.168.40.10` | Debian 13 |
 | `mrgutsy` | Cloud VM on OCI, Docker Compose. Address is not committed. | n/a | Ubuntu 26.04 |
 
@@ -58,7 +69,7 @@ Notes:
 
 - **doco-cd** polls this repo and deploys every stack above, itself included. Its own stack is defined in the root `.doco-cd.yaml`. A self-update restarts it briefly. It reaches Docker through `docker-socket-proxy`, which Ansible owns, so doco-cd never recreates its own connection.
 - **router-sync** and **ppld-calendar** build from their own repos (`laforcem/router-sync`, `laforcem/ppld-calendar`). This repo holds only their deployment config.
-- **icloudpd** stays on the trusted VLAN to keep Apple credentials out of the DMZ. It writes to the lab drive over NFS at `/mnt/lab/icloud`. It skips a run if the `.mounted` marker file is missing.
+- **icloudpd** stays on the trusted VLAN to keep Apple credentials out of the DMZ. It writes to the lab drive over NFS at `/mnt/lab/icloud`. It skips a user's run if `<user directory>/.mounted` is missing, which guards against a dropped mount.
 - **music-assistant** runs on the host network because Cast discovery uses multicast. Ports:
   - `8095` (web UI): ufw allows `caddy-internal` only.
   - `8097` (audio stream): ufw allows `192.168.20.0/24`. The Cast speakers on the IoT VLAN fetch audio here. A router rule (`IOT_FWD`) also permits this traffic.
@@ -67,7 +78,7 @@ Notes:
 
 ### chimaera
 
-DMZ VLAN 40, k3s. The router forwards ports 80 and 443 here. That forward is set in the router GUI and is not tracked in `.network/iptables.sh`. Routes are public (`$DOMAIN`).
+DMZ VLAN 40, k3s. The router forwards ports 80 and 443 here. That forward is set in the router GUI and is not tracked in git. Routes are public (`$DOMAIN`).
 
 | Service | Route |
 |---|---|
@@ -89,12 +100,13 @@ Notes:
 - **Media** lives on the lab drive (`/mnt/lab`) as local persistent volumes. Navidrome mounts the music read-only. It rescans on file changes and once a day as a backstop.
 - **AudioMuse** is reached through a NodePort that a NetworkPolicy limits to warden.
 - **Samba** has one share, `[homelab]`, covering all of `/mnt/lab` for `malc` only. It accepts only the trusted LAN (`192.168.10.0/24`) and the pod network. A NetworkPolicy enforces this because ufw can't see the traffic. It is unreachable from the tailnet because `chimaera` is not on it. The password comes from Bitwarden through an ExternalSecret.
+- **external-secrets** reads secrets from Bitwarden Secrets Manager through the `bitwarden-secretsmanager` ClusterSecretStore.
 - **cert-manager** issues certificates from Let's Encrypt over HTTP-01. It creates a Certificate for an Ingress only if the Ingress has the `cert-manager.io/cluster-issuer` annotation. Traefik redirects HTTP to HTTPS except on ACME challenge paths.
 - **CoreDNS override** (`k3s/infra/coredns-custom/`): inside the cluster, every public name `chimaera` serves resolves to `chimaera` itself. The DMZ can't reach its own public address (no hairpin NAT), so without this, cert-manager's self-check times out. Add each new app's hostname to that file.
 
 ### valet
 
-Trusted VLAN 10. Admin access is through Tailscale only. It runs OpenClaw, a personal assistant, proxied by warden at `openclaw.lan.$DOMAIN`. Its config lives in the Moltron repo.
+Trusted VLAN 10. It is not on the tailnet; remote access goes through warden's subnet route. It runs OpenClaw, a personal assistant, directly on the host (not in Docker) on port 18789. Warden proxies it at `openclaw.lan.$DOMAIN`. Its config lives in the Moltron repo.
 
 ### mrgutsy
 
@@ -113,7 +125,7 @@ TeamSpeak is an amd64-only image run under QEMU emulation (see `compose/teamspea
 
 | Pool | Backing | Holds |
 |---|---|---|
-| `local-zfs` | 238 GB NVMe, ZFS | VM boot disks |
+| `local-zfs` | 238 GiB NVMe, ZFS | VM boot disks |
 | `truelab` | ~500 GB HDD, LVM-thin | The `chimaera` lab drive, mounted at `/mnt/lab`. Declared in `terraform/chimaera.tf` so applies don't detach it. |
 | `pbs-b2-cache` | ~500 GB USB HDD | Two virtual disks for `pbs`: the local datastore `backups`, and the cache for the B2-backed datastore `b2-offsite` |
 
@@ -151,14 +163,20 @@ The lab drive is excluded from PBS. Dropbox covers it.
 
 ### Media library
 
-The `media-backup` CronJob (`k3s/apps/media-backup/`) runs at 01:00. It copies `/mnt/lab` libraries to Dropbox (`dropbox:Homelab/<name>`) with rclone. This covers audiobooks, Immich uploads (thumbnails and encoded video excluded) and iCloud photos. Each source has its own Healthchecks check. Dropbox rate-limits small-file writes, so a run with many new iCloud sidecar files can take much longer.
+The `media-backup` CronJob (`k3s/apps/media-backup/`) runs at 01:00. It copies five `/mnt/lab` folders to Dropbox (`dropbox:Homelab/<name>`) with rclone: `icloud`, `immich` (thumbnails and encoded video excluded), `movies`, `music` and `audiobooks`. Changed and deleted files move to `<name>-deleted/<date>` and are pruned after 30 days. Each folder has its own Healthchecks check. Dropbox rate-limits small-file writes, so a run with many new iCloud sidecar files can take much longer.
 
 ### k3s app data (VolSync)
 
-VolSync backs up PVCs with restic to `dropbox:Homelab/backups/<app>`. Retention is 7 daily, 4 weekly, 3 monthly. Covered: Actual, Audiobookshelf, Miniflux and Tandoor.
+VolSync backs up PVCs with restic to `dropbox:Homelab/backups/<app>`. Retention is 7 daily, 4 weekly, 3 monthly.
 
-- Postgres is never backed up by copying its data directory. A `pg-dump` CronJob (02:30) writes a dump to its own PVC, and VolSync backs up that PVC. This applies to Immich, Miniflux and Tandoor.
-- Tandoor's media PVC has its own repo (`tandoor-media`).
+| ReplicationSource | Time |
+|---|---|
+| `actual`, `immich`, `miniflux` | 03:00 |
+| `audiobookshelf` | 03:15 |
+| `navidrome-data`, `tandoor-media` | 03:30 |
+| `audiomuse-dump`, `tandoor-dump` | 03:45 |
+
+- Postgres is never backed up by copying its data directory. A `pg-dump` CronJob writes a dump to its own PVC, and VolSync backs up that PVC. This applies to Immich, Miniflux, Tandoor (02:30) and AudioMuse (02:40).
 - The Immich ML model cache is not backed up. It can be re-downloaded.
 - rclone needs the Dropbox app's client ID and secret, because the token is bound to that app.
 - Never set `spec.trigger.manual` on a `ReplicationSource`. It pauses the schedule.
@@ -214,7 +232,7 @@ Arrows show who starts the connection. The DMZ never starts one toward VLAN 10.
 | 30 | `br54` | Guest |
 | 40 | `br53` | DMZ: `chimaera` |
 
-The router enforces isolation between VLANs with custom iptables chains (`IOT_FWD`, `DMZ_FWD`, and others). Router config is in `.network/iptables.sh`.
+The router enforces isolation between VLANs with custom iptables chains (`IOT_FWD`, `DMZ_FWD`, and others). The router's config is not in this repo, and this file's router details are unverified (see `not_verified` above).
 
 `warden` is the only Tailscale subnet router. It advertises `192.168.10.0/24` and `192.168.40.0/24`. It runs with `--accept-dns=false` because Tailscale DNS would conflict with AdGuard Home on port 53.
 
@@ -222,12 +240,12 @@ The router enforces isolation between VLANs with custom iptables chains (`IOT_FW
 
 - **Grafana** runs once, on warden. It queries `chimaera`'s Prometheus and Loki through NodePorts `30090` and `30100`. A NetworkPolicy and `externalTrafficPolicy: Local` limit both to warden (`192.168.10.12`). ufw can't restrict NodePorts. Nothing is pushed out of the cluster, and the DMZ never starts a connection to the trusted network.
 - **In-cluster stack** (`k3s/infra/monitoring/`, three hand-run Helm releases in the `monitoring` namespace; see its README):
-  - `kube-prometheus-stack`: Prometheus, node-exporter and kube-state-metrics. Grafana and Alertmanager are off.
+  - `kube-prometheus-stack`: Prometheus (10-day retention), node-exporter and kube-state-metrics. Grafana and Alertmanager are off.
   - `loki`: single binary, 14-day retention.
   - `alloy`: ships every container's logs to Loki.
 
   Prometheus scrapes Traefik, cert-manager and VolSync. VolSync's metrics sit behind an auth proxy, so Prometheus's ServiceAccount is bound to `volsync-metrics-reader` (`k3s/infra/volsync/metrics.*`).
-- **Health probes**: Audiobookshelf and Miniflux each have a CronJob (`k3s/apps/<app>/health-probe.cronjob.yaml`, every 5 minutes) that checks `/healthcheck` and pings Healthchecks. The `/fail` path is untested.
+- **Health probes**: Audiobookshelf, Immich, Miniflux, Navidrome and Tandoor each have a CronJob (`k3s/apps/<app>/health-probe.cronjob.yaml`, every 5 minutes) that checks the app and pings a Healthchecks check. Actual has none. TeamSpeak has a similar probe (see mrgutsy).
 
 ## Provisioning
 
@@ -266,4 +284,5 @@ The `k3s` role:
 - **AdGuard Home accounts** for `router-sync` and `monitoring-adguard-exporter` exist only in AdGuard's live config. A fresh deploy would not recreate them. AdGuard has no read-only role, so the exporter has full API access.
 - **speedtest-tracker `/prometheus`** has no IP allowlist of its own. Caddy returns 404 for it on `speedtest.lan.$DOMAIN`, and Prometheus scrapes it container to container.
 - **node-exporter** listens on host port `9100`. ufw allows it only from `172.21.0.0/16`, the `caddy-internal` network's subnet. If Docker recreates that network with a different subnet, Prometheus loses the target until the rule is updated.
-- **Unpinned images:** `speedtest-tracker` and `samba` run `:latest`. They are the only ones.
+- **Unpinned images:** `speedtest-tracker` and `router-sync` run `:latest`. They are the only ones; every k3s image is pinned.
+- **Unused check:** the Healthchecks check `pvestatd Health (pve)` has never received a ping.
