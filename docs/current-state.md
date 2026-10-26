@@ -95,6 +95,7 @@ DMZ VLAN 40, k3s. The router forwards ports 80 and 443 here (set in the router G
 | immich | `photos.$DOMAIN` |
 | miniflux | `miniflux.$DOMAIN` |
 | navidrome | `music.$DOMAIN` (`nd.$DOMAIN` redirects here) |
+| nd-simple-rpc | `presence.music.$DOMAIN` |
 | tandoor | `recipes.$DOMAIN` |
 | audiomuse-ai | None. Warden serves it. |
 | samba | None. SMB on port 445. |
@@ -103,6 +104,7 @@ DMZ VLAN 40, k3s. The router forwards ports 80 and 443 here (set in the router G
 - Manifests are in `k3s/apps/`. Immich is a Helm release applied by hand (see the header of `k3s/apps/immich/values.yaml`).
 - Miniflux, Immich, Tandoor and AudioMuse each run their own Postgres.
 - Media sits on the lab drive (`/mnt/lab`) as local persistent volumes. Navidrome mounts music read-only and rescans on file changes, plus daily.
+- nd-simple-rpc is a Discord Rich Presence companion for Navidrome. Its plugin is installed into Navidrome's `/data/plugins` by an init container. Only its public port is routed; the internal port stays in-cluster.
 - AudioMuse is reached through a NodePort that a NetworkPolicy limits to warden.
 - **Samba** has one share, `[homelab]`, covering `/mnt/lab` for `malc` only. A NetworkPolicy limits it to the trusted LAN and the pod network, because ufw can't see this traffic. The tailnet can't reach it. The password comes from Bitwarden through an ExternalSecret.
 - **external-secrets** reads Bitwarden Secrets Manager through the `bitwarden-secretsmanager` ClusterSecretStore.
@@ -177,6 +179,7 @@ VolSync backs up PVCs with restic to `dropbox:Homelab/backups/<app>`, keeping 7 
 | `actual`, `immich`, `miniflux` | 03:00 |
 | `audiobookshelf` | 03:15 |
 | `navidrome-data`, `tandoor-media` | 03:30 |
+| `nd-simple-rpc-state` | 03:35 |
 | `audiomuse-dump`, `tandoor-dump` | 03:45 |
 
 - Postgres is never backed up by copying its data directory. A `pg-dump` CronJob writes a dump to its own PVC, and VolSync backs up that PVC (Immich, Miniflux, Tandoor at 02:30; AudioMuse at 02:40).

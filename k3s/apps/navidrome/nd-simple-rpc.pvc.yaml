@@ -1,0 +1,13 @@
+# nd-simple-rpc's SQLite DB (linked Discord accounts). Must stay on local disk.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nd-simple-rpc-state
+  namespace: navidrome
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
