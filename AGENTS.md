@@ -10,6 +10,8 @@ Config and compose files for a personal homelab, one service per directory. Larg
 
 Docker-compose and k3s both run here; `docs/current-state.md` says what runs where. Direction and sequencing live in a private roadmap document outside this repo. Debian's cloud images don't ship `qemu-guest-agent`, so `proxmox_virtual_environment_vm` resources need `agent.timeout` set short (not the 15m default) until Ansible installs it — otherwise `plan`/`apply`/`destroy` hang.
 
+Run Terraform from `terraform/` after `set -a && source .env && set +a` (see `terraform/README.md`); without it, `plan` fails on the missing Bitwarden token. Every disk attached to a VM must be declared in that VM's `.tf`: the provider detaches undeclared disks on any in-place update, and `plan` hides the removal among unchanged blocks. Before applying a VM change, compare `qm config <vmid>` on pve with the resource's `disk` blocks. `reboot_after_update` defaults to true, so a change the VM can't take live (disk attach, CPU) reboots it — on chimaera that's a full k3s outage; say so before applying.
+
 ## Hosts
 
 - **pve** — the single physical Proxmox host. `pve` is only the SSH/DNS target; its actual Proxmox cluster node name (needed for Terraform's `node_name`) is **pve0**.
