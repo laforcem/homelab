@@ -12,6 +12,8 @@ Docker-compose and k3s both run here; `docs/current-state.md` says what runs whe
 
 Run Terraform from `terraform/` after `set -a && source .env && set +a` (see `terraform/README.md`); without it, `plan` fails on the missing Bitwarden token. Every disk attached to a VM must be declared in that VM's `.tf`: the provider detaches undeclared disks on any in-place update, and `plan` hides the removal among unchanged blocks. Before applying a VM change, compare `qm config <vmid>` on pve with the resource's `disk` blocks. `reboot_after_update` defaults to true, so a change the VM can't take live (disk attach, CPU) reboots it — on chimaera that's a full k3s outage; say so before applying.
 
+Changing doco-cd's own `POLL_CONFIG` (for example, moving a deployment's `working_dir`) does not apply on merge. The running container keeps the config it was created with, so every deployment fails to load until it is recreated. Ansible won't do it: `utility-services` bootstraps doco-cd only when no container exists. Recreate it by hand on warden: copy `compose/doco-cd/compose.yaml` to a temp dir, export `SECRET_PROVIDER_ACCESS_TOKEN` from the running container's environment (don't print it), and run `docker compose -p doco-cd up -d --force-recreate`. Self-update then finishes within a few minutes; confirm with `docker logs doco-cd | grep "self-update finalised"`. Failed loads happen before any deploy, so running containers are untouched meanwhile.
+
 ## Hosts
 
 - **pve** — the single physical Proxmox host. `pve` is only the SSH/DNS target; its actual Proxmox cluster node name (needed for Terraform's `node_name`) is **pve0**.
