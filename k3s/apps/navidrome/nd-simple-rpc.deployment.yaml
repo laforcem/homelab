@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nd-simple-rpc
+  namespace: navidrome
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # SQLite on RWO, never two pods at once
+  selector:
+    matchLabels:
+      app: nd-simple-rpc
+  template:
+    metadata:
+      labels:
+        app: nd-simple-rpc
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 65532 # distroless nonroot; makes the PVC writable
+      containers:
+        - name: nd-simple-rpc
+          image: ghcr.io/laforcem/nd-simple-rpc:v0.1.1
+          ports:
+            - name: public
+              containerPort: 8080
+            - name: internal
+              containerPort: 8081
+          envFrom:
+            - secretRef:
+                name: nd-simple-rpc
+          env:
+            - name: PUBLIC_URL
+              value: https://presence.music.$DOMAIN
+            - name: NAVIDROME_URL
+              value: http://navidrome:4533
+            - name: TRUSTED_PROXY_HOPS
+              value: "1"
+            - name: DB_PATH
+              value: /state/nd-simple-rpc.db
+          volumeMounts:
+            - name: state
+              mountPath: /state
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: internal
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: internal
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: nd-simple-rpc-state

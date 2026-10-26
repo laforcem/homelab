@@ -1,0 +1,17 @@
+# public: Discord OAuth and the link page (behind the Ingress).
+# internal: /healthz and the Navidrome plugin's calls; no Ingress route.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nd-simple-rpc
+  namespace: navidrome
+spec:
+  selector:
+    app: nd-simple-rpc
+  ports:
+    - name: public
+      port: 8080
+      targetPort: public
+    - name: internal
+      port: 8081
+      targetPort: internal

@@ -16,8 +16,10 @@ spec:
         app: navidrome
     spec:
       enableServiceLinks: false
-      # Each fetches one plugin into /data/plugins, only when its pinned
-      # version differs from the installed one (same logic as the compose file).
+      # Each installs one plugin into /data/plugins. The curl ones fetch only
+      # when the pinned version differs from the installed one (same logic as
+      # the compose file); nd-simple-rpc-plugin copies the plugin bundled in
+      # the companion image, so its version follows the image tag.
       initContainers:
         - name: audiomuseai-plugin
           image: curlimages/curl:8.11.1
@@ -40,19 +42,9 @@ spec:
           resources:
             requests: {cpu: 10m, memory: 16Mi}
             limits: {cpu: 200m, memory: 64Mi}
-        - name: discord-rich-presence-plugin
-          image: curlimages/curl:8.11.1
-          command: ["sh", "-c"]
-          args:
-            - |
-              set -e
-              v=v2.0.0
-              mkdir -p /data/plugins
-              installed="$(cat /data/plugins/discord-rich-presence.version 2>/dev/null || true)"
-              if [ "$installed" != "$v" ]; then
-                curl -fsSL -o /data/plugins/discord-rich-presence.ndp "https://github.com/navidrome/discord-rich-presence-plugin/releases/download/$v/discord-rich-presence.ndp"
-                echo "$v" > /data/plugins/discord-rich-presence.version
-              fi
+        - name: nd-simple-rpc-plugin
+          image: ghcr.io/laforcem/nd-simple-rpc:v0.1.1
+          args: ["install-plugin", "--connect-url", "https://presence.music.$DOMAIN", "/data/plugins"]
           securityContext:
             runAsUser: 0
           volumeMounts:
