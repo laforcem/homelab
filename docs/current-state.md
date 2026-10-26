@@ -47,7 +47,16 @@ Query live systems for anything they can answer. This file records only what the
 | `chimaera` | Single-node k3s cluster (VM 100), public entry point | `192.168.40.10` | Debian 13 |
 | `mrgutsy` | OCI cloud VM (ARM), Docker Compose. Address not committed. | n/a | Ubuntu 26.04 |
 
-VLAN 10 (`192.168.10.0/24`): `.1`–`.9` network equipment, `.10`–`.19` servers, `.20`–`.29` reserved for static hosts, `.100`–`.254` DHCP. VLAN 40 (`192.168.40.0/24`) has no ranges yet.
+Addressing on VLAN 10 (`192.168.10.0/24`):
+
+| Range | Use |
+|---|---|
+| `.1`–`.9` | Network equipment |
+| `.10`–`.19` | Servers and hypervisors |
+| `.20`–`.29` | Reserved for other static hosts |
+| `.100`–`.254` | DHCP |
+
+VLAN 40 (`192.168.40.0/24`) has no ranges yet. `chimaera` takes `.10`, matching VLAN 10.
 
 `mrgutsy` runs only voice and game traffic, which stays off the home network on purpose.
 
