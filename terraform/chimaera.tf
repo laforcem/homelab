@@ -24,6 +24,19 @@ resource "proxmox_virtual_environment_vm" "chimaera" {
         interface = "scsi0"
         size = 64
     }
+    # The lab drive (/mnt/lab). Created by hand, not by Terraform, but it must
+    # be declared here: an undeclared disk is detached on any in-place update
+    # (the 32 -> 64 resize on 2026-10-26 dropped it).
+    disk {
+        datastore_id = "truelab"
+        path_in_datastore = "vm-100-disk-0"
+        interface = "scsi1"
+        file_format = "raw"
+        size = 456
+        backup = false
+    }
+    # Defaults to true, which would delete the lab drive with the VM.
+    delete_unreferenced_disks_on_destroy = false
     initialization {
         datastore_id = "local-zfs"
         ip_config {
