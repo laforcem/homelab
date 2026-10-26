@@ -99,7 +99,7 @@ kubectl -n <app> get replicationsource <app> -o jsonpath='{.status.latestMoverSt
 
 - Stuck in a retry loop with `Error` pods: read a failed pod's log, fix the cause, then `kubectl -n <app> delete job volsync-src-<app>` to skip the backoff.
 - Remove by name (`docker rm`, `docker volume rm ...`), not `compose down -v`.
-- Caddy on mrgutsy: pull the repo, `docker compose config -q`, `docker compose up -d` in `caddy/mrgutsy`, then `docker network rm <app>-caddy`. Confirm the other routes still answer.
+- Caddy on mrgutsy: pull the repo, `docker compose config -q`, `docker compose up -d` in `compose/caddy/mrgutsy`, then `docker network rm <app>-caddy`. Confirm the other routes still answer.
 - Move a Dropbox library folder server-side (`rclone moveto`) instead of re-uploading.
 
 ## Observability (Phase 6)
@@ -118,7 +118,7 @@ kubectl -n <app> get replicationsource <app> -o jsonpath='{.status.latestMoverSt
 ## Git and PR mechanics
 
 - Branch from `main` for the migration; the skill or other work may sit on a branch that isn't merged.
-- Another migration PR open or just merged edits the same `caddy/mrgutsy/` and `docs/current-state.md` lines. Before opening the PR (and again if GitHub reports conflicts), `git fetch` and `git merge origin/main`, resolve, and push. Take both apps' rows in the chimaera table and neither in the mrgutsy table.
+- Another migration PR open or just merged edits the same `compose/caddy/mrgutsy/` and `docs/current-state.md` lines. Before opening the PR (and again if GitHub reports conflicts), `git fetch` and `git merge origin/main`, resolve, and push. Take both apps' rows in the chimaera table and neither in the mrgutsy table.
 - A hook checks `gh pr/issue create`. Write the body to a file with the Write tool first (absolute path; `$VARS` aren't expanded), end it with the attribution block, and pass `--body-file`. Run it as its own command, not chained with `git commit`.
 - A hook wants the `Co-Authored-By:` trailer inline: `git commit -m "$(cat <<'EOF' ... EOF)"`, not `-F`.
 - Stage with `git add <dirs>` for paths that exist; `git add` on a path already removed with `git rm` errors and aborts the chain. Check `git show --stat HEAD` after committing.

@@ -1,7 +1,7 @@
 # Monitoring (warden side)
 
 The one Grafana, plus warden's own Prometheus and exporters. Deployed by
-Doco-CD (`monitoring` entry in `doco-cd/compose.yaml`). The cluster half is in
+Doco-CD (`monitoring` entry in `compose/doco-cd/compose.yaml`). The cluster half is in
 `k3s/infra/monitoring/`.
 
 Every connection starts on warden: this stack queries the cluster's Prometheus
@@ -17,7 +17,7 @@ reach warden.
 | `monitoring-grafana` | `grafana.lan.$DOMAIN` |
 
 speedtest-tracker publishes its own metrics at `/prometheus`; Prometheus scrapes
-it directly. Its init script (`speedtest/custom-cont-init.d/`) turns the export
+it directly. Its init script (`compose/speedtest/custom-cont-init.d/`) turns the export
 on and the old InfluxDB export off.
 
 ## Tailscale metrics

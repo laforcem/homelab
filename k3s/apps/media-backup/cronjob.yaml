@@ -1,5 +1,5 @@
 # Nightly rclone copy of the lab drive's five libraries to Dropbox. Replaces
-# media-backup/backup-media.sh, which ran from vm101's crontab. Each source
+# compose/media-backup/backup-media.sh, which ran from vm101's crontab. Each source
 # pings its own Healthchecks check (the ping URLs are not secret, same as the
 # other committed hc-ping.com URLs). `copy`, never `sync`: Dropbox must never
 # lose a file because the source went missing. Changed/deleted files are kept
