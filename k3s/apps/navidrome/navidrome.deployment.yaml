@@ -94,7 +94,7 @@ spec:
             - name: ND_SCANNER_SCHEDULE
               value: "@every 24h"
             - name: ND_AGENTS
-              value: apple-music,deezer,listenbrainz,lastfm,audiomuseai
+              value: apple-music,audiomuseai,deezer,listenbrainz,lastfm
             - name: ND_LASTFM_SCROBBLEFIRSTARTISTONLY
               value: "true"
             - name: ND_PLUGINS_ENABLED
