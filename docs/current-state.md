@@ -7,11 +7,15 @@ verified_against:
   - warden (docker, ufw, tailscale, NFS mount)
   - chimaera (kubectl, helm, ufw, NFS exports, fstab)
   - valet (listening ports, mounts)
+  - mrgutsy (docker, packages, architecture)
+  - asusrouter (bridges, subnets, port-forward, firewall chain names)
+  - Dropbox at /mnt/y (VolSync repos, volume tarballs)
+  - Backblaze B2 (bucket lifecycle rule)
   - Healthchecks (check list)
 not_verified:
-  - mrgutsy (no access from this machine; only the TeamSpeak probe result was checked)
-  - Router (VLAN bridge names, port-forward, iptables rules)
-  - Whether each backup lands in Dropbox or B2 (only schedules and job state were checked)
+  - mrgutsy firewall (sudo failed over SSH)
+  - Router firewall rule contents (only the chain names were checked)
+  - Media folder contents in Dropbox (only that the nightly checks pinged)
 editing_rules:
   - Describe the current state and nothing else. No history, no narrative.
   - Use the fewest words that carry the fact. Use plain English; use a technical term only when it is the precise word.
@@ -32,7 +36,7 @@ For anything a running system can answer, query it. This file records only what 
 | `warden` | Docker Compose host (VM 104). Runs the trusted-network services. | `192.168.10.12` | Debian 13 |
 | `valet` | Personal assistant host (VM 105). Its config lives in the Moltron repo. Not on the tailnet. | `192.168.10.14` | Debian 13 |
 | `chimaera` | Single-node k3s cluster (VM 100). Public entry point. | `192.168.40.10` | Debian 13 |
-| `mrgutsy` | Cloud VM on OCI, Docker Compose. Address is not committed. | n/a | Ubuntu 26.04 |
+| `mrgutsy` | Cloud VM on OCI (ARM), Docker Compose. Address is not committed. | n/a | Ubuntu 26.04 |
 
 Addressing on VLAN 10 (`192.168.10.0/24`):
 
@@ -115,9 +119,10 @@ Public (`$DOMAIN`).
 | Service | Route |
 |---|---|
 | teamspeak | Own subdomain, no Caddy. Raw UDP on 9987, so the DNS record points straight at the host. |
-| herobrines-mansion, mc-sloth-kingdom (Minecraft) | None |
+| girls-server (Minecraft, port 25570) | None |
+| herobrines-mansion, mc-sloth-kingdom (Minecraft) | None. Stopped. |
 
-TeamSpeak is an amd64-only image run under QEMU emulation (see `compose/teamspeak/README.md`). A probe on `chimaera` (`k3s/infra/external-probes/`) tests it every 5 minutes and reports to Healthchecks.
+A Caddy container holds the wildcard certificate and answers every web request with an abort, so it serves no site. TeamSpeak is an amd64-only image run under QEMU emulation (see `compose/teamspeak/README.md`). A probe on `chimaera` (`k3s/infra/external-probes/`) tests it every 5 minutes and reports to Healthchecks.
 
 ## Storage
 
@@ -232,7 +237,7 @@ Arrows show who starts the connection. The DMZ never starts one toward VLAN 10.
 | 30 | `br54` | Guest |
 | 40 | `br53` | DMZ: `chimaera` |
 
-The router enforces isolation between VLANs with custom iptables chains (`IOT_FWD`, `DMZ_FWD`, and others). The router's config is not in this repo, and this file's router details are unverified (see `not_verified` above).
+The router enforces isolation between VLANs with custom iptables chains (`IOT_FWD`, `DMZ_FWD`, and others). The router's config lives on the router (`/jffs/scripts/`), not in this repo.
 
 `warden` is the only Tailscale subnet router. It advertises `192.168.10.0/24` and `192.168.40.0/24`. It runs with `--accept-dns=false` because Tailscale DNS would conflict with AdGuard Home on port 53.
 
