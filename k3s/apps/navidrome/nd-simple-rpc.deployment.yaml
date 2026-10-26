@@ -16,11 +16,15 @@ spec:
         app: nd-simple-rpc
     spec:
       enableServiceLinks: false
+      automountServiceAccountToken: false
       securityContext:
         fsGroup: 65532 # distroless nonroot; makes the PVC writable
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: nd-simple-rpc
-          image: ghcr.io/laforcem/nd-simple-rpc:v0.1.1
+          image: ghcr.io/laforcem/nd-simple-rpc:v0.1.2
           ports:
             - name: public
               containerPort: 8080
@@ -38,9 +42,16 @@ spec:
               value: "1"
             - name: DB_PATH
               value: /state/nd-simple-rpc.db
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - name: state
               mountPath: /state
+            - name: tmp
+              mountPath: /tmp # SQLite temp files
           readinessProbe:
             httpGet:
               path: /healthz
@@ -63,3 +74,7 @@ spec:
         - name: state
           persistentVolumeClaim:
             claimName: nd-simple-rpc-state
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Mi
