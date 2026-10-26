@@ -98,7 +98,7 @@ Portainer is retired outright (not carried to warden or anywhere else) — Doco-
 | Pool | Backing | Holds |
 |---|---|---|
 | `local-zfs` (`rpool`) | 238GB NVMe, ZFS | All VMs' OS/boot disks |
-| `truelab` | ~500GB HDD, LVM-thin | chimaera's media data disk (`scsi1`, `backup=0`, mounted at `/mnt/lab`) |
+| `truelab` | ~500GB HDD, LVM-thin | chimaera's media data disk (`scsi1`, `backup=0`, mounted at `/mnt/lab`); declared in `terraform/chimaera.tf` so applies don't detach it |
 | `pbs-b2-cache` | ~500GB USB HDD (ex-`lab` drive) | The `pbs` VM's local datastore (`backups`) and the local cache for its B2-backed offsite datastore (`b2-offsite`), as two virtual disks on one drive |
 
 The former `local-lvm` (LVM-thin on the NVMe) no longer exists — it was migrated to `local-zfs` (issue #34). Current pool usage is live state; query it (`pvesm status`, `zpool list`) rather than trusting a number written here.
