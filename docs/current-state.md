@@ -16,12 +16,21 @@ not_verified:
   - mrgutsy firewall (sudo failed over SSH)
   - Router firewall rules (only chain names checked)
   - Media folder contents in Dropbox (only that nightly checks pinged)
-editing_rules:
-  - Describe the current state only. No history, no narrative.
-  - Use the fewest words that carry the fact. Plain English; a technical term only when it is the precise word.
-  - Include hardware, which changes less than software.
-  - Leave out anything a live system can report: versions, sizes, usage, health.
 ---
+
+<!-- AI AGENTS: READ THIS
+When editing this file, DO:
+- Be as clear and concise as possible
+- Write as few words as are grammatically necessary to convey important information
+- Add information that is descriptive of the current state and nothing more
+- Use technical terms when they are descriptive and necessary
+- Include information about hardware, which is less mutable than software
+DO NOT:
+- Add any narratives, stories, or long tales
+- Be overly verbose
+- Use unnecessary jargon in places where plain English suffices
+- Add information that will naturally rot: volume sizes, memory usage, or anything that could otherwise be accessed by pulling live state. Software is more mutable than software.
+ -->
 
 # Current State
 
