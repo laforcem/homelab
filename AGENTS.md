@@ -4,7 +4,7 @@ Start-of-session orientation only. Durable rules that must hold deep into a sess
 
 ## What this is
 
-Config and compose files for a personal homelab, one service per directory. Larger standalone projects live in their own repos.
+Config and compose files for a personal homelab. Compose services live one per directory under `compose/`; k3s manifests under `k3s/`. Larger standalone projects live in their own repos.
 
 ## Substrate
 
@@ -19,7 +19,7 @@ Run Terraform from `terraform/` after `set -a && source .env && set +a` (see `te
 
 What runs on each host, and the routes serving it, is inventory — see "Where state lives" below rather than assuming this list is current.
 
-Each host's Caddy config lives under `caddy/<host>/`. Which Caddyfile a service's route appears in is the authoritative record of which host it runs on.
+Each host's Caddy config lives under `compose/caddy/<host>/`. Which Caddyfile a service's route appears in is the authoritative record of which host it runs on.
 
 ## Where state lives
 
@@ -36,7 +36,7 @@ Fresh clone, run once:
 git config core.filemode false
 ```
 
-The repo's only executable scripts (`media-backup/backup-media.sh`, `speedtest/custom-cont-init.d/99-configure-prometheus.sh`) report inconsistent permission bits through WSL mounts, which makes git — and any editor's git panel — flag them as modified with no actual content change. This setting is per-clone; `git clone` never carries local config, so it has to be run again after every fresh clone or worktree.
+The repo's only executable scripts (`compose/media-backup/backup-media.sh`, `compose/speedtest/custom-cont-init.d/99-configure-prometheus.sh`) report inconsistent permission bits through WSL mounts, which makes git — and any editor's git panel — flag them as modified with no actual content change. This setting is per-clone; `git clone` never carries local config, so it has to be run again after every fresh clone or worktree.
 
 ## Conventions
 

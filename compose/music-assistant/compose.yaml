@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     # Host networking is mandatory: Cast/AirPlay discovery is mDNS multicast, and the
     # speakers (VLAN 20) fetch audio from MA's stream server (8097) directly.
-    # Web UI is 8095; Caddy reaches it via host.docker.internal (see caddy/warden).
+    # Web UI is 8095; Caddy reaches it via host.docker.internal (see compose/caddy/warden).
     # ufw (ansible/roles/utility-services) allows 8095 from caddy-internal and 8097
     # from the IoT VLAN; the router's IOT_FWD chain allows VLAN 20 -> 8097 on warden.
     network_mode: host

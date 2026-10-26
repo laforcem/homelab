@@ -36,7 +36,7 @@ Loki and Alloy are added in a later step (see the plan).
 1. Metrics: ship a `ServiceMonitor` or `PodMonitor` next to the app's
    manifests. No label is needed.
 2. Logs: nothing. Print to stdout.
-3. Dashboards: a JSON file under `monitoring/grafana/dashboards/` in this
+3. Dashboards: a JSON file under `compose/monitoring/grafana/dashboards/` in this
    repo, loaded by warden's Grafana.
 
 ## Dashboards

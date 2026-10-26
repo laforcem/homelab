@@ -20,13 +20,13 @@ services:
           interval: 300
           deployments:
             - name: doco-cd
-              working_dir: doco-cd
+              working_dir: compose/doco-cd
               compose_files:
                 - compose.yaml
               env_files:
                 - /secrets/doco-cd.env
             - name: adguard-home
-              working_dir: adguard-home
+              working_dir: compose/adguard-home
               compose_files:
                 - compose.yaml
               external_secrets:
@@ -34,7 +34,7 @@ services:
                 DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
                 DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
             - name: music-assistant
-              working_dir: music-assistant
+              working_dir: compose/music-assistant
               compose_files:
                 - compose.yaml
               external_secrets:
@@ -42,7 +42,7 @@ services:
                 DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
                 DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
             - name: caddy-lan
-              working_dir: caddy/warden
+              working_dir: compose/caddy/warden
               compose_files:
                 - compose.yaml
               external_secrets:
@@ -50,7 +50,7 @@ services:
                 API_KEY: "05d378b9-de09-465c-80ec-b4ab001378de"
                 SECRET_KEY: "e991c510-db7b-4e76-b885-b4ab00138c89"
             - name: speedtest
-              working_dir: speedtest
+              working_dir: compose/speedtest
               compose_files:
                 - compose.yaml
               external_secrets:
@@ -59,7 +59,7 @@ services:
                 DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
                 DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
             - name: monitoring
-              working_dir: monitoring
+              working_dir: compose/monitoring
               compose_files:
                 - compose.yaml
               external_secrets:
@@ -67,14 +67,14 @@ services:
                 DOMAIN: "4d3bfd3c-0a5d-496e-8eeb-b4ab00128f57"
                 ADGUARD_EXPORTER_PASSWORD: "cb730d28-66b8-4ba3-ac75-b4e80158047a"
             - name: router-sync
-              working_dir: router-sync
+              working_dir: compose/router-sync
               compose_files:
                 - compose.yaml
               external_secrets:
                 SSH_PRIVATE_KEY: "e161d8e8-4437-445e-9de7-b4c5017e30bf"
                 AGH_PASSWORD: "0d135bea-e776-4677-a546-b4c5017fd9ce"
             - name: oci-backup
-              working_dir: oci-backup
+              working_dir: compose/oci-backup
               compose_files:
                 - compose.yaml
               external_secrets:
@@ -84,7 +84,7 @@ services:
                 COMPARTMENT_ID: "6039f4df-bec5-438a-9b72-b4ab0021c7a2"
                 BOOT_VOLUME_ID: "4b5d7b03-572f-4859-b64a-b4ab00105cb1"
             - name: porkbun-ddns
-              working_dir: porkbun-ddns
+              working_dir: compose/porkbun-ddns
               compose_files:
                 - compose.yaml
               external_secrets:
@@ -93,7 +93,7 @@ services:
                 API_KEY: "05d378b9-de09-465c-80ec-b4ab001378de"
                 SECRET_KEY: "e991c510-db7b-4e76-b885-b4ab00138c89"
             - name: ppld-calendar
-              working_dir: ppld-calendar
+              working_dir: compose/ppld-calendar
               compose_files:
                 - compose.yaml
               external_secrets:
@@ -103,7 +103,7 @@ services:
                 CALDAV_APP_PASSWORD: "7a655d96-b72a-4734-8806-b4df01473b42"
                 CALDAV_CALENDAR_URL: "8679ab16-75a4-40e6-83c8-b4df01477477"
             - name: icloudpd
-              working_dir: icloudpd
+              working_dir: compose/icloudpd
               compose_files:
                 - compose.yaml
               external_secrets:

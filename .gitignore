@@ -2,8 +2,8 @@
 .vscode
 .env
 
-router-sync/.env
-router-sync/id_ed25519
+compose/router-sync/.env
+compose/router-sync/id_ed25519
 docs/superpowers/
 docs/research/
 
