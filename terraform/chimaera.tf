@@ -22,7 +22,7 @@ resource "proxmox_virtual_environment_vm" "chimaera" {
     disk {
         datastore_id = "local-zfs"
         interface = "scsi0"
-        size = 32
+        size = 64
     }
     initialization {
         datastore_id = "local-zfs"
