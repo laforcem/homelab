@@ -24,7 +24,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: nd-simple-rpc
-          image: ghcr.io/laforcem/nd-simple-rpc:v0.1.2
+          image: ghcr.io/laforcem/nd-simple-rpc:v0.2.0
           ports:
             - name: public
               containerPort: 8080
