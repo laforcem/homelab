@@ -43,7 +43,7 @@ spec:
             requests: {cpu: 10m, memory: 16Mi}
             limits: {cpu: 200m, memory: 64Mi}
         - name: nd-simple-rpc-plugin
-          image: ghcr.io/laforcem/nd-simple-rpc:v0.1.1
+          image: ghcr.io/laforcem/nd-simple-rpc:v0.2.0
           args: ["install-plugin", "--connect-url", "https://presence.music.$DOMAIN", "/data/plugins"]
           securityContext:
             runAsUser: 0
