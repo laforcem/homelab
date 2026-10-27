@@ -1,0 +1,24 @@
+# prometheus-blackbox-exporter — probes the in-cluster apps (app-probes.probe.yaml).
+# Contains $DOMAIN: install with
+#   helm install prometheus-blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
+#     --version 11.20.2 --kube-context starcliff -n monitoring \
+#     -f <(DOMAIN=... envsubst '$DOMAIN' < blackbox-exporter.values.yaml)
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 10s
+      http:
+        preferred_ip_protocol: ip4
+    # Tandoor's ALLOWED_HOSTS rejects the Service name, so send its real host.
+    http_2xx_tandoor:
+      prober: http
+      timeout: 10s
+      http:
+        preferred_ip_protocol: ip4
+        headers:
+          Host: recipes.$DOMAIN
+
+resources:
+  requests: { cpu: 5m, memory: 16Mi }
+  limits: { memory: 64Mi }

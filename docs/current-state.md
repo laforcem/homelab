@@ -246,9 +246,19 @@ The router isolates VLANs with custom iptables chains (`IOT_FWD`, `DMZ_FWD`, oth
 ## Monitoring
 
 - **Grafana** runs once, on warden, and queries `chimaera`'s Prometheus and Loki over NodePorts `30090` and `30100`. A NetworkPolicy and `externalTrafficPolicy: Local` limit both to warden, because ufw can't restrict NodePorts. Nothing is pushed out of the cluster.
-- **In-cluster stack** (`k3s/infra/monitoring/`; three hand-run Helm releases, see its README): `kube-prometheus-stack` (Prometheus with 10-day retention, node-exporter, kube-state-metrics; Grafana and Alertmanager off), `loki` (14-day retention) and `alloy` (ships container logs to Loki).
+- **In-cluster stack** (`k3s/infra/monitoring/`; four hand-run Helm releases, see its README): `kube-prometheus-stack` (Prometheus with 10-day retention, Alertmanager, node-exporter, kube-state-metrics; Grafana off), `loki` (14-day retention) and `alloy` (ships container logs to Loki) and `prometheus-blackbox-exporter` (app probes).
 - Prometheus scrapes Traefik, cert-manager and VolSync. VolSync's metrics sit behind an auth proxy, so Prometheus's ServiceAccount is bound to `volsync-metrics-reader` (`k3s/infra/volsync/metrics.*`).
-- **Health probes**: Audiobookshelf, Immich, Miniflux, Navidrome and Tandoor each run a CronJob every 5 minutes (`k3s/apps/<app>/health-probe.cronjob.yaml`) that pings a Healthchecks check. Actual has none.
+- **App probes**: blackbox exporter `Probe` objects (`k3s/infra/monitoring/app-probes.probe.yaml`) check Actual, Audiobookshelf, Immich, Miniflux, Navidrome and Tandoor every minute. The `AppDown` alert fires after 5 minutes of failures.
+
+### Alerting
+
+- **Delivery**: Alertmanager sends everything to a dedicated Telegram bot, one chat, no severity tiers and no paging. The bot token and chat ID come from Bitwarden through the `alertmanager-telegram` ExternalSecret. Messages are short: status, alert name, one sentence (a custom template in `kube-prometheus-stack.values.yaml`). Alertmanager has no volume and no ingress; restarting it loses silences, and firing alerts re-notify once.
+- **Rules**: one hand-written `PrometheusRule` (`k3s/infra/monitoring/rules/alerts.prometheusrule.yaml`) with unit tests (`bash rules/test.sh`, needs `promtool` and `yq`). kube-prometheus-stack's default alerts are off; its recording rules stay on because the Grafana dashboards use them. Alerts: crash loops, OOM kills, scrape targets down, app probes, cert-manager not ready or expiring in under 14 days, failed VolSync mover Jobs, no VolSync sync in 30 hours (a kube-state-metrics custom-resource-state metric on `ReplicationSource`), and low disk (the `lab` drive under 15% free, chimaera's root under 20%).
+- **Watchdog**: an always-firing alert posts to the `Alertmanager Watchdog` Healthchecks check every 5 minutes. If the pings stop, Healthchecks messages Telegram, which covers Prometheus, Alertmanager or chimaera being down.
+- **AudioMuse analysis**: the `audiomuse-analysis-probe` CronJob (hourly) reads AudioMuse's `task_status` table and pings the `AudioMuse nightly analysis` check. It reports failure when the latest analysis failed or the last success is over 52 hours old (the analysis runs Sunday to Friday, so a 48-hour gap is normal).
+- **Kubeconfig cert**: the `kubeconfig-cert-watch` CronJob (daily) hashes chimaera's k3s admin client cert and posts an alert when it changes, because downstream copies of the kubeconfig do not renew themselves (#101). It records the hash in a ConfigMap on its first run.
+- **Still on Healthchecks**: jobs outside the cluster (PBS, vzdump, warden and mrgutsy backups, the TeamSpeak probe) and the media-backup CronJob checks, plus the Watchdog and AudioMuse checks above. The Healthchecks project is at its 20-check limit on the free plan.
+- **Not alerted**: a ReplicationSource that has never synced has no `lastSyncTime`, so the 30-hour alert stays silent for it. `volsync_volume_out_of_sync` and the missed-interval metric are untested against a paused schedule and are not used.
 
 ## Provisioning
 
@@ -279,9 +289,7 @@ The `k3s` role:
 
 ## Known gaps
 
-- **No alerting.** Grafana has no alert rules, and nothing alerts on VolSync metrics. Tracked in [#109](https://github.com/laforcem/homelab/issues/109).
 - **AdGuard accounts** for `router-sync` and `monitoring-adguard-exporter` exist only in AdGuard's live config, so a fresh deploy loses them. AdGuard has no read-only role, so the exporter has full API access.
 - **speedtest-tracker `/prometheus`** has no IP allowlist. Caddy returns 404 for it on `speedtest.lan.$DOMAIN`, and Prometheus scrapes it container to container.
 - **node-exporter** (host port `9100`) is allowed through ufw only from `172.21.0.0/16`, the `caddy-internal` subnet. If Docker recreates that network on a different subnet, Prometheus loses the target until the rule is updated.
 - **Unpinned images:** `speedtest-tracker` and `router-sync` run `:latest`. Every k3s image is pinned.
-- **Dead check:** `pvestatd Health (pve)` in Healthchecks has never received a ping.

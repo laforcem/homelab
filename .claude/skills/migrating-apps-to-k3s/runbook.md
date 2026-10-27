@@ -104,16 +104,15 @@ kubectl -n <app> get replicationsource <app> -o jsonpath='{.status.latestMoverSt
 
 ## Observability (Phase 6)
 
-- Probe: copy `k3s/apps/audiobookshelf/health-probe.cronjob.yaml`. Create its check through the Healthchecks MCP (needs a read-write key): `timeout` = 2x the cron period, `grace` = same, same integration as the other checks. The `/fail` branch is untested by design (it alerts for real).
+- Probe: add a `Probe` for the app's health URL to `k3s/infra/monitoring/app-probes.probe.yaml` (copy an existing entry; it uses the blackbox exporter, see `docs/current-state.md` Alerting) and `kubectl apply` it. `AppDown` then covers the app with no Healthchecks check. If the app rejects the Service host name (Tandoor does), add a module with a `Host` header to `blackbox-exporter.values.yaml` and `helm upgrade` that release. Confirm `probe_success` is 1 for the new target.
 - VolSync metrics are already scraped; no per-app work. Confirm the new app shows up (Prometheus' NodePort is unreachable from WSL and its image has no `wget`; use the API server proxy):
   ```bash
   q(){ kubectl get --raw "/api/v1/namespaces/monitoring/services/kube-prometheus-stack-prometheus:9090/proxy/api/v1/query?query=$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$1")"; }
   q 'volsync_volume_out_of_sync{obj_namespace="<app>"}'          # one series per ReplicationSource, value 0
-  q 'kube_cronjob_status_last_successful_time{namespace="<app>"}' # health-probe, plus pg-dump for Postgres apps
+  q 'kube_cronjob_status_last_successful_time{namespace="<app>"}' # pg-dump for Postgres apps
   ```
-- Nothing alerts on VolSync or CronJob failure yet (#109); say so to the user rather than implying coverage.
-- Healthchecks MCP: `get_check` takes `check` (the UUID). `create_check` takes `tags` and `channels` as arrays. Read the channel id from an existing probe's `get_check`.
-- Probe from the template: `sed` the namespace, URL and ping UUID in `k3s/apps/audiobookshelf/health-probe.cronjob.yaml`, apply, run `kubectl create job --from=cronjob/health-probe probe-test-1`, then confirm `n_pings: 1` on the check.
+- VolSync and certificates are covered by `BackupJobFailed`, `BackupStale` and the cert alerts in `k3s/infra/monitoring/rules/`; they need no per-app work. A Postgres app's `pg-dump` CronJob has no alert of its own.
+- Healthchecks MCP (still used for jobs Prometheus can't see): `get_check` takes `check` (the UUID). `create_check` takes `tags` and `channels` as arrays. The project is capped at 20 checks, so remove a retired check with `delete_check` before adding one.
 
 ## Git and PR mechanics
 

@@ -1,0 +1,127 @@
+# Hand-picked alerts, unit-tested by `bash test.sh` (promtool). Thresholds are
+# starting points; tune them after the first week. Every alert resolves on its
+# own when the cause clears.
+# PodCrashLooping, RootDiskLow and TargetDown are
+# adapted from kube-prometheus-stack's default rules, which are turned off in
+# ../kube-prometheus-stack.values.yaml.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: homelab-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: watchdog
+      rules:
+        - alert: Watchdog
+          expr: vector(1)
+          labels:
+            severity: none
+          annotations:
+            summary: Always-firing alert that proves Prometheus and Alertmanager are alive.
+
+    - name: workloads
+      rules:
+        - alert: PodCrashLooping
+          expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", job="kube-state-metrics"}[5m]) >= 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Pod is crash looping.
+            description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is in CrashLoopBackOff.
+        # kube_pod_container_status_last_terminated_reason keeps its value until
+        # the pod is replaced, so alert on a fresh restart that was an OOM kill.
+        - alert: ContainerOOMKilled
+          expr: |-
+            increase(kube_pod_container_status_restarts_total[10m]) > 0
+            and on (namespace, pod, container)
+            kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: Container was OOM-killed.
+            description: Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} was OOM-killed and restarted.
+        - alert: TargetDown
+          expr: 100 * (count(up == 0) by (job, namespace, service) / count(up) by (job, namespace, service)) > 10
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: A scrape target is down.
+            description: Scrape targets for {{ $labels.job }}/{{ $labels.service }} in {{ $labels.namespace }} are down.
+        - alert: AppDown
+          expr: probe_success == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: An app is not answering its health check.
+            description: '{{ $labels.instance }} has failed its probe for 5 minutes.'
+
+    - name: certificates
+      rules:
+        - alert: CertificateNotReady
+          expr: certmanager_certificate_ready_status{condition="True"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Certificate is not ready.
+            description: Certificate {{ $labels.namespace }}/{{ $labels.name }} is not ready.
+        - alert: CertificateExpiringSoon
+          expr: certmanager_certificate_expiration_timestamp_seconds - time() < 14 * 86400
+          labels:
+            severity: warning
+          annotations:
+            summary: Certificate expires in under 14 days.
+            description: Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in under 14 days.
+
+    - name: backups
+      rules:
+        - alert: BackupJobFailed
+          expr: kube_job_status_failed{job_name=~"volsync-src.*"} > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: A VolSync backup job failed.
+            description: Backup job {{ $labels.namespace }}/{{ $labels.job_name }} has failed pods.
+        # Needs the ReplicationSource metric from kube-state-metrics'
+        # custom-resource-state config in ../kube-prometheus-stack.values.yaml.
+        # A source that never synced has no series and stays silent.
+        - alert: BackupStale
+          expr: time() - kube_volsync_replicationsource_last_sync_timestamp_seconds > 30 * 3600
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: No successful backup in over 30 hours.
+            description: ReplicationSource {{ $labels.namespace }}/{{ $labels.name }} has not synced in over 30 hours.
+
+    - name: capacity
+      rules:
+        # The lab drive is shared with Immich and reported through the
+        # audiobookshelf-library PVC; its series are duplicated, hence max by.
+        - alert: LabDriveLow
+          expr: |-
+            max by (persistentvolumeclaim) (kubelet_volume_stats_available_bytes{persistentvolumeclaim="audiobookshelf-library"})
+            / max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{persistentvolumeclaim="audiobookshelf-library"})
+            < 0.15
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: The lab drive has under 15% free space.
+            description: The drive behind {{ $labels.persistentvolumeclaim }} has under 15% free space.
+        - alert: RootDiskLow
+          expr: |-
+            node_filesystem_avail_bytes{mountpoint="/", fstype!=""}
+            / node_filesystem_size_bytes{mountpoint="/", fstype!=""}
+            < 0.20
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: Root disk has under 20% free space.
+            description: Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} has under 20% free space.
