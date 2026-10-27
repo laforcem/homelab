@@ -1,0 +1,86 @@
+# Dead-man's-switch for AudioMuse's scheduled analysis (cron `0 2 * * 0-5`).
+# Prometheus can't see an application failure, so this reads AudioMuse's own
+# task_status table. It reports "fail" when the latest top-level main_analysis
+# row is FAILURE, or when the last SUCCESS ended more than 52h ago (the Fri->Sun
+# gap is 48h). A run that never reaches the ping lets the check time out.
+# Ping URLs are not secret (same as the other committed hc-ping.com URLs).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: audiomuse-analysis-probe
+  namespace: navidrome
+spec:
+  schedule: "17 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          volumes:
+            - name: out
+              emptyDir: {}
+          initContainers:
+            - name: verdict
+              image: postgres:15.18
+              command:
+                - sh
+                - -c
+                - |
+                  psql -h audiomuse-postgres -U audiomuse -d audiomusedb -Atq -v max_age=187200 -f - > /out/verdict 2>/dev/null <<'SQL' || echo fail > /out/verdict
+                  select case
+                    when (select status from task_status where task_type = 'main_analysis' and parent_task_id is null order by timestamp desc limit 1) = 'FAILURE' then 'fail'
+                    when coalesce(extract(epoch from now()) - (select max(end_time) from task_status where task_type = 'main_analysis' and parent_task_id is null and status = 'SUCCESS'), 1e12) > :max_age then 'fail'
+                    else 'ok' end;
+                  SQL
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: audiomuse
+                      key: POSTGRES_PASSWORD
+              volumeMounts:
+                - name: out
+                  mountPath: /out
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+          containers:
+            - name: ping
+              image: curlimages/curl:8.11.1
+              command:
+                - sh
+                - -c
+                - |
+                  if [ "$(cat /out/verdict)" = ok ]; then
+                    curl -fsS --retry 3 -o /dev/null https://hc-ping.com/b85e1ba2-df47-4fec-b636-95ae8541ced1
+                  else
+                    curl -fsS --retry 3 -o /dev/null https://hc-ping.com/b85e1ba2-df47-4fec-b636-95ae8541ced1/fail
+                    exit 1
+                  fi
+              volumeMounts:
+                - name: out
+                  mountPath: /out
+                  readOnly: true
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
