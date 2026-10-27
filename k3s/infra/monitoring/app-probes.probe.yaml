@@ -1,0 +1,92 @@
+# One Probe per app, replacing the per-app health-probe CronJobs. AppDown (rules/alerts.prometheusrule.yaml)
+# fires when probe_success is 0 for 5 minutes.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: audiobookshelf
+  namespace: monitoring
+spec:
+  interval: 1m
+  module: http_2xx
+  prober:
+    url: prometheus-blackbox-exporter.monitoring:9115
+  targets:
+    staticConfig:
+      static:
+        - http://audiobookshelf.audiobookshelf/healthcheck
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: immich
+  namespace: monitoring
+spec:
+  interval: 1m
+  module: http_2xx
+  prober:
+    url: prometheus-blackbox-exporter.monitoring:9115
+  targets:
+    staticConfig:
+      static:
+        - http://immich-server.immich:2283/api/server/ping
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: miniflux
+  namespace: monitoring
+spec:
+  interval: 1m
+  module: http_2xx
+  prober:
+    url: prometheus-blackbox-exporter.monitoring:9115
+  targets:
+    staticConfig:
+      static:
+        - http://miniflux.miniflux/healthcheck
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: navidrome
+  namespace: monitoring
+spec:
+  interval: 1m
+  module: http_2xx
+  prober:
+    url: prometheus-blackbox-exporter.monitoring:9115
+  targets:
+    staticConfig:
+      static:
+        - http://navidrome.navidrome:4533/ping
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: tandoor
+  namespace: monitoring
+spec:
+  interval: 1m
+  module: http_2xx_tandoor
+  prober:
+    url: prometheus-blackbox-exporter.monitoring:9115
+  targets:
+    staticConfig:
+      static:
+        - http://tandoor.tandoor/accounts/login/
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: actual
+  namespace: monitoring
+spec:
+  interval: 1m
+  module: http_2xx
+  prober:
+    url: prometheus-blackbox-exporter.monitoring:9115
+  targets:
+    staticConfig:
+      static:
+        - http://actual.actual:5006/health
