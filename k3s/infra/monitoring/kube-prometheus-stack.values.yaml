@@ -59,6 +59,14 @@ alertmanager:
           - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram/bot-token
             chat_id_file: /etc/alertmanager/secrets/alertmanager-telegram/chat-id
             send_resolved: true
+            parse_mode: HTML
+            # Short on purpose: status, name, one sentence. The default lists every label
+            # and an internal Prometheus URL.
+            message: |-
+              {{ range .Alerts -}}
+              <b>{{ if eq .Status "firing" }}FIRING{{ else }}RESOLVED{{ end }}: {{ .Labels.alertname }}</b>
+              {{ if .Annotations.description }}{{ .Annotations.description | html }}{{ else }}{{ .Annotations.summary | html }}{{ end }}
+              {{ end }}
       - name: healthchecks
         webhook_configs:
           - url: https://hc-ping.com/e6ec4ad9-8caf-4377-9158-1627591b8aed
