@@ -61,7 +61,7 @@ alertmanager:
             send_resolved: true
       - name: healthchecks
         webhook_configs:
-          - url: https://hc-ping.com/REPLACE-WITH-WATCHDOG-CHECK-UUID
+          - url: https://hc-ping.com/e6ec4ad9-8caf-4377-9158-1627591b8aed
             send_resolved: false
 
 # k3s embeds these control-plane components in its own process, so there is
