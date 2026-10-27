@@ -7,8 +7,62 @@ grafana:
   # extracted with `helm template` and loaded on warden.
   forceDeployDashboards: true
 
+# Our own alerts live in rules/alerts.prometheusrule.yaml. The chart's default
+# alerts assume a multi-node cluster and misfire on single-node k3s, so every
+# alert-bearing group is off. Recording-only groups stay on: the Kubernetes
+# dashboards on warden query their series.
+defaultRules:
+  rules:
+    alertmanager: false
+    configReloaders: false
+    etcd: false
+    general: false
+    kubeApiserverSlos: false
+    kubeStateMetrics: false
+    kubernetesApps: false
+    kubernetesResources: false
+    kubernetesStorage: false
+    kubernetesSystem: false
+    network: false
+    nodeExporterAlerting: false
+    prometheus: false
+    prometheusOperator: false
+
 alertmanager:
-  enabled: false
+  enabled: true
+  alertmanagerSpec:
+    # Bot token and chat ID, mounted at /etc/alertmanager/secrets/alertmanager-telegram/
+    # (ExternalSecret in alertmanager-telegram.externalsecret.yaml).
+    secrets:
+      - alertmanager-telegram
+    # No PVC: config is in git, and the only runtime state is silences.
+    resources:
+      requests: { cpu: 10m, memory: 32Mi }
+      limits: { memory: 128Mi }
+  config:
+    route:
+      receiver: telegram
+      group_by: [alertname, namespace]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      routes:
+        # Watchdog always fires; Healthchecks alerts if the pings stop.
+        - matchers: ['alertname="Watchdog"']
+          receiver: healthchecks
+          group_wait: 0s
+          group_interval: 1m
+          repeat_interval: 5m
+    receivers:
+      - name: telegram
+        telegram_configs:
+          - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram/bot-token
+            chat_id_file: /etc/alertmanager/secrets/alertmanager-telegram/chat-id
+            send_resolved: true
+      - name: healthchecks
+        webhook_configs:
+          - url: https://hc-ping.com/REPLACE-WITH-WATCHDOG-CHECK-UUID
+            send_resolved: false
 
 # k3s embeds these control-plane components in its own process, so there is
 # nothing for Prometheus to scrape.
@@ -39,6 +93,8 @@ prometheus:
     # Any ServiceMonitor/PodMonitor in any namespace, no release label needed.
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
     # Nothing is pushed into the cluster.
     enableRemoteWriteReceiver: false
     retention: 10d
@@ -58,6 +114,35 @@ kube-state-metrics:
   resources:
     requests: { cpu: 10m, memory: 32Mi }
     limits: { memory: 128Mi }
+  # Exposes each VolSync ReplicationSource's last successful sync as a
+  # timestamp, so BackupStale can catch a schedule that silently stopped.
+  # (kube-state-metrics parses the RFC3339 string into seconds.)
+  rbac:
+    extraRules:
+      - apiGroups: ["volsync.backube"]
+        resources: ["replicationsources"]
+        verbs: ["list", "watch"]
+  customResourceState:
+    enabled: true
+    config:
+      kind: CustomResourceStateMetrics
+      spec:
+        resources:
+          - groupVersionKind:
+              group: volsync.backube
+              version: v1alpha1
+              kind: ReplicationSource
+            metricNamePrefix: kube_volsync_replicationsource
+            labelsFromPath:
+              name: [metadata, name]
+              namespace: [metadata, namespace]
+            metrics:
+              - name: last_sync_timestamp_seconds
+                help: Time of the last successful sync.
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, lastSyncTime]
 
 prometheus-node-exporter:
   resources:

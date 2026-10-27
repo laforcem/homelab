@@ -1,0 +1,217 @@
+rule_files:
+  - alerts.rules.yaml
+
+evaluation_interval: 1m
+
+tests:
+  # --- Watchdog ---
+  - name: watchdog always fires
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: Watchdog
+        exp_alerts:
+          - exp_labels: { severity: none }
+            exp_annotations:
+              summary: Always-firing alert that proves Prometheus and Alertmanager are alive.
+
+  # --- Crash loops ---
+  - name: crash loop fires after 15m and stays silent when it clears
+    input_series:
+      - series: 'kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff",job="kube-state-metrics",namespace="immich",pod="p1",container="c1"}'
+        values: '1x25 0x40'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: PodCrashLooping
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: PodCrashLooping
+        exp_alerts:
+          - exp_labels: { severity: warning, reason: CrashLoopBackOff, job: kube-state-metrics, namespace: immich, pod: p1, container: c1 }
+            exp_annotations:
+              summary: Pod is crash looping.
+              description: Pod immich/p1 (c1) is in CrashLoopBackOff.
+      - eval_time: 50m
+        alertname: PodCrashLooping
+        exp_alerts: []
+
+  # --- OOM kills ---
+  - name: oom kill fires on a fresh restart and resolves though the reason stays set
+    input_series:
+      - series: 'kube_pod_container_status_restarts_total{namespace="navidrome",pod="worker",container="w"}'
+        values: '0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_container_status_last_terminated_reason{reason="OOMKilled",namespace="navidrome",pod="worker",container="w"}'
+        values: '1x24'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ContainerOOMKilled
+        exp_alerts:
+          - exp_labels: { severity: warning, namespace: navidrome, pod: worker, container: w }
+            exp_annotations:
+              summary: Container was OOM-killed.
+              description: Container w in navidrome/worker was OOM-killed and restarted.
+      - eval_time: 20m
+        alertname: ContainerOOMKilled
+        exp_alerts: []
+
+  - name: restart without oom reason does not fire the oom alert
+    input_series:
+      - series: 'kube_pod_container_status_restarts_total{namespace="a",pod="p",container="c"}'
+        values: '0 0 0 1 1 1 1'
+      - series: 'kube_pod_container_status_last_terminated_reason{reason="Error",namespace="a",pod="p",container="c"}'
+        values: '1x6'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ContainerOOMKilled
+        exp_alerts: []
+
+  # --- Certificates ---
+  - name: certificate not ready fires after 15m
+    input_series:
+      - series: 'certmanager_certificate_ready_status{condition="True",name="budget-tls",namespace="actual"}'
+        values: '0x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CertificateNotReady
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: CertificateNotReady
+        exp_alerts:
+          - exp_labels: { severity: warning, condition: "True", name: budget-tls, namespace: actual }
+            exp_annotations:
+              summary: Certificate is not ready.
+              description: Certificate actual/budget-tls is not ready.
+
+  - name: certificate expiring within 14 days fires and a far-off one does not
+    input_series:
+      - series: 'certmanager_certificate_expiration_timestamp_seconds{name="soon-tls",namespace="actual"}'
+        values: '1126800x120'
+      - series: 'certmanager_certificate_expiration_timestamp_seconds{name="far-tls",namespace="actual"}'
+        values: '2592000x120'
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: CertificateExpiringSoon
+        exp_alerts:
+          - exp_labels: { severity: warning, name: soon-tls, namespace: actual }
+            exp_annotations:
+              summary: Certificate expires in under 14 days.
+              description: Certificate actual/soon-tls expires in under 14 days.
+
+  # --- Backups ---
+  - name: volsync mover job failure fires and other jobs do not
+    input_series:
+      - series: 'kube_job_status_failed{namespace="actual",job_name="volsync-src-actual"}'
+        values: '1x20'
+      - series: 'kube_job_status_failed{namespace="actual",job_name="pg-dump-123"}'
+        values: '1x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: BackupJobFailed
+        exp_alerts:
+          - exp_labels: { severity: warning, namespace: actual, job_name: volsync-src-actual }
+            exp_annotations:
+              summary: A VolSync backup job failed.
+              description: Backup job actual/volsync-src-actual has failed pods.
+
+  - name: stale backup fires after 30h, not at 29h, and not when the series is absent
+    input_series:
+      - series: 'kube_volsync_replicationsource_last_sync_timestamp_seconds{namespace="actual",name="actual"}'
+        values: '0x2000'
+    alert_rule_test:
+      - eval_time: 29h
+        alertname: BackupStale
+        exp_alerts: []
+      - eval_time: 31h
+        alertname: BackupStale
+        exp_alerts:
+          - exp_labels: { severity: warning, namespace: actual, name: actual }
+            exp_annotations:
+              summary: No successful backup in over 30 hours.
+              description: ReplicationSource actual/actual has not synced in over 30 hours.
+
+  - name: absent replication source series stays silent
+    alert_rule_test:
+      - eval_time: 40h
+        alertname: BackupStale
+        exp_alerts: []
+
+  # --- Disk ---
+  - name: lab drive under 15 percent free fires once despite duplicate series
+    input_series:
+      - series: 'kubelet_volume_stats_available_bytes{persistentvolumeclaim="audiobookshelf-library",instance="a"}'
+        values: '10x60'
+      - series: 'kubelet_volume_stats_available_bytes{persistentvolumeclaim="audiobookshelf-library",instance="b"}'
+        values: '10x60'
+      - series: 'kubelet_volume_stats_capacity_bytes{persistentvolumeclaim="audiobookshelf-library",instance="a"}'
+        values: '100x60'
+      - series: 'kubelet_volume_stats_capacity_bytes{persistentvolumeclaim="audiobookshelf-library",instance="b"}'
+        values: '100x60'
+    alert_rule_test:
+      - eval_time: 45m
+        alertname: LabDriveLow
+        exp_alerts:
+          - exp_labels: { severity: warning, persistentvolumeclaim: audiobookshelf-library }
+            exp_annotations:
+              summary: The lab drive has under 15% free space.
+              description: The drive behind audiobookshelf-library has under 15% free space.
+
+  - name: lab drive at 30 percent free is silent
+    input_series:
+      - series: 'kubelet_volume_stats_available_bytes{persistentvolumeclaim="audiobookshelf-library"}'
+        values: '30x60'
+      - series: 'kubelet_volume_stats_capacity_bytes{persistentvolumeclaim="audiobookshelf-library"}'
+        values: '100x60'
+    alert_rule_test:
+      - eval_time: 45m
+        alertname: LabDriveLow
+        exp_alerts: []
+
+  - name: root disk under 20 percent free fires after 30m
+    input_series:
+      - series: 'node_filesystem_avail_bytes{mountpoint="/",device="sda1",fstype="ext4",instance="chimaera"}'
+        values: '15x60'
+      - series: 'node_filesystem_size_bytes{mountpoint="/",device="sda1",fstype="ext4",instance="chimaera"}'
+        values: '100x60'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: RootDiskLow
+        exp_alerts: []
+      - eval_time: 45m
+        alertname: RootDiskLow
+        exp_alerts:
+          - exp_labels: { severity: warning, mountpoint: /, device: sda1, fstype: ext4, instance: chimaera }
+            exp_annotations:
+              summary: Root disk has under 20% free space.
+              description: Filesystem / on chimaera has under 20% free space.
+
+  # --- Scrape targets and apps ---
+  - name: scrape target down for 15m fires
+    input_series:
+      - series: 'up{job="node-exporter",namespace="monitoring",service="ne",instance="i1"}'
+        values: '0x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: TargetDown
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: TargetDown
+        exp_alerts:
+          - exp_labels: { severity: warning, job: node-exporter, namespace: monitoring, service: ne }
+            exp_annotations:
+              summary: A scrape target is down.
+              description: Scrape targets for node-exporter/ne in monitoring are down.
+
+  - name: app probe failing for 5m fires
+    input_series:
+      - series: 'probe_success{instance="http://navidrome.navidrome:4533/ping",job="probe/monitoring/navidrome"}'
+        values: '0x20'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: AppDown
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: AppDown
+        exp_alerts:
+          - exp_labels: { severity: warning, instance: "http://navidrome.navidrome:4533/ping", job: probe/monitoring/navidrome }
+            exp_annotations:
+              summary: An app is not answering its health check.
+              description: http://navidrome.navidrome:4533/ping has failed its probe for 5 minutes.
