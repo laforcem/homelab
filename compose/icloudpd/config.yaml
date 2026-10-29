@@ -3,6 +3,7 @@ app:
   mfa_provider: webui
   password_providers: [parameter]
   webui_port: 2011
+  control_token_file: /run/secrets/icloudpd_control_token
   watch_with_interval: 86400
 
 all_users:
@@ -17,8 +18,12 @@ users:
     directory: /data/malc
     cookie_directory: /home/icloudpd/.pyicloud/malc
     state_directory: /home/icloudpd/.pyicloud/state/malc
+    sync_deletions: true
+    deletion_sync_threshold: 3 # low while new; held batches go to Telegram for review
   - username_file: /run/secrets/apple_id_grug
     password_file: /run/secrets/apple_password_grug
     directory: /data/grug
     cookie_directory: /home/icloudpd/.pyicloud/grug
     state_directory: /home/icloudpd/.pyicloud/state/grug
+    sync_deletions: true
+    deletion_sync_threshold: 3 # low while new; held batches go to Telegram for review
