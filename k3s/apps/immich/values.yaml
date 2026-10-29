@@ -53,6 +53,9 @@ server:
             - path: /mnt/media/icloud/grug
               subPath: grug
               readOnly: true
+            - path: /mnt/media/icloud/shared
+              subPath: shared
+              readOnly: true
   ingress:
     main:
       enabled: true
