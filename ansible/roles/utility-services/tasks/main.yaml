@@ -236,6 +236,11 @@
     name: nfs-common
     state: present
 
+- name: Install rsync — for moving and verifying photo libraries on the lab drive
+  ansible.builtin.apt:
+    name: rsync
+    state: present
+
 # The lab drive lives on chimaera (see the k3s role).
 # automount + hard: if the server is down, access blocks instead of falling
 # through to the empty local mountpoint and filling warden's disk.

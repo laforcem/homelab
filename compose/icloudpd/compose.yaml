@@ -23,12 +23,16 @@ secrets:
     environment: TELEGRAM_BOT_TOKEN
   telegram_allowed_chat_ids:
     environment: TELEGRAM_ALLOWED_CHAT_IDS
+  # Bearer token for the control channel (port 2012, compose network only).
+  # One value, read by both icloudpd and the bot.
+  icloudpd_control_token:
+    environment: ICLOUDPD_CONTROL_TOKEN
 
 services:
   icloudpd:
     container_name: icloudpd
     hostname: icloudpd
-    image: ghcr.io/laforcem/icloudpd:v1.2.0
+    image: ghcr.io/laforcem/icloudpd:v1.4.0
     networks:
       - icloudpd
     environment:
@@ -39,26 +43,30 @@ services:
       # NFS automount from the lab drive (ansible/roles/utility-services)
       - /mnt/lab/icloud/malc:/data/malc
       - /mnt/lab/icloud/grug:/data/grug
+      - /mnt/lab/icloud/shared:/data/shared
       - ./config.yaml:/etc/icloudpd/config.yaml:ro
     secrets:
       - apple_id_malc
       - apple_id_grug
       - apple_password_malc
       - apple_password_grug
+      - icloudpd_control_token
 
   icloudpd-telegram-bot:
     container_name: icloudpd-telegram-bot
     hostname: icloudpd-telegram-bot
-    image: ghcr.io/laforcem/icloudpd-telegram-bot:v1.2.0
+    image: ghcr.io/laforcem/icloudpd-telegram-bot:v1.4.0
     networks:
       - icloudpd
     environment:
       - TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
       - TELEGRAM_ALLOWED_CHAT_IDS_FILE=/run/secrets/telegram_allowed_chat_ids
       - ICLOUDPD_BASE_URL=http://icloudpd:2011
+      - ICLOUDPD_CONTROL_TOKEN_FILE=/run/secrets/icloudpd_control_token
     secrets:
       - telegram_bot_token
       - telegram_allowed_chat_ids
+      - icloudpd_control_token
     restart: always
 
   # Copies the volume live. state.db is only written during a download run and

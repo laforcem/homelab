@@ -113,6 +113,7 @@ services:
                 APPLE_PASSWORD_GRUG: "7022bf83-d6ce-45bd-912c-b4ec01022fa0"
                 TELEGRAM_BOT_TOKEN: "0000df5a-ef56-49d0-a10c-b4ec01022fe2"
                 TELEGRAM_ALLOWED_CHAT_IDS: "48059eed-255a-440a-847d-b4ec01023021"
+                ICLOUDPD_CONTROL_TOKEN: "5ba30aca-ff8b-4422-828c-b4f2012277ab"
                 DROPBOX_APP_KEY: "491fc480-9679-4992-a726-b4c601069133"
                 DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
                 DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
