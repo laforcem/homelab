@@ -6,16 +6,16 @@ app:
   control_token_file: /run/secrets/icloudpd_control_token
   watch_with_interval: 86400
 
-all_# Deletion sync is off everywhere for the first deploy. Later: turn it on for all
-# three entries (malc, grug, shared) with `sync_deletions: true` and a low
-# `deletion_sync_threshold`, after the shared scan is verified and the old
-# folders' duplicates are cleaned up.
-users:
+all_users:
   xmp_sidecar: true
   notification_forwarder: true
   session_expiry_warning_days: 7
   require_mount_marker: true # library is NFS from the lab drive
 
+# Deletion sync is off everywhere for the first deploy. Later: turn it on for all
+# three entries (malc, grug, shared) with `sync_deletions: true` and a low
+# `deletion_sync_threshold`, after the shared scan is verified and the old
+# folders' duplicates are cleaned up.
 users:
   - username_file: /run/secrets/apple_id_malc
     password_file: /run/secrets/apple_password_malc
