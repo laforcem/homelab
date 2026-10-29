@@ -43,6 +43,7 @@ services:
       # NFS automount from the lab drive (ansible/roles/utility-services)
       - /mnt/lab/icloud/malc:/data/malc
       - /mnt/lab/icloud/grug:/data/grug
+      - /mnt/lab/icloud/shared:/data/shared
       - ./config.yaml:/etc/icloudpd/config.yaml:ro
     secrets:
       - apple_id_malc
