@@ -12,27 +12,33 @@ all_users:
   session_expiry_warning_days: 7
   require_mount_marker: true # library is NFS from the lab drive
 
-# Deletion sync is off everywhere for the first deploy. Later: turn it on for all
-# three entries (malc, grug, shared) with `sync_deletions: true` and a low
-# `deletion_sync_threshold`, after the shared scan is verified and the old
-# folders' duplicates are cleaned up.
+# Deletion sync is on for all three entries: a photo deleted in Immich (trash
+# emptied, read-write mount) is moved to iCloud's Recently Deleted after two
+# scans in a row. `deletion_sync_threshold: 10` is a rolling 7-day budget per
+# entry: when held, new and unreviewed deletions from the last 7 days add up to
+# 10, further deletions wait for approval in the Telegram bot.
 users:
   - username_file: /run/secrets/apple_id_malc
     password_file: /run/secrets/apple_password_malc
     directory: /data/malc
     cookie_directory: /home/icloudpd/.pyicloud/malc
     state_directory: /home/icloudpd/.pyicloud/state/malc
+    sync_deletions: true
+    deletion_sync_threshold: 10
   - username_file: /run/secrets/apple_id_grug
     password_file: /run/secrets/apple_password_grug
     directory: /data/grug
     cookie_directory: /home/icloudpd/.pyicloud/grug
     state_directory: /home/icloudpd/.pyicloud/state/grug
+    sync_deletions: true
+    deletion_sync_threshold: 10
   # iCloud Shared Library, one entry for both people (malc's session). Deleting
   # a photo here sends it to Recently Deleted for everyone in the library.
-  # sync_deletions stays off until the first scan shows no unexpected downloads.
   - username_file: /run/secrets/apple_id_malc
     password_file: /run/secrets/apple_password_malc
     library: SharedSync-FE07681B-21C3-47C7-A4A7-A6FEF517C7A2
     directory: /data/shared
     cookie_directory: /home/icloudpd/.pyicloud/malc
     state_directory: /home/icloudpd/.pyicloud/state/shared
+    sync_deletions: true
+    deletion_sync_threshold: 10
