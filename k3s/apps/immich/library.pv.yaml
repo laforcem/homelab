@@ -20,8 +20,8 @@ spec:
               operator: In
               values: [chimaera]
 ---
-# External libraries (icloudpd's output). Mounted read-only by the release's
-# advancedMounts, not here.
+# External libraries (icloudpd's output). Mounted read-write by the release's
+# advancedMounts so Immich can delete files and write sidecars.
 apiVersion: v1
 kind: PersistentVolume
 metadata:
