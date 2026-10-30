@@ -47,15 +47,15 @@ server:
       advancedMounts:
         main:
           main:
+            # Read-write on purpose: Immich deletes the real file when its trash
+            # is emptied, which icloudpd's deletion sync then sends to iCloud.
+            # Read-only silently drops sidecar (rating, description) writes too.
             - path: /mnt/media/icloud/malc
               subPath: malc
-              readOnly: true
             - path: /mnt/media/icloud/grug
               subPath: grug
-              readOnly: true
             - path: /mnt/media/icloud/shared
               subPath: shared
-              readOnly: true
   ingress:
     main:
       enabled: true
