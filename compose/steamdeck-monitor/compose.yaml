@@ -13,7 +13,7 @@ secrets:
 services:
   steamdeck-monitor:
     container_name: steamdeck-monitor
-    image: ghcr.io/laforcem/steamdeck-monitor:v0.1.0
+    image: ghcr.io/laforcem/steamdeck-monitor:v0.1.1
     restart: always
     environment:
       TZ: America/Denver
