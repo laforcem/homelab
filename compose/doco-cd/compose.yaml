@@ -117,6 +117,14 @@ services:
                 DROPBOX_APP_KEY: "491fc480-9679-4992-a726-b4c601069133"
                 DROPBOX_APP_SECRET: "1bd1d5a7-b2e6-4b49-870e-b4c60106b524"
                 DROPBOX_REFRESH_TOKEN: "4466365a-c366-439d-b52c-b4c601089b7e"
+            - name: steamdeck-monitor
+              working_dir: compose/steamdeck-monitor
+              compose_files:
+                - compose.yaml
+              external_secrets:
+                STEAMDECK_TELEGRAM_BOT_TOKEN: "6c4c26ee-0962-42c2-b098-b4f5003d6622"
+                STEAMDECK_TELEGRAM_CHAT_ID: "f2b3340f-2f07-4893-a32d-b4f5004873f3"
+                STEAMDECK_HEALTHCHECKS_PING_URL: "41bbd510-eaac-434b-b7e1-b4f500487e2f"
     volumes:
       - data:/data
       - /opt/doco-cd-secrets:/secrets:ro

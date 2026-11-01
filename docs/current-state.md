@@ -76,10 +76,11 @@ Trusted VLAN 10. Routes are internal (`*.lan.$DOMAIN`).
 | music-assistant | `mass.lan.$DOMAIN` |
 | openclaw (runs on `valet`) | `openclaw.lan.$DOMAIN` |
 | audiomuse-ai (runs on `chimaera`) | `audiomuse.lan.$DOMAIN` |
-| caddy, doco-cd, docker-socket-proxy, oci-backup, porkbun-ddns, ppld-calendar, router-sync, icloudpd, icloudpd-telegram-bot, monitoring-prometheus, monitoring-node-exporter, monitoring-cadvisor, monitoring-adguard-exporter | None |
+| caddy, doco-cd, docker-socket-proxy, oci-backup, porkbun-ddns, ppld-calendar, router-sync, steamdeck-monitor, icloudpd, icloudpd-telegram-bot, monitoring-prometheus, monitoring-node-exporter, monitoring-cadvisor, monitoring-adguard-exporter | None |
 
 - **doco-cd** polls this repo and deploys every stack, itself included (its stack is in the root `.doco-cd.yaml`). A self-update restarts it briefly. It reaches Docker through `docker-socket-proxy`, which Ansible owns, so doco-cd never recreates its own connection.
-- **router-sync** and **ppld-calendar** build from their own repos (`laforcem/router-sync`, `laforcem/ppld-calendar`). This repo holds only their deployment config.
+- **router-sync**, **ppld-calendar** and **steamdeck-monitor** build from their own repos (`laforcem/router-sync`, `laforcem/ppld-calendar`, `laforcem/steamdeck-monitor`). This repo holds only their deployment config.
+- **steamdeck-monitor** polls Steam once a minute and sends a Telegram message (its own bot) when a watched Steam Deck refurb model comes into stock or sells out. It watches the 512 GB and 1 TB OLED refurbs; the Dock is available but off until a Deck is owned (`WATCH`). It cross-checks against steamhardwarestock.com and pings a Healthchecks check (`Steam Deck Monitor (warden)`) on every loop.
 - **icloudpd** stays on the trusted VLAN to keep Apple credentials out of the DMZ. It writes to the lab drive over NFS at `/mnt/lab/icloud` and skips a user's run if `<user directory>/.mounted` is missing, which guards against a dropped mount.
 - **music-assistant** uses the host network because Cast discovery is multicast. Ufw allows the web UI (`8095`) from `caddy-internal` only, and the audio stream (`8097`) from the IoT VLAN, where the Cast speakers fetch it. The router's `IOT_FWD` chain also permits this. The router's Avahi mDNS reflector lets it find the speakers. Sources (Navidrome via Subsonic, Spotify via Soloist) are set in its UI, not git. Soloist pairs on a random TCP port that ufw blocks, so re-pairing needs a temporary rule.
 

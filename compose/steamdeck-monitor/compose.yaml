@@ -1,0 +1,28 @@
+# Telegram alerts when a watched Steam Deck refurb model changes stock.
+# Source and design: https://github.com/laforcem/steamdeck-monitor
+
+# From Bitwarden Secrets Manager via doco-cd's external_secrets.
+secrets:
+  steamdeck_telegram_bot_token:
+    environment: STEAMDECK_TELEGRAM_BOT_TOKEN
+  steamdeck_telegram_chat_id:
+    environment: STEAMDECK_TELEGRAM_CHAT_ID
+  steamdeck_healthchecks_ping_url:
+    environment: STEAMDECK_HEALTHCHECKS_PING_URL
+
+services:
+  steamdeck-monitor:
+    container_name: steamdeck-monitor
+    image: ghcr.io/laforcem/steamdeck-monitor:v0.1.0
+    restart: always
+    environment:
+      TZ: America/Denver
+      TELEGRAM_BOT_TOKEN_FILE: /run/secrets/steamdeck_telegram_bot_token
+      TELEGRAM_CHAT_ID_FILE: /run/secrets/steamdeck_telegram_chat_id
+      HEALTHCHECKS_PING_URL_FILE: /run/secrets/steamdeck_healthchecks_ping_url
+      # 512 GB OLED and 1 TB OLED refurbs. Add `dock` once a Deck is owned.
+      WATCH: "512oled,1tboled"
+    secrets:
+      - steamdeck_telegram_bot_token
+      - steamdeck_telegram_chat_id
+      - steamdeck_healthchecks_ping_url
