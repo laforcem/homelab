@@ -1,0 +1,3 @@
+# Needs the ClusterSecretStore CRD, which the external-secrets release installs.
+resources:
+  - secretstore.yaml

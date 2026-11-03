@@ -1,0 +1,13 @@
+# VolumeSnapshot CRDs, required by VolSync even for the Direct copy method.
+# Deleting these would delete every VolumeSnapshot, so Flux never prunes them.
+resources:
+  - snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+  - snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+  - snapshot.storage.k8s.io_volumesnapshots.yaml
+patches:
+  - target:
+      kind: CustomResourceDefinition
+    patch: |-
+      - op: add
+        path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1prune
+        value: disabled

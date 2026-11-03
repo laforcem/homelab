@@ -1,0 +1,13 @@
+# bitwarden-access-token and bitwarden-tls-certs are created by hand (README.md)
+# and are deliberately not resources here.
+resources:
+  - namespace.yaml
+  - helmrepository.yaml
+  - helmrelease.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - name: external-secrets-values
+    namespace: external-secrets
+    files:
+      - values.yaml=values.yaml
