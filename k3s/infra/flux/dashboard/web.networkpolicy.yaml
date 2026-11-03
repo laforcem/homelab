@@ -1,0 +1,17 @@
+# The NodePort bypasses ufw, so this policy is what keeps the dashboard behind
+# warden's basic auth: only warden and in-cluster traffic reach port 9080.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: flux-operator-web-restricted
+  namespace: flux-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: flux-operator
+      app.kubernetes.io/instance: flux-operator
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.42.0.0/16 }       # pod network (incl. node gateway)
+        - ipBlock: { cidr: 192.168.10.12/32 }   # warden

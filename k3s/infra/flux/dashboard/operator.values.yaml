@@ -1,0 +1,20 @@
+# flux-operator 0.62.1. Installed by hand once (k3s/clusters/starcliff/README.md),
+# then managed by Flux with these values.
+web:
+  config:
+    # Basic auth lives in front of this, at warden's Caddy (flux.lan route).
+    # Everyone who passes it shares this one identity; swap for OIDC if an
+    # identity provider is ever deployed.
+    authentication:
+      type: Anonymous
+      anonymous:
+        username: flux
+        groups:
+          - flux-admin
+    userActions:
+      # Actions need only the per-action verbs in web-rbac.yaml; the operator
+      # performs them with its own privileges.
+      access: FineGrained
+  # Replaced by web.networkpolicy.yaml, which also admits warden's NodePort traffic.
+  networkPolicy:
+    create: false

@@ -1,0 +1,13 @@
+resources:
+  - helmrepository.yaml
+  - helmrelease.yaml
+  - web-rbac.yaml
+  - web-nodeport.service.yaml
+  - web.networkpolicy.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - name: flux-operator-values
+    namespace: flux-system
+    files:
+      - values.yaml=operator.values.yaml
