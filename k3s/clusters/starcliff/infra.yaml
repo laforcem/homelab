@@ -32,6 +32,9 @@ spec:
     name: flux-system
   path: ./k3s/infra/flux/notifications
   postBuild:
+    substitute:
+      # A numeric chat ID would otherwise become an integer; Provider.channel is a string.
+      quote: '"'
     substituteFrom:
       - kind: Secret
         name: flux-vars
