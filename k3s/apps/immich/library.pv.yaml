@@ -3,6 +3,8 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: immich-library
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   capacity:
     storage: 100Gi # nominal, local PVs don't enforce it
@@ -26,6 +28,8 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: immich-icloud
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   capacity:
     storage: 200Gi # nominal, local PVs don't enforce it

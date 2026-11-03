@@ -6,6 +6,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: immich-dump
   namespace: immich
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

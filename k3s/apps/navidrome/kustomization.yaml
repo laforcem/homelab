@@ -1,0 +1,26 @@
+resources:
+  - audiomuse-analysis-probe.cronjob.yaml
+  - audiomuse-db.pvc.yaml
+  - audiomuse.externalsecret.yaml
+  - audiomuse-flask.yaml
+  - audiomuse-postgres.yaml
+  - audiomuse-redis.yaml
+  - audiomuse-worker.yaml
+  - data.pvc.yaml
+  - ingress.yaml
+  - music.pvc.yaml
+  - music.pv.yaml
+  - namespace.yaml
+  - navidrome.deployment.yaml
+  - navidrome.externalsecret.yaml
+  - navidrome.service.yaml
+  - nd-simple-rpc.deployment.yaml
+  - nd-simple-rpc.externalsecret.yaml
+  - nd-simple-rpc.ingress.yaml
+  - nd-simple-rpc.networkpolicy.yaml
+  - nd-simple-rpc.pvc.yaml
+  - nd-simple-rpc.replicationsource.yaml
+  - nd-simple-rpc.restic.externalsecret.yaml
+  - nd-simple-rpc.service.yaml
+  - replicationsource.yaml
+  - restic.externalsecret.yaml

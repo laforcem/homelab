@@ -4,6 +4,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: tandoor-media
   namespace: tandoor
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: audiomuse-db
   namespace: navidrome
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce
@@ -18,6 +20,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: audiomuse-dump
   namespace: navidrome
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

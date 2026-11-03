@@ -5,6 +5,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: navidrome-data
   namespace: navidrome
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

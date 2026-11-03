@@ -1,0 +1,6 @@
+resources:
+  - cronjob.yaml
+  - lab.pvc.yaml
+  - lab.pv.yaml
+  - namespace.yaml
+  - rclone.externalsecret.yaml

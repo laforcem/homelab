@@ -1,0 +1,15 @@
+resources:
+  - db.pvc.yaml
+  - deployment.yaml
+  - dump.cronjob.yaml
+  - dump.pvc.yaml
+  - ingress.yaml
+  - media.pvc.yaml
+  - namespace.yaml
+  - pg.externalsecret.yaml
+  - postgres.deployment.yaml
+  - postgres.service.yaml
+  - replicationsource.yaml
+  - restic-dump.externalsecret.yaml
+  - restic-media.externalsecret.yaml
+  - service.yaml

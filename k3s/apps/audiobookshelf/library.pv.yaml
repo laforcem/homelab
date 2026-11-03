@@ -3,6 +3,8 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: audiobookshelf-library
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   capacity:
     storage: 100Gi # nominal, local PVs don't enforce it

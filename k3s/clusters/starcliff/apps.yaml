@@ -1,0 +1,184 @@
+# One Kustomization per app: a broken app never blocks the others.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: actual
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 10m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: flux-secrets
+    - name: volsync
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/apps/actual
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: audiobookshelf
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 10m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: flux-secrets
+    - name: volsync
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/apps/audiobookshelf
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: immich
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 15m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: flux-secrets
+    - name: volsync
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/apps/immich
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: media-backup
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 10m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: flux-secrets
+    - name: volsync
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/apps/media-backup
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: miniflux
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 10m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: flux-secrets
+    - name: volsync
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/apps/miniflux
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: navidrome
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 10m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: flux-secrets
+    - name: volsync
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/apps/navidrome
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: samba
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 10m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: flux-secrets
+    - name: volsync
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/apps/samba
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tandoor
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 10m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: flux-secrets
+    - name: volsync
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/apps/tandoor
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars

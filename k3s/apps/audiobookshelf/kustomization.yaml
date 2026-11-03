@@ -1,0 +1,10 @@
+resources:
+  - data.pvc.yaml
+  - deployment.yaml
+  - ingress.yaml
+  - library.pvc.yaml
+  - library.pv.yaml
+  - namespace.yaml
+  - replicationsource.yaml
+  - restic.externalsecret.yaml
+  - service.yaml

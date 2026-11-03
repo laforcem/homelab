@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: navidrome-music
   namespace: navidrome
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadOnlyMany
