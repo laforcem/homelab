@@ -1,0 +1,24 @@
+resources:
+  - db.pvc.yaml
+  - dump.cronjob.yaml
+  - dump.pvc.yaml
+  - library.pvc.yaml
+  - library.pv.yaml
+  - namespace.yaml
+  - pg.externalsecret.yaml
+  - postgres.deployment.yaml
+  - postgres.service.yaml
+  - replicationsource.yaml
+  - restic.externalsecret.yaml
+  - helmrepository.yaml
+  - helmrelease.yaml
+
+# Name stays stable (no hash suffix) so the HelmRelease can reference it.
+# ${DOMAIN} in values.yaml is filled in by the Kustomization's postBuild.
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - name: immich-values
+    namespace: immich
+    files:
+      - values.yaml=values.yaml

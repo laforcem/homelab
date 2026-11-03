@@ -1,0 +1,12 @@
+resources:
+  - actual.deployment.yaml
+  - actual.pvc.yaml
+  - ingress.yaml
+  - mcp.deployment.yaml
+  - mcp.externalsecret.yaml
+  - mcp.middleware.yaml
+  - mcp.pvc.yaml
+  - mcp.service.yaml
+  - replicationsource.yaml
+  - restic.externalsecret.yaml
+  - service.yaml

@@ -1,0 +1,8 @@
+resources:
+  - deployment.yaml
+  - lab.pvc.yaml
+  - lab.pv.yaml
+  - namespace.yaml
+  - networkpolicy.yaml
+  - secret.externalsecret.yaml
+  - service.yaml

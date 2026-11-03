@@ -6,6 +6,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: miniflux-dump
   namespace: miniflux
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

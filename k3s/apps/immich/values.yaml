@@ -1,7 +1,7 @@
-# helm upgrade --install immich oci://ghcr.io/immich-app/immich-charts/immich \
-#   --version 0.13.4 -n immich -f <(DOMAIN=... envsubst '${DOMAIN}' < values.yaml)
-# The chart ships no Postgres: see postgres.*.yaml. Replicas are 0 until the
-# database is restored; raise them here, then re-run helm upgrade.
+# immich chart 0.13.4, installed by Flux (helmrelease.yaml); ${DOMAIN} comes
+# from the flux-system/flux-vars Secret. The chart ships no Postgres: see
+# postgres.*.yaml. Replica counts live here: change them in a PR, never with
+# kubectl scale.
 immich:
   persistence:
     library:

@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: actual-mcp-data
   namespace: actual
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

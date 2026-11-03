@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: audiobookshelf-library
   namespace: audiobookshelf
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce
