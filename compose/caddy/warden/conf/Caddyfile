@@ -37,6 +37,20 @@
         reverse_proxy 192.168.40.10:30800
     }
 
+    @flux host flux.lan.{$DOMAIN}
+    handle @flux {
+        # Flux dashboard on chimaera. It runs as one fixed identity that can
+        # reconcile and restart workloads, so this login is the only gate.
+        # The NodePort is restricted to warden by
+        # k3s/infra/flux/dashboard/web.networkpolicy.yaml, so there is no way
+        # around it. Hash and password: Bitwarden flux_ui_basic_auth_hash and
+        # flux_ui_password (user name: flux).
+        basic_auth {
+            flux {$FLUX_UI_HASH}
+        }
+        reverse_proxy 192.168.40.10:30200
+    }
+
     @mass host mass.lan.{$DOMAIN}
     handle @mass {
         # Host-network container; ufw allows 8095 from caddy-internal only.
