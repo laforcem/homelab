@@ -18,29 +18,12 @@ warden only; the ufw rule is in `ansible/roles/k3s`.
 
 ## Install
 
-```
-kubectl apply -f namespace.yaml
-
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-  --version 92.10.1 --kube-context starcliff -n monitoring \
-  -f kube-prometheus-stack.values.yaml
-
-kubectl apply -f traefik.podmonitor.yaml -f cert-manager.servicemonitor.yaml
-```
-
-Loki and Alloy are added in a later step (see the plan).
-
-The Alertmanager bot token and chat ID come from `alertmanager-telegram.externalsecret.yaml`;
-apply it before the Helm upgrade. The blackbox exporter's values contain `${DOMAIN}`:
-
-```
-kubectl apply -f alertmanager-telegram.externalsecret.yaml -f rules/alerts.prometheusrule.yaml
-helm install prometheus-blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
-  --version 11.20.2 --kube-context starcliff -n monitoring \
-  -f <(DOMAIN=... envsubst '${DOMAIN}' < blackbox-exporter.values.yaml)
-kubectl apply -f app-probes.probe.yaml -f kubeconfig-cert-watch.cronjob.yaml
-```
+Flux manages all of it (see `k3s/clusters/starcliff/README.md`). Two
+Kustomizations: `monitoring` (`releases/`: namespace, the four HelmReleases and
+their values files) and `monitoring-config` (this directory: rules, probes,
+monitors, NodePorts, NetworkPolicy, ExternalSecret). The second waits for the
+first because the CRDs it needs come from kube-prometheus-stack. Change a chart
+version or a values file in a PR; never `helm upgrade`.
 
 ## Alerting
 
@@ -49,7 +32,7 @@ All alerts go to one Telegram chat through Alertmanager. The rules are in
 
 - Add an alert: write a failing case in `rules/alerts.test.yaml`, add the rule,
   and run `bash rules/test.sh` (needs `promtool` and `yq`, both in brew:
-  `brew install prometheus yq`). Then `kubectl apply` the rule file.
+  `brew install prometheus yq`). Then merge it; Flux applies the rule file.
 - Test delivery: port-forward the Alertmanager Service on 9093 and POST a JSON
   alert to `/api/v2/alerts`.
 - The Watchdog alert pings a Healthchecks check; see `docs/current-state.md`.

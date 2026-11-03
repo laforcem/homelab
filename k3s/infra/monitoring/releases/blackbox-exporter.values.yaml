@@ -1,8 +1,6 @@
-# prometheus-blackbox-exporter — probes the in-cluster apps (app-probes.probe.yaml).
-# Contains ${DOMAIN}: install with
-#   helm install prometheus-blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
-#     --version 11.20.2 --kube-context starcliff -n monitoring \
-#     -f <(DOMAIN=... envsubst '${DOMAIN}' < blackbox-exporter.values.yaml)
+# prometheus-blackbox-exporter 11.20.2, installed by Flux (blackbox.helmrelease.yaml).
+# Probes the in-cluster apps (../app-probes.probe.yaml). ${DOMAIN} comes from the
+# flux-system/flux-vars Secret.
 config:
   modules:
     http_2xx:

@@ -1,26 +1,22 @@
 # VolSync
 
-Install (VolumeSnapshot CRDs required even for `Direct` copyMethod — undocumented in the chart, see `crds/`):
+Flux installs it: `crds/` (Kustomization `volsync-crds`, never pruned) then
+`helmrelease.yaml` (chart 0.16.0). The VolumeSnapshot CRDs are required even
+for the `Direct` copy method; the chart doesn't ship them.
 
-```
-kubectl apply -f crds/
-helm repo add backube https://backube.github.io/helm-charts
-helm install volsync backube/volsync \
-  --kube-context starcliff -n volsync-system --create-namespace \
-  --version 0.16.0 \
-  --post-renderer ./postrender/render.sh
-```
+## Chart gaps patched in the HelmRelease
 
-## Timezone (chart gap)
+Both live in `spec.postRenderers`, so they apply on every upgrade.
 
-The chart exposes no `env`/`extraVolumes`/`extraVolumeMounts` field, so there's
-no `values.yaml` way to set a timezone — cron schedules (`ReplicationSource`/
-`ReplicationDestination` `spec.trigger.schedule`) are evaluated in whatever
-timezone the controller pod runs in, UTC by default. `postrender/` patches
-the rendered Deployment via Kustomize (`helm upgrade`/`install
---post-renderer ./postrender/render.sh`) to set `TZ=America/Denver` and mount
-the node's `/usr/share/zoneinfo` (the image has no `tzdata` of its own).
+- **Timezone.** The chart exposes no `env`/`extraVolumes`/`extraVolumeMounts`,
+  so cron schedules (`ReplicationSource`/`ReplicationDestination`
+  `spec.trigger.schedule`) would run in UTC. A patch sets `TZ=America/Denver`
+  and mounts the node's `/usr/share/zoneinfo` (the image has no `tzdata`).
+- **Duplicate ServiceMonitor.** When the ServiceMonitor CRD exists the chart
+  creates its own `volsync` ServiceMonitor, which scrapes without the bearer
+  token the endpoint requires (401, `TargetDown`). A patch deletes it;
+  `metrics.servicemonitor.yaml` is the working one.
 
-Always use `--post-renderer` on every install/upgrade — a plain `helm
-upgrade` without it drops this patch silently, since Helm has no record of
-it.
+When rendering the chart by hand to compare against the cluster, pass
+`--api-versions monitoring.coreos.com/v1/ServiceMonitor`, or the chart leaves
+objects out that Flux's own render includes.

@@ -28,3 +28,31 @@ bootstrap secrets below, and the `FluxInstance` itself.
 
 Merge to `main`; the cluster follows within 5 minutes. Never `kubectl apply`
 or `helm upgrade` anything under `k3s/`: Flux reverts it.
+
+## Adding an app
+
+1. Create `k3s/apps/<app>/` with its manifests and a `kustomization.yaml`
+   listing them. Namespaces, PVs and PVCs get the annotation
+   `kustomize.toolkit.fluxcd.io/prune: disabled`.
+2. Add a Kustomization for it to `apps.yaml` (copy an existing one).
+3. Write the domain as `${DOMAIN}` (braces required; bare `$DOMAIN` is not
+   substituted). Escape literal shell or regex `${...}` as `$${...}`.
+4. Add the hostname to `k3s/infra/coredns-custom/` if it is public.
+
+## Gotchas
+
+- Flux only substitutes `${var}`. A value that looks numeric becomes an
+  integer; wrap it in a `${quote}` variable when the field is a string
+  (see `k3s/infra/flux/notifications/`).
+- Adopting a Deployment that was ever restarted with `kubectl rollout restart`
+  drops its `restartedAt` annotation and rolls it once.
+- Compare a chart against the cluster with `helm template ... --api-versions`
+  for every CRD the cluster has, and `--no-hooks` against `helm get manifest`.
+
+## Dashboard
+
+`flux.lan.<domain>` (warden's Caddy, basic auth) proxies the Flux Operator's
+web UI on NodePort `30200`. The UI's identity and permissions are in
+`k3s/infra/flux/dashboard/`. Credentials are in Bitwarden
+(`flux_ui_password`, `flux_ui_basic_auth_hash`); to rotate, replace both and
+recreate the `caddy-lan` stack.

@@ -76,6 +76,7 @@ Trusted VLAN 10. Routes are internal (`*.lan.$DOMAIN`).
 | music-assistant | `mass.lan.$DOMAIN` |
 | openclaw (runs on `valet`) | `openclaw.lan.$DOMAIN` |
 | audiomuse-ai (runs on `chimaera`) | `audiomuse.lan.$DOMAIN` |
+| Flux dashboard (runs on `chimaera`) | `flux.lan.$DOMAIN`, behind basic auth |
 | caddy, doco-cd, docker-socket-proxy, oci-backup, porkbun-ddns, ppld-calendar, router-sync, steamdeck-monitor, icloudpd, icloudpd-telegram-bot, monitoring-prometheus, monitoring-node-exporter, monitoring-cadvisor, monitoring-adguard-exporter | None |
 
 - **doco-cd** polls this repo and deploys every stack, itself included (its stack is in the root `.doco-cd.yaml`). A self-update restarts it briefly. It reaches Docker through `docker-socket-proxy`, which Ansible owns, so doco-cd never recreates its own connection.
@@ -102,7 +103,9 @@ DMZ VLAN 40, k3s. The router forwards ports 80 and 443 here (set in the router G
 | samba | None. SMB on port 445. |
 | media-backup | None. Nightly CronJob. |
 
-- Manifests are in `k3s/apps/`. Immich is a Helm release applied by hand (see the header of `k3s/apps/immich/values.yaml`).
+- **Flux** reconciles everything in `k3s/` from `main` every 5 minutes (setup and recovery: `k3s/clusters/starcliff/README.md`). Nothing under `k3s/` is applied by hand; Flux reverts it. Apps are in `k3s/apps/` (one Kustomization each; Immich is also a `HelmRelease`), infra in `k3s/infra/`. The Flux Operator, `bitwarden-access-token`, `bitwarden-tls-certs`, cert-manager (Ansible) and Traefik (k3s addon) are not under Flux.
+- Flux failures (Kustomization or HelmRelease errors) go to the same Telegram chat as Alertmanager. The `DOMAIN` and chat ID reach manifests through the `flux-vars` Secret, an ExternalSecret.
+- **Flux dashboard**: the Flux Operator's web UI, NodePort `30200` on `chimaera`, limited to warden by a NetworkPolicy and `externalTrafficPolicy: Local`. Warden's Caddy serves it at `flux.lan.$DOMAIN` behind basic auth (user `flux`; hash and password in Bitwarden: `flux_ui_basic_auth_hash`, `flux_ui_password`). The UI runs as one fixed identity that can reconcile, suspend, resume and restart workloads but cannot read Secrets (`k3s/infra/flux/dashboard/web-rbac.yaml`). Replace the shared login with OIDC if an identity provider is ever deployed.
 - Miniflux, Immich, Tandoor and AudioMuse each run their own Postgres.
 - Media sits on the lab drive (`/mnt/lab`) as local persistent volumes. Navidrome mounts music read-only and rescans on file changes, plus daily.
 - nd-simple-rpc is a Discord Rich Presence companion for Navidrome. Its plugin is installed into Navidrome's `/data/plugins` by an init container. Only its public port is routed; the internal port stays in-cluster.
@@ -247,7 +250,7 @@ The router isolates VLANs with custom iptables chains (`IOT_FWD`, `DMZ_FWD`, oth
 ## Monitoring
 
 - **Grafana** runs once, on warden, and queries `chimaera`'s Prometheus and Loki over NodePorts `30090` and `30100`. A NetworkPolicy and `externalTrafficPolicy: Local` limit both to warden, because ufw can't restrict NodePorts. Nothing is pushed out of the cluster.
-- **In-cluster stack** (`k3s/infra/monitoring/`; four hand-run Helm releases, see its README): `kube-prometheus-stack` (Prometheus with 10-day retention, Alertmanager, node-exporter, kube-state-metrics; Grafana off), `loki` (14-day retention) and `alloy` (ships container logs to Loki) and `prometheus-blackbox-exporter` (app probes).
+- **In-cluster stack** (`k3s/infra/monitoring/`; four Helm releases managed by Flux, see its README): `kube-prometheus-stack` (Prometheus with 10-day retention, Alertmanager, node-exporter, kube-state-metrics; Grafana off), `loki` (14-day retention) and `alloy` (ships container logs to Loki) and `prometheus-blackbox-exporter` (app probes).
 - Prometheus scrapes Traefik, cert-manager and VolSync. VolSync's metrics sit behind an auth proxy, so Prometheus's ServiceAccount is bound to `volsync-metrics-reader` (`k3s/infra/volsync/metrics.*`).
 - **App probes**: blackbox exporter `Probe` objects (`k3s/infra/monitoring/app-probes.probe.yaml`) check Actual, Audiobookshelf, Immich, Miniflux, Navidrome and Tandoor every minute. The `AppDown` alert fires after 5 minutes of failures.
 
