@@ -1,0 +1,31 @@
+# The four Helm releases in the monitoring namespace. Raw manifests live in the
+# parent directory (Kustomization monitoring-config), which waits for these:
+# the CRDs it needs come from the kube-prometheus-stack release.
+resources:
+  - namespace.yaml
+  - helmrepository.yaml
+  - blackbox.helmrelease.yaml
+  - alloy.helmrelease.yaml
+  - loki.helmrelease.yaml
+  - kube-prometheus-stack.helmrelease.yaml
+
+# Names stay stable (no hash suffix) so the HelmReleases can reference them.
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - name: blackbox-exporter-values
+    namespace: monitoring
+    files:
+      - values.yaml=blackbox-exporter.values.yaml
+  - name: alloy-values
+    namespace: monitoring
+    files:
+      - values.yaml=alloy.values.yaml
+  - name: loki-values
+    namespace: monitoring
+    files:
+      - values.yaml=loki.values.yaml
+  - name: kube-prometheus-stack-values
+    namespace: monitoring
+    files:
+      - values.yaml=kube-prometheus-stack.values.yaml

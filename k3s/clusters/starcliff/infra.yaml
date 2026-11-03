@@ -39,14 +39,14 @@ spec:
       - kind: Secret
         name: flux-vars
 ---
-# Starts suspended: resume only after `flux diff` shows no workload change.
+# Helm releases for the monitoring namespace. monitoring-config waits for it:
+# the CRDs it needs come from the kube-prometheus-stack release.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: monitoring
   namespace: flux-system
 spec:
-  suspend: true
   interval: 5m
   retryInterval: 1m
   timeout: 10m
@@ -54,6 +54,27 @@ spec:
   wait: true
   dependsOn:
     - name: flux-notifications
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/infra/monitoring/releases
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: monitoring-config
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 5m
+  prune: true
+  dependsOn:
+    - name: monitoring
   sourceRef:
     kind: GitRepository
     name: flux-system
