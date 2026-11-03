@@ -11,10 +11,13 @@ web:
         username: flux
         groups:
           - flux-admin
-    userActions:
-      # Actions need only the per-action verbs in web-rbac.yaml; the operator
-      # performs them with its own privileges.
-      access: FineGrained
+  # Actions need only the per-action verbs in web-rbac.yaml; the operator
+  # performs them with its own privileges. This must sit here, not inside
+  # web.config: the chart sets userActions.access from this value and overwrites
+  # one placed in config (it silently stayed Impersonated, which also needs
+  # `patch`, so Restart failed with "cannot patch deployments").
+  userActions:
+    access: FineGrained
   # Replaced by web.networkpolicy.yaml, which also admits warden's NodePort traffic.
   networkPolicy:
     create: false
