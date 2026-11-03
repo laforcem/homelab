@@ -1,15 +1,11 @@
-# Flux applies this directory. Values files, rules/ tests and READMEs are
-# inputs or tooling, not resources.
+# Raw manifests for the monitoring namespace. Tests (rules/alerts.test.yaml,
+# rules/test.sh), the README and the Helm releases are not resources here.
 resources:
-  - namespace.yaml
-  - helmrepository.yaml
-  - blackbox.helmrelease.yaml
-
-# Names stay stable (no hash suffix) so the HelmReleases can reference them.
-generatorOptions:
-  disableNameSuffixHash: true
-configMapGenerator:
-  - name: blackbox-exporter-values
-    namespace: monitoring
-    files:
-      - values.yaml=blackbox-exporter.values.yaml
+  - alertmanager-telegram.externalsecret.yaml
+  - app-probes.probe.yaml
+  - cert-manager.servicemonitor.yaml
+  - kubeconfig-cert-watch.cronjob.yaml
+  - loki-nodeport.service.yaml
+  - nodeport.networkpolicy.yaml
+  - traefik.podmonitor.yaml
+  - rules/alerts.prometheusrule.yaml
