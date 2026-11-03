@@ -35,7 +35,7 @@ spec:
                 name: nd-simple-rpc
           env:
             - name: PUBLIC_URL
-              value: https://presence.music.$DOMAIN
+              value: https://presence.music.${DOMAIN}
             - name: NAVIDROME_URL
               value: http://navidrome:4533
             - name: TRUSTED_PROXY_HOPS

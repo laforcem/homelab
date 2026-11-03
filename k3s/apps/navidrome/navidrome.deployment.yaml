@@ -44,7 +44,7 @@ spec:
             limits: {cpu: 200m, memory: 64Mi}
         - name: nd-simple-rpc-plugin
           image: ghcr.io/laforcem/nd-simple-rpc:v0.2.0
-          args: ["install-plugin", "--connect-url", "https://presence.music.$DOMAIN", "/data/plugins"]
+          args: ["install-plugin", "--connect-url", "https://presence.music.${DOMAIN}", "/data/plugins"]
           securityContext:
             runAsUser: 0
           volumeMounts:
@@ -102,7 +102,7 @@ spec:
             - name: ND_PLUGINS_AUTORELOAD
               value: "true"
             - name: ND_BASEURL
-              value: https://music.$DOMAIN
+              value: https://music.${DOMAIN}
             - name: ND_COVERARTPRIORITY
               value: cover.webp,folder.webp,front.webp,cover.*,folder.*,front.*,embedded,external
           volumeMounts:

@@ -1,0 +1,42 @@
+# Applied by hand once (see README.md). Not listed in kustomization.yaml: the
+# sync below reads this directory, so the FluxInstance can't manage itself.
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "5m"
+spec:
+  distribution:
+    version: "2.x"
+    registry: "ghcr.io/fluxcd"
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: kubernetes
+    size: small
+    multitenant: false
+    # The dashboard's own NetworkPolicy lives in k3s/infra/flux/.
+    networkPolicy: false
+  kustomize:
+    patches:
+      - target:
+          kind: Deployment
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/resources/requests
+            value:
+              cpu: 50m
+              memory: 64Mi
+  sync:
+    kind: GitRepository
+    # Public repo: no pullSecret.
+    url: "https://github.com/laforcem/homelab.git"
+    ref: "refs/heads/main"
+    path: "k3s/clusters/starcliff"
+    interval: 5m

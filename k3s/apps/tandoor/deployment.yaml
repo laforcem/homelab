@@ -45,7 +45,7 @@ spec:
                   name: tandoor-secrets
                   key: SECRET_KEY
             - name: ALLOWED_HOSTS
-              value: recipes.$DOMAIN
+              value: recipes.${DOMAIN}
           volumeMounts:
             - name: media
               mountPath: /opt/recipes/mediafiles
@@ -57,7 +57,7 @@ spec:
               port: 80
               httpHeaders:
                 - name: Host
-                  value: recipes.$DOMAIN # ALLOWED_HOSTS rejects the pod IP
+                  value: recipes.${DOMAIN} # ALLOWED_HOSTS rejects the pod IP
             initialDelaySeconds: 20
             periodSeconds: 10
           resources:

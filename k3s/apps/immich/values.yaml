@@ -1,5 +1,5 @@
 # helm upgrade --install immich oci://ghcr.io/immich-app/immich-charts/immich \
-#   --version 0.13.4 -n immich -f <(DOMAIN=... envsubst '$DOMAIN' < values.yaml)
+#   --version 0.13.4 -n immich -f <(DOMAIN=... envsubst '${DOMAIN}' < values.yaml)
 # The chart ships no Postgres: see postgres.*.yaml. Replicas are 0 until the
 # database is restored; raise them here, then re-run helm upgrade.
 immich:
@@ -63,13 +63,13 @@ server:
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt
       hosts:
-        - host: photos.$DOMAIN
+        - host: photos.${DOMAIN}
           paths:
             - path: /
               service:
                 identifier: main
       tls:
-        - hosts: [photos.$DOMAIN]
+        - hosts: [photos.${DOMAIN}]
           secretName: immich-tls
 
 machine-learning:

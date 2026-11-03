@@ -32,13 +32,13 @@ kubectl apply -f traefik.podmonitor.yaml -f cert-manager.servicemonitor.yaml
 Loki and Alloy are added in a later step (see the plan).
 
 The Alertmanager bot token and chat ID come from `alertmanager-telegram.externalsecret.yaml`;
-apply it before the Helm upgrade. The blackbox exporter's values contain `$DOMAIN`:
+apply it before the Helm upgrade. The blackbox exporter's values contain `${DOMAIN}`:
 
 ```
 kubectl apply -f alertmanager-telegram.externalsecret.yaml -f rules/alerts.prometheusrule.yaml
 helm install prometheus-blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
   --version 11.20.2 --kube-context starcliff -n monitoring \
-  -f <(DOMAIN=... envsubst '$DOMAIN' < blackbox-exporter.values.yaml)
+  -f <(DOMAIN=... envsubst '${DOMAIN}' < blackbox-exporter.values.yaml)
 kubectl apply -f app-probes.probe.yaml -f kubeconfig-cert-watch.cronjob.yaml
 ```
 

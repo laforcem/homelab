@@ -83,7 +83,7 @@ spec:
     - port: 8000
       targetPort: 8000
 ---
-# Reached by warden's Caddy for audiomuse.lan.$DOMAIN. Local keeps the
+# Reached by warden's Caddy for audiomuse.lan.${DOMAIN}. Local keeps the
 # caller's real address so audiomuse.networkpolicy.yaml can restrict access to
 # warden (ufw can't restrict NodePort traffic).
 apiVersion: v1

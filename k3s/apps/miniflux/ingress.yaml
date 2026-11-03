@@ -9,10 +9,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - miniflux.$DOMAIN
+        - miniflux.${DOMAIN}
       secretName: miniflux-tls
   rules:
-    - host: miniflux.$DOMAIN
+    - host: miniflux.${DOMAIN}
       http:
         paths:
           - path: /

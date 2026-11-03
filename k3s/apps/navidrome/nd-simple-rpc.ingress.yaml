@@ -9,10 +9,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - presence.music.$DOMAIN
+        - presence.music.${DOMAIN}
       secretName: presence-tls
   rules:
-    - host: presence.music.$DOMAIN
+    - host: presence.music.${DOMAIN}
       http:
         paths:
           - path: /

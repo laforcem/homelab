@@ -54,9 +54,9 @@ spec:
                   # would exit non-zero on every run without the excludes.
                   run() {
                     name=$1; uuid=$2; shift 2
-                    echo "=== ${name} ==="
-                    if rclone copy "/mnt/lab/${name}" "dropbox:Homelab/${name}" \
-                        --backup-dir "dropbox:Homelab/${name}-deleted/${DATE_TAG}" \
+                    echo "=== $${name} ==="
+                    if rclone copy "/mnt/lab/$${name}" "dropbox:Homelab/$${name}" \
+                        --backup-dir "dropbox:Homelab/$${name}-deleted/$${DATE_TAG}" \
                         --transfers=4 --checkers=8 \
                         --exclude '[Tt]humbs.db' --exclude '[Dd]esktop.ini' \
                         "$@"; then
@@ -74,11 +74,11 @@ spec:
 
                   cutoff=$(date -d "@$(( $(date +%s) - RETENTION_DAYS * 86400 ))" +%Y-%m-%d)
                   for name in icloud immich movies music audiobooks; do
-                    prefix="Homelab/${name}-deleted"
-                    rclone lsf "dropbox:${prefix}" --dirs-only 2>/dev/null | sed 's#/$##' | while read -r folder; do
+                    prefix="Homelab/$${name}-deleted"
+                    rclone lsf "dropbox:$${prefix}" --dirs-only 2>/dev/null | sed 's#/$##' | while read -r folder; do
                       if [ "$(expr "$folder" '<' "$cutoff")" = 1 ]; then
-                        echo "Pruning dropbox:${prefix}/${folder} (older than ${RETENTION_DAYS}d)"
-                        rclone purge "dropbox:${prefix}/${folder}"
+                        echo "Pruning dropbox:$${prefix}/$${folder} (older than $${RETENTION_DAYS}d)"
+                        rclone purge "dropbox:$${prefix}/$${folder}"
                       fi
                     done
                   done
