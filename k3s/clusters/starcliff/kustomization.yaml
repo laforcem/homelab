@@ -1,3 +1,4 @@
 # Sync root: Flux applies whatever this lists. The Kustomizations that
 # manage each component are added here as they are adopted.
-resources: []
+resources:
+  - infra.yaml
