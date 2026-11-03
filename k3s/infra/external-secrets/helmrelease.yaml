@@ -3,6 +3,9 @@ kind: HelmRelease
 metadata:
   name: external-secrets
   namespace: external-secrets
+  annotations:
+    # Pruning this object would run `helm uninstall`; see postRenderers below.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   interval: 1h
   releaseName: external-secrets
@@ -18,3 +21,17 @@ spec:
     - kind: ConfigMap
       name: external-secrets-values
       valuesKey: values.yaml
+  # The chart templates its CRDs without helm.sh/resource-policy: keep, so a
+  # helm uninstall (the HelmRelease or its Kustomization being removed) would
+  # delete every ExternalSecret CRD, then every ExternalSecret and the Secrets
+  # they own, cluster-wide. Keep the CRDs.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: CustomResourceDefinition
+            patch: |-
+              - op: add
+                path: /metadata/annotations/helm.sh~1resource-policy
+                value: keep
+

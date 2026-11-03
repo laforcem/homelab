@@ -215,3 +215,22 @@ tests:
             exp_annotations:
               summary: An app is not answering its health check.
               description: http://navidrome.navidrome:4533/ping has failed its probe for 5 minutes.
+
+  # --- Flux ---
+  - name: a Flux object left suspended fires after 30m, a running one stays silent
+    input_series:
+      - series: 'gotk_suspend_status{kind="Kustomization",name="miniflux",job="flux-system/flux-controllers"}'
+        values: '1x90'
+      - series: 'gotk_suspend_status{kind="Kustomization",name="actual",job="flux-system/flux-controllers"}'
+        values: '0x90'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: FluxObjectSuspended
+        exp_alerts: []
+      - eval_time: 40m
+        alertname: FluxObjectSuspended
+        exp_alerts:
+          - exp_labels: { severity: warning, kind: Kustomization, name: miniflux }
+            exp_annotations:
+              summary: A Flux object has been suspended for over 30 minutes.
+              description: Kustomization miniflux is suspended, so Flux no longer reconciles it. Resume it from the dashboard or with flux resume.

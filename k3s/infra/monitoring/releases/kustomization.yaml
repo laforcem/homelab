@@ -1,8 +1,11 @@
 # The four Helm releases in the monitoring namespace. Raw manifests live in the
 # parent directory (Kustomization monitoring-config), which waits for these:
 # the CRDs it needs come from the kube-prometheus-stack release.
+# alertmanager-telegram lives here, not in monitoring-config: kube-prometheus-stack
+# mounts that Secret, so on a fresh cluster Alertmanager cannot start without it.
 resources:
   - namespace.yaml
+  - alertmanager-telegram.externalsecret.yaml
   - helmrepository.yaml
   - blackbox.helmrelease.yaml
   - alloy.helmrelease.yaml

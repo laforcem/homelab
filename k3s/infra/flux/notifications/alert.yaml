@@ -14,3 +14,14 @@ spec:
     - kind: HelmRelease
       name: "*"
       namespace: "*"
+    # A failed fetch leaves Kustomizations reporting "Applied revision <old>",
+    # so the cluster would silently stop following main without these.
+    - kind: GitRepository
+      name: "*"
+      namespace: flux-system
+    - kind: HelmRepository
+      name: "*"
+      namespace: flux-system
+    - kind: HelmChart
+      name: "*"
+      namespace: flux-system

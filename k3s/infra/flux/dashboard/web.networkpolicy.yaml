@@ -1,5 +1,8 @@
-# The NodePort bypasses ufw, so this policy is what keeps the dashboard behind
-# warden's basic auth: only warden and in-cluster traffic reach port 9080.
+# The NodePort bypasses ufw, so this policy limits who can reach port 9080 to
+# warden and in-cluster traffic. It is not a per-client gate: anything running
+# on warden, or tailnet traffic routed through warden, arrives as warden's
+# address and never meets warden's basic auth. Any pod can also reach the
+# ClusterIP service directly.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

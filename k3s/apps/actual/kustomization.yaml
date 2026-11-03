@@ -1,4 +1,5 @@
 resources:
+  - namespace.yaml
   - actual.deployment.yaml
   - actual.pvc.yaml
   - ingress.yaml
