@@ -1,0 +1,48 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: volsync
+  namespace: volsync-system
+spec:
+  interval: 1h
+  releaseName: volsync
+  chart:
+    spec:
+      chart: volsync
+      version: 0.16.0
+      sourceRef:
+        kind: HelmRepository
+        name: backube
+        namespace: flux-system
+  # The chart has no env/volume fields, so a post-renderer sets the timezone:
+  # cron schedules (ReplicationSource trigger.schedule) run in the controller's
+  # zone, UTC by default, and the image has no tzdata, so the node's zoneinfo
+  # is mounted.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: volsync
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: volsync
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: manager
+                        env:
+                          - name: TZ
+                            value: America/Denver
+                        volumeMounts:
+                          - name: zoneinfo
+                            mountPath: /usr/share/zoneinfo
+                            readOnly: true
+                    volumes:
+                      - name: zoneinfo
+                        hostPath:
+                          path: /usr/share/zoneinfo
+                          type: Directory
