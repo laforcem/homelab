@@ -9,10 +9,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - audiobooks.$DOMAIN
+        - audiobooks.${DOMAIN}
       secretName: audiobooks-tls
   rules:
-    - host: audiobooks.$DOMAIN
+    - host: audiobooks.${DOMAIN}
       http:
         paths:
           - path: /

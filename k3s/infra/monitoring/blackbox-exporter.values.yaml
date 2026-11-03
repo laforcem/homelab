@@ -1,8 +1,8 @@
 # prometheus-blackbox-exporter — probes the in-cluster apps (app-probes.probe.yaml).
-# Contains $DOMAIN: install with
+# Contains ${DOMAIN}: install with
 #   helm install prometheus-blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
 #     --version 11.20.2 --kube-context starcliff -n monitoring \
-#     -f <(DOMAIN=... envsubst '$DOMAIN' < blackbox-exporter.values.yaml)
+#     -f <(DOMAIN=... envsubst '${DOMAIN}' < blackbox-exporter.values.yaml)
 config:
   modules:
     http_2xx:
@@ -17,7 +17,7 @@ config:
       http:
         preferred_ip_protocol: ip4
         headers:
-          Host: recipes.$DOMAIN
+          Host: recipes.${DOMAIN}
 
 resources:
   requests: { cpu: 5m, memory: 16Mi }

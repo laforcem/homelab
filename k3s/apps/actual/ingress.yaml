@@ -10,10 +10,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - budget.$DOMAIN
+        - budget.${DOMAIN}
       secretName: budget-tls
   rules:
-    - host: budget.$DOMAIN
+    - host: budget.${DOMAIN}
       http:
         paths:
           - path: /mcp

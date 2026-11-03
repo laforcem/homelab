@@ -9,10 +9,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - recipes.$DOMAIN
+        - recipes.${DOMAIN}
       secretName: tandoor-tls
   rules:
-    - host: recipes.$DOMAIN
+    - host: recipes.${DOMAIN}
       http:
         paths:
           - path: /
