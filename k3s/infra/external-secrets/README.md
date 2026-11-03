@@ -1,13 +1,9 @@
 # external-secrets + Bitwarden Secrets Manager
 
-Install:
-
-```
-helm repo add external-secrets https://charts.external-secrets.io
-helm install external-secrets external-secrets/external-secrets \
-  --kube-context starcliff -n external-secrets --create-namespace \
-  -f values.yaml
-```
+Flux installs and upgrades the chart (`helmrelease.yaml`, values in `values.yaml`)
+and applies the ClusterSecretStore (`config/`) once the CRDs exist. Do not run
+`helm` by hand. Only the two secrets below are manual, once per cluster, before
+Flux reconciles this directory.
 
 ## bitwarden-tls-certs (manual step, chart gap)
 
@@ -41,5 +37,5 @@ external-secrets trusts the SDK server's self-signed TLS.
 
 `bitwarden-access-token` (key: `token`) holds the external-secrets machine
 account's BWS access token — created once by hand
-(`kubectl create secret generic ...`), not by any tool here. This is the
+(`kubectl create secret generic ...`), not by Flux or anything else in this repo. This is the
 roadmap's accepted stopgap until Phase 3 secrets-as-code.
