@@ -49,6 +49,7 @@ services:
                 DOMAIN: "4d3bfd3c-0a5d-496e-8eeb-b4ab00128f57"
                 API_KEY: "05d378b9-de09-465c-80ec-b4ab001378de"
                 SECRET_KEY: "e991c510-db7b-4e76-b885-b4ab00138c89"
+                FLUX_UI_HASH: "bedbbbad-ef4a-49bb-848a-b4f70159a15e"
             - name: speedtest
               working_dir: compose/speedtest
               compose_files:
