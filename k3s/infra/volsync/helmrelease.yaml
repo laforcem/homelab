@@ -14,6 +14,11 @@ spec:
         kind: HelmRepository
         name: backube
         namespace: flux-system
+  # The chart emits its own ServiceMonitor whenever the ServiceMonitor CRD
+  # exists. It scrapes /metrics without the bearer token the endpoint needs, so
+  # it fails with 401 and fires TargetDown. The working one is
+  # metrics.servicemonitor.yaml, so the chart's is deleted below.
+  #
   # The chart has no env/volume fields, so a post-renderer sets the timezone:
   # cron schedules (ReplicationSource trigger.schedule) run in the controller's
   # zone, UTC by default, and the image has no tzdata, so the node's zoneinfo
@@ -46,3 +51,12 @@ spec:
                         hostPath:
                           path: /usr/share/zoneinfo
                           type: Directory
+          - target:
+              kind: ServiceMonitor
+              name: volsync
+            patch: |
+              $patch: delete
+              apiVersion: monitoring.coreos.com/v1
+              kind: ServiceMonitor
+              metadata:
+                name: volsync
