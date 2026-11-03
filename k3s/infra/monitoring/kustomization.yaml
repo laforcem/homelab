@@ -1,11 +1,11 @@
 # Raw manifests for the monitoring namespace. Tests (rules/alerts.test.yaml,
 # rules/test.sh), the README and the Helm releases are not resources here.
 resources:
-  - alertmanager-telegram.externalsecret.yaml
   - app-probes.probe.yaml
   - cert-manager.servicemonitor.yaml
   - kubeconfig-cert-watch.cronjob.yaml
   - loki-nodeport.service.yaml
   - nodeport.networkpolicy.yaml
   - traefik.podmonitor.yaml
+  - flux.podmonitor.yaml
   - rules/alerts.prometheusrule.yaml

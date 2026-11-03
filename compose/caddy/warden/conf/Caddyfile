@@ -41,9 +41,11 @@
     handle @flux {
         # Flux dashboard on chimaera. It runs as one fixed identity that can
         # reconcile and restart workloads, so this login is the only gate.
-        # The NodePort is restricted to warden by
-        # k3s/infra/flux/dashboard/web.networkpolicy.yaml, so there is no way
-        # around it. Hash and password: Bitwarden flux_ui_basic_auth_hash and
+        # The NodePort is restricted to warden's address by
+        # k3s/infra/flux/dashboard/web.networkpolicy.yaml. That blocks every LAN
+        # host except warden, but anything running on warden (any container, or
+        # tailnet traffic routed through it) is that address and skips this
+        # login. Hash and password: Bitwarden flux_ui_basic_auth_hash and
         # flux_ui_password (user name: flux).
         basic_auth {
             flux {$FLUX_UI_HASH}
