@@ -1,4 +1,4 @@
-# Reached by warden's Caddy for flux.lan.<domain>. Local keeps the caller's
+# Reached by warden's Caddy for flux.lan.${DOMAIN}. Local keeps the caller's
 # real address so web.networkpolicy.yaml can restrict access to warden (ufw
 # can't restrict NodePort traffic).
 apiVersion: v1
