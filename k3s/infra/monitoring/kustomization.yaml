@@ -1,0 +1,15 @@
+# Flux applies this directory. Values files, rules/ tests and READMEs are
+# inputs or tooling, not resources.
+resources:
+  - namespace.yaml
+  - helmrepository.yaml
+  - blackbox.helmrelease.yaml
+
+# Names stay stable (no hash suffix) so the HelmReleases can reference them.
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - name: blackbox-exporter-values
+    namespace: monitoring
+    files:
+      - values.yaml=blackbox-exporter.values.yaml

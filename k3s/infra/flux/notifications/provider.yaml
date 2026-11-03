@@ -1,0 +1,12 @@
+# Same Telegram chat as Alertmanager. The chat ID can't come from a Secret
+# field, so the Kustomization substitutes it from flux-vars.
+apiVersion: notification.toolkit.fluxcd.io/v1
+kind: Provider
+metadata:
+  name: telegram
+  namespace: flux-system
+spec:
+  type: telegram
+  channel: "${TELEGRAM_CHAT_ID}"
+  secretRef:
+    name: telegram-token

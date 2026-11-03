@@ -1,0 +1,61 @@
+# One Kustomization per infra component. Order comes from dependsOn.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: flux-secrets
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 5m
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/infra/flux/secrets
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: flux-notifications
+  namespace: flux-system
+spec:
+  interval: 5m
+  retryInterval: 1m
+  timeout: 5m
+  prune: true
+  dependsOn:
+    - name: flux-secrets
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/infra/flux/notifications
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
+---
+# Starts suspended: resume only after `flux diff` shows no workload change.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: monitoring
+  namespace: flux-system
+spec:
+  suspend: true
+  interval: 5m
+  retryInterval: 1m
+  timeout: 10m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: flux-notifications
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./k3s/infra/monitoring
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: flux-vars
