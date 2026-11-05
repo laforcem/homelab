@@ -42,8 +42,8 @@ or `helm upgrade` anything under `k3s/`: Flux reverts it.
 ## Gotchas
 
 - Flux only substitutes `${var}`. A value that looks numeric becomes an
-  integer; wrap it in a `${quote}` variable when the field is a string
-  (see `k3s/infra/flux/notifications/`).
+  integer; wrap it in a `${quote}` variable (`quote: '"'` under
+  `postBuild.substitute`) when the field is a string.
 - Adopting a Deployment that was ever restarted with `kubectl rollout restart`
   drops its `restartedAt` annotation and rolls it once.
 - Compare a chart against the cluster with `helm template ... --api-versions`

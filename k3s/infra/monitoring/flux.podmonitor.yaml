@@ -1,6 +1,7 @@
 # Flux controllers serve Prometheus metrics on container port 8080 ("http-prom").
-# Feeds the FluxObjectSuspended alert: a suspended object raises no event, so
-# without this a forgotten suspend silently stops reconciliation.
+# Scrapes the controllers themselves, so TargetDown notices a dead one. Per-object
+# readiness and suspend state come from kube-state-metrics, not from here
+# (see customResourceState in kube-prometheus-stack.values.yaml).
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
