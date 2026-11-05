@@ -126,10 +126,20 @@ spec:
             summary: Root disk has under 20% free space.
             description: Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} has under 20% free space.
         - alert: FluxObjectSuspended
-          expr: max by (kind, name) (gotk_suspend_status == 1)
+          expr: max by (customresource_kind, exported_namespace, name) (gotk_resource_info{suspended="true"}) == 1
           for: 30m
           labels:
             severity: warning
           annotations:
             summary: A Flux object has been suspended for over 30 minutes.
-            description: '{{ $labels.kind }} {{ $labels.name }} is suspended, so Flux no longer reconciles it. Resume it from the dashboard or with flux resume.'
+            description: '{{ $labels.customresource_kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} is suspended, so Flux no longer reconciles it. Resume it from the dashboard or with flux resume.'
+        # Ready=False means the last reconcile failed. The 10m wait rides out
+        # transient fetch errors (DNS or upstream blips) that Flux retries itself.
+        - alert: FluxObjectNotReady
+          expr: max by (customresource_kind, exported_namespace, name) (gotk_resource_info{ready="False", suspended!="true"}) == 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: A Flux object has been failing for over 10 minutes.
+            description: '{{ $labels.customresource_kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} is not Ready. See its status with flux get or the dashboard.'

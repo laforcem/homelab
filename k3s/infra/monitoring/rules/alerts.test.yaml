@@ -219,10 +219,10 @@ tests:
   # --- Flux ---
   - name: a Flux object left suspended fires after 30m, a running one stays silent
     input_series:
-      - series: 'gotk_suspend_status{kind="Kustomization",name="miniflux",job="flux-system/flux-controllers"}'
+      - series: 'gotk_resource_info{customresource_kind="Kustomization",exported_namespace="flux-system",name="miniflux",suspended="true",ready="True"}'
         values: '1x90'
-      - series: 'gotk_suspend_status{kind="Kustomization",name="actual",job="flux-system/flux-controllers"}'
-        values: '0x90'
+      - series: 'gotk_resource_info{customresource_kind="Kustomization",exported_namespace="flux-system",name="actual",suspended="",ready="True"}'
+        values: '1x90'
     alert_rule_test:
       - eval_time: 20m
         alertname: FluxObjectSuspended
@@ -230,7 +230,32 @@ tests:
       - eval_time: 40m
         alertname: FluxObjectSuspended
         exp_alerts:
-          - exp_labels: { severity: warning, kind: Kustomization, name: miniflux }
+          - exp_labels: { severity: warning, customresource_kind: Kustomization, exported_namespace: flux-system, name: miniflux }
             exp_annotations:
               summary: A Flux object has been suspended for over 30 minutes.
-              description: Kustomization miniflux is suspended, so Flux no longer reconciles it. Resume it from the dashboard or with flux resume.
+              description: Kustomization flux-system/miniflux is suspended, so Flux no longer reconciles it. Resume it from the dashboard or with flux resume.
+
+  - name: a Flux object failing for 10m fires, a blip that recovers stays silent
+    input_series:
+      # Not Ready for the whole window.
+      - series: 'gotk_resource_info{customresource_kind="HelmRepository",exported_namespace="flux-system",name="backube",suspended="",ready="False"}'
+        values: '1x30'
+      # Fails for 5 minutes, then recovers (the Ready label flips; the old series ends).
+      - series: 'gotk_resource_info{customresource_kind="HelmRepository",exported_namespace="flux-system",name="grafana",suspended="",ready="False"}'
+        values: '1x5 _x25'
+      - series: 'gotk_resource_info{customresource_kind="HelmRepository",exported_namespace="flux-system",name="grafana",suspended="",ready="True"}'
+        values: '_x6 1x24'
+      # Suspended objects are covered by FluxObjectSuspended, not this alert.
+      - series: 'gotk_resource_info{customresource_kind="Kustomization",exported_namespace="flux-system",name="paused",suspended="true",ready="False"}'
+        values: '1x30'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: FluxObjectNotReady
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: FluxObjectNotReady
+        exp_alerts:
+          - exp_labels: { severity: warning, customresource_kind: HelmRepository, exported_namespace: flux-system, name: backube }
+            exp_annotations:
+              summary: A Flux object has been failing for over 10 minutes.
+              description: HelmRepository flux-system/backube is not Ready. See its status with flux get or the dashboard.
