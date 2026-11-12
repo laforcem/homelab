@@ -1,8 +1,12 @@
-"""Mirror a Pinterest board into an Immich album, dated by when each pin was saved.
+"""Mirror Pinterest boards into Immich albums, dated by when each pin was saved.
+
+BOARDS is a JSON object of album name -> board URL. Every album belongs to the
+Immich user who owns IMMICH_API_KEY.
 
 Safe to re-run. gallery-dl's archive skips images it already fetched, Immich
-answers a re-upload with the existing asset (status DUPLICATE), and state.json
-records which images are already uploaded, in the album and dated.
+answers a re-upload with the existing asset (status DUPLICATE), and each
+board's state.json records which images are already uploaded, in the album
+and dated.
 
 Everything is keyed on the image hash (gallery-dl's {filename}), not the pin id:
 Pinterest returns different pin ids to signed-in and signed-out requests.
@@ -21,13 +25,10 @@ import urllib.parse
 import urllib.request
 import uuid
 
-BOARD_URL = os.environ["BOARD_URL"]
-ALBUM = os.environ["ALBUM_NAME"]
+BOARDS = json.loads(os.environ["BOARDS"])
 IMMICH = os.environ["IMMICH_URL"].rstrip("/")
 KEY = os.environ["IMMICH_API_KEY"]
 DATA = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
-FILES = DATA / "files"
-STATE = DATA / "state.json"
 # gallery-dl rewrites its cookies file on exit, and the Secret mount is
 # read-only, so it works on a copy.
 COOKIES = pathlib.Path("/tmp/pinterest-cookies.txt")
@@ -105,34 +106,42 @@ def add_image(path, pin_ids, album_id):
     return asset
 
 
-def main():
+class CookiesExpired(Exception):
+    pass
+
+
+def sync_board(album_name, board_url, albums):
+    """Returns the image failures; raises if the board can't be read at all."""
+    # Per-board directory, named by the board's URL slug.
+    data = DATA / board_url.rstrip("/").rsplit("/", 1)[-1]
+    files, state_file = data / "files", data / "state.json"
+
     # One crawl for metadata. Signed out, Pinterest hides some pins and
     # scrambles pin ids, so non-numeric ids mean the session has expired.
     board = {}
-    for entry in json.loads(gallery_dl("-j", BOARD_URL)):
+    for entry in json.loads(gallery_dl("-j", board_url)):
         if entry[0] == 3:
             meta = entry[2]
             board.setdefault(meta["filename"], []).append(str(meta["id"]))
     if not board:
-        sys.exit("board returned no images")
+        raise ValueError("board returned no images")
     if not all(i.isdigit() for ids in board.values() for i in ids):
-        sys.exit("Pinterest cookies have expired: re-export them into Bitwarden")
+        raise CookiesExpired
 
-    FILES.mkdir(parents=True, exist_ok=True)
-    gallery_dl("-D", str(FILES), "--download-archive", str(DATA / "archive.sqlite3"),
+    files.mkdir(parents=True, exist_ok=True)
+    gallery_dl("-D", str(files), "--download-archive", str(data / "archive.sqlite3"),
                "-f", "{filename}.{extension}", "-o", "archive-format=pin_{filename}",
-               BOARD_URL)
+               board_url)
 
-    state = json.loads(STATE.read_text()) if STATE.exists() else {}
-    album = next((a for a in immich("GET", "/albums") if a["albumName"] == ALBUM), None)
-    album_id = album["id"] if album else immich_json(
-        "POST", "/albums", {"albumName": ALBUM})["id"]
+    state = json.loads(state_file.read_text()) if state_file.exists() else {}
+    album_id = albums.get(album_name) or immich_json(
+        "POST", "/albums", {"albumName": album_name})["id"]
 
     added, failed = 0, []
     for image, pin_ids in board.items():
         if image in state:
             continue
-        found = sorted(FILES.glob(image + ".*"))
+        found = sorted(files.glob(image + ".*"))
         if not found:
             failed.append(f"{image}: not downloaded")
             continue
@@ -148,13 +157,29 @@ def main():
             failed.append(f"{image}: {error}")
             continue
         state[image] = asset
-        STATE.write_text(json.dumps(state))
+        state_file.write_text(json.dumps(state))
         added += 1
 
-    print(f"board: {len(board)} images; added {added}; {len(state)} in album")
+    print(f"{album_name}: {len(board)} images; added {added}; {len(state)} in album")
+    return failed
+
+
+def main():
+    albums = {a["albumName"]: a["id"] for a in immich("GET", "/albums")}
+    failed = []
+    # One board failing doesn't stop the others; the run still fails at the end.
+    for album_name, board_url in BOARDS.items():
+        try:
+            failed += [f"{album_name}: {f}" for f in
+                       sync_board(album_name, board_url, albums)]
+        except CookiesExpired:
+            sys.exit("Pinterest cookies have expired: re-export them into Bitwarden")
+        except (subprocess.CalledProcessError, urllib.error.URLError,
+                KeyError, ValueError) as e:
+            failed.append(f"{album_name}: board failed: {e}")
     if failed:
         print("\n".join(failed), file=sys.stderr)
-        sys.exit(f"{len(failed)} image(s) failed")
+        sys.exit(f"{len(failed)} failure(s)")
 
 
 if __name__ == "__main__":
