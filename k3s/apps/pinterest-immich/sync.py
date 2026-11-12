@@ -77,6 +77,14 @@ def pin_saved_at(pin_id):
 def upload(path, when):
     """POST /assets as multipart; returns the asset id, new or existing."""
     blob = path.read_bytes()
+    checksum = hashlib.sha1(blob).hexdigest()
+    # Ask first. Sent straight to immich-server (no proxy buffering the body),
+    # a duplicate upload gets its answer before the body is fully sent, and
+    # the connection closes under a large file: Broken pipe.
+    known = immich_json("POST", "/assets/bulk-upload-check",
+                        {"assets": [{"id": "0", "checksum": checksum}]})["results"][0]
+    if known.get("assetId"):
+        return known["assetId"]
     boundary = uuid.uuid4().hex
     stamp = when.strftime("%Y-%m-%dT%H:%M:%S.000Z")
     parts = []
@@ -90,7 +98,7 @@ def upload(path, when):
     parts.append(f"--{boundary}--\r\n".encode())
     res = immich("POST", "/assets", b"".join(parts), {
         "content-type": f"multipart/form-data; boundary={boundary}",
-        "x-immich-checksum": hashlib.sha1(blob).hexdigest(),
+        "x-immich-checksum": checksum,
     })
     return res["id"]
 
@@ -100,9 +108,12 @@ def add_image(path, pin_ids, album_id):
     when = min(pin_saved_at(p) for p in pin_ids)
     asset = upload(path, when)
     immich_json("PUT", f"/albums/{album_id}/assets", {"ids": [asset]})
-    # Set explicitly too: a file's own EXIF date would beat fileCreatedAt.
+    # Set the date explicitly too: a file's own EXIF date would beat
+    # fileCreatedAt. Archived keeps it off the owner's timeline; albums
+    # still show archived photos.
     immich_json("PUT", f"/assets/{asset}",
-                {"dateTimeOriginal": when.strftime("%Y-%m-%dT%H:%M:%S.000Z")})
+                {"dateTimeOriginal": when.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                 "visibility": "archive"})
     return asset
 
 
