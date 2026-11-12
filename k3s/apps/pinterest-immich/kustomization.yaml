@@ -1,0 +1,12 @@
+# No namespace.yaml: the immich namespace is owned by k3s/apps/immich. If two
+# Kustomizations both declared it, pruning this one could delete Immich.
+resources:
+  - cronjob.yaml
+  - state.pvc.yaml
+  - pinterest-immich.externalsecret.yaml
+
+configMapGenerator:
+  - name: pinterest-immich-app
+    namespace: immich
+    files:
+      - sync.py

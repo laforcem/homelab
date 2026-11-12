@@ -1,0 +1,14 @@
+# Download archive, downloaded images and state.json. Not backed up: losing it
+# only costs one slow run, since Immich answers every re-upload as a
+# duplicate (matched by checksum) and nothing is added twice.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pinterest-immich-state
+  namespace: immich
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi

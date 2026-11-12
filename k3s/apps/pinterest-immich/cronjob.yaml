@@ -1,0 +1,102 @@
+# Daily mirror of a Pinterest board into an Immich album (sync.py). Lives in
+# the immich namespace but in its own Flux Kustomization, so a broken run or
+# manifest here can't hold up Immich's own reconcile. The namespace belongs
+# to k3s/apps/immich; this directory must never declare it.
+#
+# A failed run pings Healthchecks /fail. "Pinterest cookies have expired" in
+# the log means re-export the session cookies into Bitwarden.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pinterest-immich
+  namespace: immich
+spec:
+  schedule: "0 5 * * *"
+  timeZone: America/Denver
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 3600
+      template:
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          securityContext:
+            fsGroup: 1000
+          containers:
+            - name: sync
+              # gallery-dl's official image: Python, yt-dlp and ffmpeg. ffmpeg
+              # matters: Pinterest serves video pins as HLS with separate
+              # audio, and without it the upload would be a silent video.
+              image: mikf123/gallery-dl:v1.32.19
+              envFrom:
+                - secretRef:
+                    name: pinterest-immich
+              env:
+                - name: HOME
+                  value: /tmp
+                - name: ALBUM_NAME
+                  value: "Malco's Memes"
+                # In-cluster: skips the ingress and its TLS.
+                - name: IMMICH_URL
+                  value: http://immich-server.immich:2283/api
+                - name: PINTEREST_COOKIES_FILE
+                  value: /secrets/cookies.txt
+                - name: DATA_DIR
+                  value: /data
+              securityContext:
+                runAsUser: 1000
+                runAsGroup: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              command:
+                - sh
+                - -c
+                - |
+                  set -u
+                  ping() { wget -q -O /dev/null --tries=3 --timeout=15 "https://hc-ping.com/692c38b4-5bb1-4088-bb66-f1742483994e$1"; }
+                  ping /start
+                  if python3 -I /app/sync.py; then
+                    ping ""
+                  else
+                    ping /fail
+                    exit 1
+                  fi
+              volumeMounts:
+                - name: app
+                  mountPath: /app
+                  readOnly: true
+                - name: cookies
+                  mountPath: /secrets
+                  readOnly: true
+                - name: state
+                  mountPath: /data
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: "1"
+                  memory: 512Mi
+          volumes:
+            - name: app
+              configMap:
+                name: pinterest-immich-app
+            - name: cookies
+              secret:
+                secretName: pinterest-immich
+                items:
+                  - key: PINTEREST_COOKIES
+                    path: cookies.txt
+            - name: state
+              persistentVolumeClaim:
+                claimName: pinterest-immich-state
+            - name: tmp
+              emptyDir: {}
