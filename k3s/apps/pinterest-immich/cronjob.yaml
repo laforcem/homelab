@@ -1,4 +1,5 @@
-# Daily mirror of a Pinterest board into an Immich album (sync.py). Lives in
+# Daily mirror of Pinterest boards into Immich albums (sync.py). The boards
+# and album names are the BOARDS secret. Lives in
 # the immich namespace but in its own Flux Kustomization, so a broken run or
 # manifest here can't hold up Immich's own reconcile. The namespace belongs
 # to k3s/apps/immich; this directory must never declare it.
@@ -39,8 +40,6 @@ spec:
               env:
                 - name: HOME
                   value: /tmp
-                - name: ALBUM_NAME
-                  value: "Malco's Memes"
                 # In-cluster: skips the ingress and its TLS.
                 - name: IMMICH_URL
                   value: http://immich-server.immich:2283/api

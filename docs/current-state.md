@@ -102,7 +102,7 @@ DMZ VLAN 40, k3s. The router forwards ports 80 and 443 here (set in the router G
 | audiomuse-ai | None. Warden serves it. |
 | samba | None. SMB on port 445. |
 | media-backup | None. Nightly CronJob. |
-| pinterest-immich | None. Daily CronJob in the `immich` namespace that mirrors a Pinterest board into an Immich album, dated by save time. Its own Kustomization. Needs Pinterest session cookies from Bitwarden; when they expire the run fails with a message saying so. |
+| pinterest-immich | None. Daily CronJob in the `immich` namespace that mirrors Pinterest boards into Immich albums, dated by save time. The board list and the owning Immich user's API key are in Bitwarden. Its own Kustomization. Needs Pinterest session cookies from Bitwarden; when they expire the run fails with a message saying so. |
 
 - **Flux** reconciles everything in `k3s/` from `main` every 5 minutes (setup and recovery: `k3s/clusters/starcliff/README.md`). Nothing under `k3s/` is applied by hand; Flux reverts it. Apps are in `k3s/apps/` (one Kustomization each; Immich is also a `HelmRelease`), infra in `k3s/infra/`. The Flux Operator, `bitwarden-access-token`, `bitwarden-tls-certs`, cert-manager (Ansible) and Traefik (k3s addon) are not under Flux.
 - Flux failures alert through Alertmanager like everything else (see Alerting). Flux's own notification-controller sends nothing. The `DOMAIN` reaches manifests through the `flux-vars` Secret, an ExternalSecret.
