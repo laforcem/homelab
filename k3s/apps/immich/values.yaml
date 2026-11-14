@@ -26,7 +26,7 @@ server:
       containers:
         main:
           image:
-            tag: v3.3.5 # the chart defaults to v3.2.0
+            tag: v3.4.1 # the chart defaults to v3.2.0
           env:
             DB_HOSTNAME: postgres
             DB_USERNAME: postgres
