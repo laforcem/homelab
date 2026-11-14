@@ -17,6 +17,9 @@ resources:
 # ${DOMAIN} in values.yaml is filled in by the Kustomization's postBuild.
 generatorOptions:
   disableNameSuffixHash: true
+  # Makes helm-controller upgrade the release as soon as the values change; without it, only the next interval notices.
+  labels:
+    reconcile.fluxcd.io/watch: Enabled
 configMapGenerator:
   - name: immich-values
     namespace: immich
