@@ -10,7 +10,7 @@ volumes:
 services:
   adguard:
     container_name: adguard-home
-    image: adguard/adguardhome:v0.107.73
+    image: adguard/adguardhome:v1.0.0
     restart: always
     ports:
       - "53:53/tcp"
