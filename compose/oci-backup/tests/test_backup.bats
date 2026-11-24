@@ -157,3 +157,38 @@ MOCKEOF
     grep -q "create" "$BATS_TEST_TMPDIR/oci_calls.log"
     grep -q "delete" "$BATS_TEST_TMPDIR/oci_calls.log"
 }
+
+mock_wget() {
+    cat > "$MOCK_BIN/wget" << MOCKEOF
+#!/usr/bin/env bash
+echo "\${@: -1}" >> "$BATS_TEST_TMPDIR/wget_calls.log"
+MOCKEOF
+    chmod +x "$MOCK_BIN/wget"
+    rm -f "$BATS_TEST_TMPDIR/wget_calls.log"
+}
+
+@test "healthchecks: pings /start then success" {
+    mock_wget
+    export HC_PING_URL="https://hc.example/abc"
+    cat > "$MOCK_BIN/oci" << 'MOCKEOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"list"* ]]; then echo '{"data": []}'; else echo '{"data": {"id": "ocid1.new"}}'; fi
+MOCKEOF
+    chmod +x "$MOCK_BIN/oci"
+    run bash "$SCRIPT"
+    [ "$status" -eq 0 ]
+    [ "$(cat "$BATS_TEST_TMPDIR/wget_calls.log")" = "$(printf 'https://hc.example/abc/start\nhttps://hc.example/abc')" ]
+}
+
+@test "healthchecks: pings /start then /fail when create fails" {
+    mock_wget
+    export HC_PING_URL="https://hc.example/abc"
+    cat > "$MOCK_BIN/oci" << 'MOCKEOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"list"* ]]; then echo '{"data": []}'; else exit 1; fi
+MOCKEOF
+    chmod +x "$MOCK_BIN/oci"
+    run bash "$SCRIPT"
+    [ "$status" -ne 0 ]
+    [ "$(cat "$BATS_TEST_TMPDIR/wget_calls.log")" = "$(printf 'https://hc.example/abc/start\nhttps://hc.example/abc/fail')" ]
+}

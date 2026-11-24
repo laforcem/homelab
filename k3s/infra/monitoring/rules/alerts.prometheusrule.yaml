@@ -143,3 +143,33 @@ spec:
           annotations:
             summary: A Flux object has been failing for over 10 minutes.
             description: '{{ $labels.customresource_kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} is not Ready. See its status with flux get or the dashboard.'
+    # warden has no Alertmanager of its own: its Prometheus pushes a few series
+    # here (compose/monitoring/prometheus/prometheus.yml). RootDiskLow and
+    # TargetDown above cover warden through those series too.
+    - name: warden
+      rules:
+        - alert: WardenNotReporting
+          expr: absent_over_time(up{job="node-exporter", host="warden"}[10m])
+          labels:
+            severity: critical
+          annotations:
+            summary: warden has stopped sending metrics.
+            description: No metrics from warden for 10 minutes. warden, its Prometheus, or the path to chimaera is down. DNS (AdGuard) may be down with it.
+        # One line per container that matters; absent_over_time keeps the
+        # name label. Silent while warden itself is silent (WardenNotReporting
+        # covers that).
+        - alert: WardenContainerDown
+          expr: |-
+            (
+                absent_over_time(container_last_seen{host="warden", name="adguard-home"}[10m])
+              or absent_over_time(container_last_seen{host="warden", name="caddy-warden"}[10m])
+              or absent_over_time(container_last_seen{host="warden", name="doco-cd"}[10m])
+              or absent_over_time(container_last_seen{host="warden", name="docker-proxy"}[10m])
+              or absent_over_time(container_last_seen{host="warden", name="icloudpd"}[10m])
+            )
+            unless on() absent_over_time(up{job="node-exporter", host="warden"}[10m])
+          labels:
+            severity: critical
+          annotations:
+            summary: A key container on warden is not running.
+            description: Container {{ $labels.name }} on warden has not been seen for 10 minutes.

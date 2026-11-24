@@ -103,8 +103,10 @@ prometheus:
     podMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
-    # Nothing is pushed into the cluster.
-    enableRemoteWriteReceiver: false
+    # warden's Prometheus pushes its alerting series here (see
+    # compose/monitoring/prometheus/prometheus.yml). Only warden and pods can
+    # reach the NodePort (nodeport.networkpolicy.yaml).
+    enableRemoteWriteReceiver: true
     retention: 10d
     resources:
       requests: { cpu: 200m, memory: 512Mi }

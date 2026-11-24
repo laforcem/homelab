@@ -1,1 +1,3 @@
 tailscale_authkey: "{{ lookup('bitwarden.secrets.lookup', '7f852b6a-a703-4bbe-85bb-b4aa01192cb0') }}"
+# Monthly reboot window, after backups (see roles/common).
+monthly_reboot_time: "05:15"

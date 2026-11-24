@@ -14,3 +14,9 @@
     name: tailscale-metrics.timer
     daemon_reload: true
     state: restarted
+
+- name: Reload systemd and restart Docker prune timer
+  ansible.builtin.systemd:
+    name: docker-prune.timer
+    daemon_reload: true
+    state: restarted
