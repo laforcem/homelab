@@ -1,4 +1,4 @@
-# kube-prometheus-stack 92.10.1 — metrics only. Grafana runs on warden, not
+# kube-prometheus-stack 92.22.0 — metrics only. Grafana runs on warden, not
 # here (see docs/superpowers/plans/2026-10-19-cluster-observability.md).
 
 grafana:

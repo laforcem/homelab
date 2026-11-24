@@ -20,7 +20,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: flask
-          image: ghcr.io/neptunehub/audiomuse-ai:3.6.4
+          image: ghcr.io/neptunehub/audiomuse-ai:3.7.4
           ports:
             - containerPort: 8000
           envFrom:

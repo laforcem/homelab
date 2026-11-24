@@ -28,7 +28,7 @@ services:
 
   speedtest-tracker-backup:
     container_name: speedtest-tracker-backup
-    image: offen/docker-volume-backup:v2.49.0
+    image: offen/docker-volume-backup:v2.50.2
     restart: unless-stopped
     environment:
       BACKUP_CRON_EXPRESSION: "30 3 * * *" # nightly, offset from PBS's 03:00 snapshot, adguard's 03:15, and B2's 04:30 sync

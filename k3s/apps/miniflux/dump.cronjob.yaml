@@ -20,7 +20,7 @@ spec:
           enableServiceLinks: false
           containers:
             - name: pg-dump
-              image: postgres:15.19
+              image: postgres:15.20
               command:
                 - sh
                 - -c

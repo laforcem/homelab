@@ -18,7 +18,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: worker
-          image: ghcr.io/neptunehub/audiomuse-ai:3.6.4
+          image: ghcr.io/neptunehub/audiomuse-ai:3.7.4
           envFrom:
             - secretRef:
                 name: audiomuse

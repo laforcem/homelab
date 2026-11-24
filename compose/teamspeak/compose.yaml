@@ -5,7 +5,7 @@ volumes:
 
 services:
   teamspeak:
-    image: teamspeak:3.13.7
+    image: teamspeak:3.13.9
     platform: linux/amd64
     container_name: teamspeak
     restart: unless-stopped
