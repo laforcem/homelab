@@ -1,0 +1,10 @@
+[Unit]
+Description=Monthly reboot window (first Monday)
+
+[Timer]
+# First Monday of the month. No Persistent=: a missed window waits a month
+# rather than rebooting right after an unrelated boot.
+OnCalendar=Mon *-*-01..07 {{ monthly_reboot_time }}
+
+[Install]
+WantedBy=timers.target

@@ -15,3 +15,5 @@ services:
       OCI_CLI_REGION: us-phoenix-1
       BACKUP_NAME_PREFIX: mrgutsy-boot
       BACKUP_INTERVAL_CRON: "0 3 * * *"
+      # Healthchecks "mrgutsy OCI Boot Backup (warden)"; schedule there matches the cron above (UTC).
+      HC_PING_URL: "https://hc-ping.com/11a53cad-8d19-4c92-889f-421c938fa318"

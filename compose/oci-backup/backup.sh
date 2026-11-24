@@ -6,6 +6,15 @@ BOOT_VOLUME_ID="${BOOT_VOLUME_ID:?BOOT_VOLUME_ID is required}"
 COMPARTMENT_ID="${COMPARTMENT_ID:?COMPARTMENT_ID is required}"
 export OCI_CLI_KEY_FILE="${OCI_CLI_KEY_FILE:-/run/oci_key.pem}"
 
+# Healthchecks: /start now, /fail on any error exit, plain ping on success.
+# Unset HC_PING_URL skips pinging (tests, manual runs).
+ping_hc() {
+    [ -n "${HC_PING_URL:-}" ] || return 0
+    wget -q -O /dev/null -T 10 "${HC_PING_URL}$1" || echo "WARNING: Healthchecks ping failed" >&2
+}
+trap 'rc=$?; [ "$rc" -eq 0 ] || ping_hc /fail' EXIT
+ping_hc /start
+
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 NEW_NAME="${BACKUP_NAME_PREFIX}-${TIMESTAMP}"
 
@@ -64,3 +73,4 @@ if [ -n "$EXISTING_ID" ]; then
 fi
 
 echo "Backup complete"
+ping_hc ""

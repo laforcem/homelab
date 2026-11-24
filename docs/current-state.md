@@ -251,6 +251,7 @@ The router isolates VLANs with custom iptables chains (`IOT_FWD`, `DMZ_FWD`, oth
 ## Monitoring
 
 - **Grafana** runs once, on warden, and queries `chimaera`'s Prometheus and Loki over NodePorts `30090` and `30100`. A NetworkPolicy and `externalTrafficPolicy: Local` limit both to warden, because ufw can't restrict NodePorts. Nothing is pushed out of the cluster.
+- **warden → cluster**: warden's Prometheus remote-writes `up`, `container_last_seen` and root-filesystem series to `chimaera`'s Prometheus (receiver on, same NodePort), labels trimmed to `job`, `instance`, `host`, `name`, `mountpoint`, `fstype`, `device`. warden has no Alertmanager; its alerts are evaluated in the cluster.
 - **In-cluster stack** (`k3s/infra/monitoring/`; four Helm releases managed by Flux, see its README): `kube-prometheus-stack` (Prometheus with 10-day retention, Alertmanager, node-exporter, kube-state-metrics; Grafana off), `loki` (14-day retention) and `alloy` (ships container logs to Loki) and `prometheus-blackbox-exporter` (app probes).
 - Prometheus scrapes Traefik, cert-manager and VolSync. VolSync's metrics sit behind an auth proxy, so Prometheus's ServiceAccount is bound to `volsync-metrics-reader` (`k3s/infra/volsync/metrics.*`).
 - **App probes**: blackbox exporter `Probe` objects (`k3s/infra/monitoring/app-probes.probe.yaml`) check Actual, Audiobookshelf, Immich, Miniflux, Navidrome and Tandoor every minute. The `AppDown` alert fires after 5 minutes of failures.
@@ -258,12 +259,12 @@ The router isolates VLANs with custom iptables chains (`IOT_FWD`, `DMZ_FWD`, oth
 ### Alerting
 
 - **Delivery**: Alertmanager sends everything to a dedicated Telegram bot, one chat, no severity tiers and no paging. The bot token and chat ID come from Bitwarden through the `alertmanager-telegram` ExternalSecret. Messages are short: status, alert name, one sentence (a custom template in `kube-prometheus-stack.values.yaml`). Alertmanager has no volume and no ingress; restarting it loses silences, and firing alerts re-notify once.
-- **Rules**: one hand-written `PrometheusRule` (`k3s/infra/monitoring/rules/alerts.prometheusrule.yaml`) with unit tests (`bash rules/test.sh`, needs `promtool` and `yq`). kube-prometheus-stack's default alerts are off; its recording rules stay on because the Grafana dashboards use them. Alerts: crash loops, OOM kills, scrape targets down, app probes, cert-manager not ready or expiring in under 14 days, failed VolSync mover Jobs, no VolSync sync in 30 hours (a kube-state-metrics custom-resource-state metric on `ReplicationSource`), and low disk (the `lab` drive under 15% free, chimaera's root under 20%).
+- **Rules**: one hand-written `PrometheusRule` (`k3s/infra/monitoring/rules/alerts.prometheusrule.yaml`) with unit tests (`bash rules/test.sh`, needs `promtool` and `yq`). kube-prometheus-stack's default alerts are off; its recording rules stay on because the Grafana dashboards use them. Alerts: crash loops, OOM kills, scrape targets down, app probes, cert-manager not ready or expiring in under 14 days, failed VolSync mover Jobs, no VolSync sync in 30 hours (a kube-state-metrics custom-resource-state metric on `ReplicationSource`), low disk (the `lab` drive under 15% free, chimaera's and warden's root under 20%), and warden: `WardenNotReporting` (no series for 10 minutes) and `WardenContainerDown` (adguard-home, caddy-warden, doco-cd, docker-proxy or icloudpd unseen for 10 minutes).
 - **Flux**: kube-state-metrics exports `gotk_resource_info` (ready and suspended state) for GitRepository, HelmRepository, HelmChart, OCIRepository, Kustomization and HelmRelease through a custom-resource-state config. `FluxObjectNotReady` fires after 10 minutes of `Ready=False`, so transient fetch errors that Flux retries itself stay quiet, and Telegram gets a RESOLVED message on recovery. `FluxObjectSuspended` fires after 30 minutes suspended.
 - **Watchdog**: an always-firing alert posts to the `Alertmanager Watchdog` Healthchecks check every 5 minutes. If the pings stop, Healthchecks messages Telegram, which covers Prometheus, Alertmanager or chimaera being down.
 - **AudioMuse analysis**: the `audiomuse-analysis-probe` CronJob (hourly) reads AudioMuse's `task_status` table and pings the `AudioMuse nightly analysis` check. It reports failure when the latest analysis failed or the last success is over 52 hours old (the analysis runs Sunday to Friday, so a 48-hour gap is normal).
 - **Kubeconfig cert**: the `kubeconfig-cert-watch` CronJob (daily) hashes chimaera's k3s admin client cert and posts an alert when it changes, because downstream copies of the kubeconfig do not renew themselves (#101). It records the hash in a ConfigMap on its first run.
-- **Still on Healthchecks**: jobs outside the cluster (PBS, vzdump, warden and mrgutsy backups, the TeamSpeak probe) the media-backup and pinterest-immich CronJob checks, plus the Watchdog and AudioMuse checks above. The Healthchecks project is at its 20-check limit on the free plan.
+- **Still on Healthchecks**: jobs outside the cluster (PBS, vzdump, warden volume backups, the mrgutsy OCI boot-volume backup run by `oci-backup`, the TeamSpeak probe), the media-backup and pinterest-immich CronJob checks, plus the Watchdog and AudioMuse checks above. The free plan allows 20 checks.
 - **Not alerted**: a ReplicationSource that has never synced has no `lastSyncTime`, so the 30-hour alert stays silent for it. `volsync_volume_out_of_sync` and the missed-interval metric are untested against a paused schedule and are not used.
 
 ## Provisioning
@@ -279,8 +280,8 @@ ansible-playbook playbooks/main.yaml
 
 | Role | Hosts | Does |
 |---|---|---|
-| `common` | All | Hostname, `qemu-guest-agent`, unattended upgrades, timezone, NTP. SSH hardening (no passwords, no root). ufw deny-by-default with SSH and Tailscale allowed, plus routing rules for warden's subnet-router role. |
-| `utility-services` | warden | Frees port 53 from systemd-resolved. Installs Tailscale (reusable Bitwarden auth key, rotated every 90 days), Docker with Compose, and doco-cd (bootstrapped once, then self-managing from git). Automounts `/mnt/lab/icloud` over NFS with `hard`, so an outage blocks writes instead of exposing the empty local mount point. |
+| `common` | All | Hostname, `qemu-guest-agent`, unattended upgrades, timezone, NTP. SSH hardening (no passwords, no root). ufw deny-by-default with SSH and Tailscale allowed, plus routing rules for warden's subnet-router role. `monthly-reboot.timer`: first Monday of the month (warden 05:15, chimaera 05:30), reboots only if `/var/run/reboot-required` exists or uptime is over 90 days, which keeps k3s restarting inside its 120-day certificate renewal window. |
+| `utility-services` | warden | Frees port 53 from systemd-resolved. Installs Tailscale (reusable Bitwarden auth key, rotated every 90 days), Docker with Compose, and doco-cd (bootstrapped once, then self-managing from git). Automounts `/mnt/lab/icloud` over NFS with `hard`, so an outage blocks writes instead of exposing the empty local mount point. `docker-prune.timer` (Sundays 06:30) removes unused images and build cache older than a week. |
 | `k3s` | chimaera | See below. |
 | `cert-manager` | chimaera | cert-manager (Helm), a `letsencrypt` ClusterIssuer (HTTP-01), and Traefik's HTTP-to-HTTPS redirect. |
 | `valet-music` | valet | Mounts the music export at `/mnt/music`. Valet otherwise comes from the Moltron repo and skips `common`. |
@@ -292,6 +293,10 @@ The `k3s` role:
 - Writes the kubeconfig to the operator's `~/.kube/config`, named `starcliff`.
 - Mounts the lab drive at `/mnt/lab` (XFS, by UUID) with no `nofail`: a missing drive fails the mount instead of letting volumes land on the 32 GB root disk.
 - Exports `/mnt/lab/icloud` to warden and `/mnt/lab/music` to valet over NFS, each to one host only (`all_squash`, uid/gid 1000). Ufw allows `2049/tcp` from those two hosts only.
+
+## Dependency updates
+
+Renovate (Mend hosted app, `.github/renovate.json5`) opens one grouped non-major PR and one Immich PR on the 1st of each month. Majors wait for a tick on its Dependency Dashboard issue. Postgres and Redis majors and Immich's Postgres image are excluded. Merged PRs deploy through Flux (k3s) and doco-cd (warden); `mrgutsy` is not deployed automatically. Host OS packages update through unattended-upgrades on Ansible-managed VMs; `pve` and `pbs` are updated by hand.
 
 ## Known gaps
 

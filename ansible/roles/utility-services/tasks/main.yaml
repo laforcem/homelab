@@ -251,3 +251,20 @@
     fstype: nfs
     opts: nfsvers=4.2,hard,_netdev,nofail,x-systemd.automount
     state: mounted
+
+- name: Install weekly Docker prune units
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - docker-prune.service
+    - docker-prune.timer
+  notify: Reload systemd and restart Docker prune timer
+
+- name: Enable weekly Docker prune timer
+  ansible.builtin.systemd:
+    name: docker-prune.timer
+    enabled: true
+    state: started
+    daemon_reload: true

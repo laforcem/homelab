@@ -1,0 +1,6 @@
+[Unit]
+Description=Reboot if updates require it or uptime is over 90 days
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/monthly-reboot.sh

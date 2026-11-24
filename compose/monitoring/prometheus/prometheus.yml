@@ -32,3 +32,20 @@ scrape_configs:
     metrics_path: /prometheus
     static_configs:
       - targets: ['speedtest-tracker:80']
+
+# Push the few series warden's alerts need to the cluster's Prometheus
+# (NodePort 30090, which its NetworkPolicy opens to warden only). Alert rules
+# and Alertmanager live there; see WardenNotReporting and WardenContainerDown
+# in k3s/infra/monitoring/rules/alerts.prometheusrule.yaml.
+remote_write:
+  - url: http://192.168.40.10:30090/api/v1/write
+    write_relabel_configs:
+      - source_labels: [__name__, mountpoint]
+        regex: 'up;.*|container_last_seen;.*|node_filesystem_(avail|size)_bytes;/'
+        action: keep
+      - regex: '__name__|job|instance|host|name|mountpoint|fstype|device'
+        action: labelkeep
+      # Name the host in alert text instead of host.docker.internal:9100.
+      - source_labels: [host]
+        regex: '(.+)'
+        target_label: instance

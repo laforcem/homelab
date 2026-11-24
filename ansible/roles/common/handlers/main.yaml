@@ -2,3 +2,9 @@
   ansible.builtin.systemd:
     name: ssh
     state: restarted
+
+- name: Reload systemd and restart monthly reboot timer
+  ansible.builtin.systemd:
+    name: monthly-reboot.timer
+    daemon_reload: true
+    state: restarted

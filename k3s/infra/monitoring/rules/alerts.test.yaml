@@ -259,3 +259,55 @@ tests:
             exp_annotations:
               summary: A Flux object has been failing for over 10 minutes.
               description: HelmRepository flux-system/backube is not Ready. See its status with flux get or the dashboard.
+
+  # --- warden (series pushed by warden's Prometheus via remote write) ---
+  - name: warden not reporting fires after 10m of silence
+    input_series:
+      - series: 'up{job="node-exporter",host="warden",instance="warden"}'
+        values: '1x10 _x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: WardenNotReporting
+        exp_alerts: []
+      - eval_time: 35m
+        alertname: WardenNotReporting
+        exp_alerts:
+          - exp_labels: { severity: critical, job: node-exporter, host: warden }
+            exp_annotations:
+              summary: warden has stopped sending metrics.
+              description: No metrics from warden for 10 minutes. warden, its Prometheus, or the path to chimaera is down. DNS (AdGuard) may be down with it.
+
+  - name: warden container down fires when a key container disappears, not when warden is silent
+    input_series:
+      - series: 'up{job="node-exporter",host="warden",instance="warden"}'
+        values: '1x40'
+      - series: 'container_last_seen{host="warden",name="adguard-home"}'
+        values: '1x40'
+      - series: 'container_last_seen{host="warden",name="caddy-warden"}'
+        values: '1x40'
+      - series: 'container_last_seen{host="warden",name="doco-cd"}'
+        values: '1x40'
+      - series: 'container_last_seen{host="warden",name="docker-proxy"}'
+        values: '1x10'
+      - series: 'container_last_seen{host="warden",name="icloudpd"}'
+        values: '1x40'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: WardenContainerDown
+        exp_alerts: []
+      - eval_time: 30m
+        alertname: WardenContainerDown
+        exp_alerts:
+          - exp_labels: { severity: critical, host: warden, name: docker-proxy }
+            exp_annotations:
+              summary: A key container on warden is not running.
+              description: Container docker-proxy on warden has not been seen for 10 minutes.
+
+  - name: warden container down stays silent when warden itself is silent
+    input_series:
+      - series: 'up{job="node-exporter",host="warden",instance="warden"}'
+        values: '1x5'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: WardenContainerDown
+        exp_alerts: []
