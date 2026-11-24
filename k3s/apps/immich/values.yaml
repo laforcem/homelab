@@ -26,6 +26,8 @@ server:
       containers:
         main:
           image:
+            # Repository is the chart default; stated so Renovate can track the tag.
+            repository: ghcr.io/immich-app/immich-server
             tag: v3.4.1 # the chart defaults to v3.2.0
           env:
             DB_HOSTNAME: postgres
@@ -69,7 +71,8 @@ server:
               service:
                 identifier: main
       tls:
-        - hosts: [photos.${DOMAIN}]
+        - hosts:
+            - photos.${DOMAIN}
           secretName: immich-tls
 
 machine-learning:
@@ -80,6 +83,7 @@ machine-learning:
       containers:
         main:
           image:
+            repository: ghcr.io/immich-app/immich-machine-learning
             tag: v3.3.5
           env:
             MACHINE_LEARNING_MODEL_REVISION: v2 # optimized models, opt-in as of v3.3.0

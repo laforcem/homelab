@@ -1,0 +1,46 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['config:recommended', ':timezone(America/Denver)'],
+
+  // One batch a month. Renovate only opens or updates PRs on the 1st; the
+  // Dependency Dashboard issue lists everything pending in between.
+  // minimumReleaseAge is deliberately unset: ghcr.io, lscr.io and quay.io
+  // publish no release timestamps, so it would hold those images back forever.
+  schedule: ['* * 1 * *'],
+
+  // These managers have no default file patterns and scan nothing without one.
+  kubernetes: { managerFilePatterns: ['/^k3s/.+\\.ya?ml$/'] },
+  flux: { managerFilePatterns: ['/^k3s/.+\\.ya?ml$/'] },
+  'helm-values': { managerFilePatterns: ['/^k3s/.+values\\.ya?ml$/'] },
+
+  packageRules: [
+    {
+      description: 'Everything non-major lands in one monthly PR.',
+      matchUpdateTypes: ['minor', 'patch', 'digest'],
+      groupName: 'monthly non-major updates',
+      groupSlug: 'monthly-non-major',
+    },
+    {
+      description: 'Immich server, machine-learning and chart must move together, in their own PR.',
+      matchPackageNames: ['ghcr.io/immich-app/immich-server', 'ghcr.io/immich-app/immich-machine-learning', 'immich'],
+      groupName: 'immich',
+      groupSlug: 'immich',
+    },
+    {
+      description: 'Majors wait until ticked on the Dependency Dashboard.',
+      matchUpdateTypes: ['major'],
+      dependencyDashboardApproval: true,
+    },
+    {
+      description: 'Immich pins its own Postgres build; follow its release notes instead.',
+      matchPackageNames: ['ghcr.io/immich-app/postgres'],
+      enabled: false,
+    },
+    {
+      description: 'A Postgres or Redis major needs a dump and restore, not a tag bump.',
+      matchPackageNames: ['postgres', 'redis'],
+      matchUpdateTypes: ['major'],
+      enabled: false,
+    },
+  ],
+}
