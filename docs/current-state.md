@@ -133,6 +133,8 @@ Public (`$DOMAIN`).
 
 A Caddy container holds the wildcard certificate and aborts every web request, so it serves no site. TeamSpeak is amd64-only and runs under QEMU emulation (see `compose/teamspeak/README.md`). A probe on `chimaera` (`k3s/infra/external-probes/`) tests it every 5 minutes and reports to Healthchecks.
 
+Nothing deploys to `mrgutsy` automatically. It runs a manual checkout of this repo at `~/homelab`; to update, `git pull` there, then `docker compose up -d` in `compose/teamspeak` and `docker compose up -d --build` in `compose/caddy/mrgutsy`. Each stack's `.env` sits untracked beside its `compose.yaml`.
+
 ## Storage
 
 `pve` has three pools. None is shared.
@@ -296,9 +298,12 @@ The `k3s` role:
 
 ## Dependency updates
 
-Renovate (Mend hosted app, `.github/renovate.json5`) opens one grouped non-major PR and one Immich PR on the 1st of each month. Majors wait for a tick on its Dependency Dashboard issue. Postgres and Redis majors and Immich's Postgres image are excluded. Merged PRs deploy through Flux (k3s) and doco-cd (warden); `mrgutsy` is not deployed automatically. Host OS packages update through unattended-upgrades on Ansible-managed VMs; `pve` and `pbs` are updated by hand.
+Renovate (Mend hosted app, `.github/renovate.json5`) opens one grouped non-major PR and one Immich PR on the 1st of each month. Majors wait for a tick on its Dependency Dashboard issue. Postgres and Redis majors and Immich's Postgres image are excluded. Merged PRs deploy through Flux (k3s) and doco-cd (warden); `mrgutsy` is not deployed automatically. Host OS packages update through unattended-upgrades on Ansible-managed VMs; `pve` and `pbs` are updated by hand (`apt dist-upgrade`, then a `pve` reboot, which restarts every VM and takes warden's DNS down for a few minutes). Both use Proxmox's no-subscription repository; the enterprise repositories are disabled.
 
 ## Known gaps
+
+- **ZFS errors on `pve`** reach no alert. `rpool` is a single NVMe with no redundancy; a scrub runs monthly (Proxmox default) but nothing reports `zpool status` problems. Check `zpool status -x` after any host trouble.
+- **valet's kernel** is held back (`linux-image-amd64` marked hold, from the Moltron repo), so it runs an older kernel than the other VMs.
 
 - **AdGuard accounts** for `router-sync` and `monitoring-adguard-exporter` exist only in AdGuard's live config, so a fresh deploy loses them. AdGuard has no read-only role, so the exporter has full API access.
 - **speedtest-tracker `/prometheus`** has no IP allowlist. Caddy returns 404 for it on `speedtest.lan.$DOMAIN`, and Prometheus scrapes it container to container.
