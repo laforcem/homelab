@@ -15,3 +15,5 @@ docs/research/
 *.tfstate.*.backup
 .claude/settings.local.json
 .claude/worktrees/
+
+__pycache__/
