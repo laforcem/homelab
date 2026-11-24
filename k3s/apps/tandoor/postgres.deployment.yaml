@@ -18,7 +18,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: postgres
-          image: postgres:16.4-alpine
+          image: postgres:16.16-alpine
           ports:
             - containerPort: 5432
           env:

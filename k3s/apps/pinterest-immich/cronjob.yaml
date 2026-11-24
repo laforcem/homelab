@@ -33,7 +33,7 @@ spec:
               # gallery-dl's official image: Python, yt-dlp and ffmpeg. ffmpeg
               # matters: Pinterest serves video pins as HLS with separate
               # audio, and without it the upload would be a silent video.
-              image: mikf123/gallery-dl:v1.32.19
+              image: mikf123/gallery-dl:v1.32.21
               envFrom:
                 - secretRef:
                     name: pinterest-immich

@@ -22,7 +22,7 @@ spec:
       # the companion image, so its version follows the image tag.
       initContainers:
         - name: audiomuseai-plugin
-          image: curlimages/curl:8.11.1
+          image: curlimages/curl:8.23.0
           command: ["sh", "-c"]
           args:
             - |
@@ -54,7 +54,7 @@ spec:
             requests: {cpu: 10m, memory: 16Mi}
             limits: {cpu: 200m, memory: 64Mi}
         - name: apple-music-plugin
-          image: curlimages/curl:8.11.1
+          image: curlimages/curl:8.23.0
           command: ["sh", "-c"]
           args:
             - |

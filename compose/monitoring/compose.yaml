@@ -18,7 +18,7 @@ networks:
 
 services:
   prometheus:
-    image: prom/prometheus:v3.15.0
+    image: prom/prometheus:v3.16.0
     container_name: monitoring-prometheus
     restart: unless-stopped
     command:
@@ -35,7 +35,7 @@ services:
     mem_limit: 512m
 
   node-exporter:
-    image: prom/node-exporter:v1.12.1
+    image: prom/node-exporter:v1.13.1
     container_name: monitoring-node-exporter
     restart: unless-stopped
     command:
@@ -53,7 +53,7 @@ services:
     mem_limit: 64m
 
   cadvisor:
-    image: ghcr.io/google/cadvisor:v0.60.6
+    image: ghcr.io/google/cadvisor:v0.61.1
     container_name: monitoring-cadvisor
     restart: unless-stopped
     command:
@@ -72,7 +72,7 @@ services:
     mem_limit: 256m
 
   adguard-exporter:
-    image: ghcr.io/henrywhitaker3/adguard-exporter:v1.2.1
+    image: ghcr.io/henrywhitaker3/adguard-exporter:v1.2.3
     container_name: monitoring-adguard-exporter
     restart: unless-stopped
     environment:
@@ -87,7 +87,7 @@ services:
     mem_limit: 64m
 
   grafana:
-    image: grafana/grafana:13.2.3
+    image: grafana/grafana:13.3.1
     container_name: monitoring-grafana
     restart: unless-stopped
     environment:

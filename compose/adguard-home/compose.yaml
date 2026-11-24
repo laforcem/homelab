@@ -25,7 +25,7 @@ services:
 
   backup:
     container_name: adguard-home-backup
-    image: offen/docker-volume-backup:v2.49.0
+    image: offen/docker-volume-backup:v2.50.2
     restart: unless-stopped
     environment:
       BACKUP_CRON_EXPRESSION: "15 3 * * *" # nightly, offset from PBS's 03:00 snapshot and 04:30 B2 sync

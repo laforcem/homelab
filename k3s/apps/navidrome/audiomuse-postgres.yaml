@@ -18,7 +18,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: postgres
-          image: postgres:15.18 # matches vm101
+          image: postgres:15.20 # matches vm101
           ports:
             - containerPort: 5432
           env:
@@ -86,7 +86,7 @@ spec:
           enableServiceLinks: false
           containers:
             - name: pg-dump
-              image: postgres:15.18
+              image: postgres:15.20
               command:
                 - sh
                 - -c

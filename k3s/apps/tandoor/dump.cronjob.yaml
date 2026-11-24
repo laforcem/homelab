@@ -20,7 +20,7 @@ spec:
           enableServiceLinks: false
           containers:
             - name: pg-dump
-              image: postgres:16.4-alpine
+              image: postgres:16.16-alpine
               command:
                 - sh
                 - -c

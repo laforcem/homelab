@@ -4,7 +4,7 @@ volumes:
 services:
   music-assistant:
     container_name: music-assistant
-    image: ghcr.io/music-assistant/server:2.10.8
+    image: ghcr.io/music-assistant/server:2.10.13
     restart: unless-stopped
     # Host networking is mandatory: Cast/AirPlay discovery is mDNS multicast, and the
     # speakers (VLAN 20) fetch audio from MA's stream server (8097) directly.
@@ -17,7 +17,7 @@ services:
 
   backup:
     container_name: music-assistant-backup
-    image: offen/docker-volume-backup:v2.49.0
+    image: offen/docker-volume-backup:v2.50.2
     restart: unless-stopped
     environment:
       BACKUP_CRON_EXPRESSION: "0 4 * * *" # nightly, after the 03:00-03:45 app backups, before the 04:30 B2 sync

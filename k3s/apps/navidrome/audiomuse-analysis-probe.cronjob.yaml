@@ -28,7 +28,7 @@ spec:
               emptyDir: {}
           initContainers:
             - name: verdict
-              image: postgres:15.18
+              image: postgres:15.20
               command:
                 - sh
                 - -c
@@ -57,7 +57,7 @@ spec:
                   memory: 64Mi
           containers:
             - name: ping
-              image: curlimages/curl:8.11.1
+              image: curlimages/curl:8.23.0
               command:
                 - sh
                 - -c
